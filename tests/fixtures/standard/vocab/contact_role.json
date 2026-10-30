@@ -1,0 +1,44 @@
+{
+  "scheme": {
+    "id": "mosaic-contact-role",
+    "title": "Contact Role",
+    "description": "Role a person or organization plays for a resource."
+  },
+  "concepts": [
+    {
+      "id": "producer",
+      "label": "Producer",
+      "description": "Created the data."
+    },
+    {
+      "id": "licensor",
+      "label": "Licensor",
+      "description": "Granted the licence under which the data is shared."
+    },
+    {
+      "id": "host",
+      "label": "Host",
+      "description": "Stores and serves the data (a repository, portal or server)."
+    },
+    {
+      "id": "processor",
+      "label": "Processor",
+      "description": "Transformed, cleaned or derived the data."
+    },
+    {
+      "id": "point-of-contact",
+      "label": "Point of contact",
+      "description": "Answers questions and access requests."
+    },
+    {
+      "id": "maintainer",
+      "label": "Maintainer",
+      "description": "Keeps the record and the data up to date."
+    },
+    {
+      "id": "funder",
+      "label": "Funder",
+      "description": "Paid for producing the data (prefer the funding field when only a name is known)."
+    }
+  ]
+}

@@ -1,0 +1,403 @@
+{
+ "records": [
+  {
+   "id": "MFL-2026-064",
+   "title": "Tree conservation and restoration priority areas (Kenya)",
+   "description": "Conservation for Restoration (C4R) tool KENYA: mapping the vulnerability and priority areas for conservation and restoration of 78 native tree species. Linked to D4R",
+   "resource_type": "dataset",
+   "themes": [
+    "decision-support-outputs"
+   ],
+   "geography": [
+    "KEN"
+   ],
+   "license": {
+    "spdx": null,
+    "url": null,
+    "text": "CGIAR Open Access"
+   },
+   "contacts": [
+    {
+     "organization": "Alliance Bioversity-CIAT",
+     "roles": [
+      "producer"
+     ]
+    },
+    {
+     "name": "Hannes Gaisberger",
+     "email": "h.gaisberger@cgiar.org",
+     "roles": [
+      "point-of-contact"
+     ]
+    }
+   ],
+   "access": "public",
+   "data": [
+    {
+     "name": "Page at dataverse.harvard.edu",
+     "kind": "raster",
+     "method": "landing_page",
+     "url": "https://dataverse.harvard.edu/citation?persistentId=doi:10.7910/DVN/2ZQTB2",
+     "files": "ex_situ_conservation.tif; expanding_protection.tif; landscape_restoration.tif; maintaining_protection.tif",
+     "size": "220 MB",
+     "raster": {
+      "resolution": {
+       "value": 1000,
+       "unit": "m"
+      }
+     }
+    },
+    {
+     "name": "Earth Engine asset (MOSAIC project)",
+     "kind": "raster",
+     "method": "service",
+     "description": "Earth Engine asset projects/mosaic-mfl/assets/mvp/MFL-2026-064; not public yet.",
+     "access": "internal",
+     "service": {
+      "service_type": "earth-engine",
+      "auth_required": true
+     }
+    }
+   ],
+   "temporal": {
+    "start": "2017",
+    "end": "2025",
+    "text": "2017-2025"
+   },
+   "spatial": {
+    "resolution": {
+     "value": 1000,
+     "unit": "m"
+    },
+    "bbox": [
+     33.9083,
+     -4.7083,
+     41.925,
+     5.0583
+    ],
+    "crs": "EPSG:4326"
+   },
+   "update_frequency": "irregular",
+   "source_updated": "2025",
+   "created": "2026-07-24",
+   "updated": "2026-10-15",
+   "mosaic": {
+    "intake": {
+     "status": "published"
+    }
+   },
+   "meta": {
+    "status": "incomplete",
+    "completeness": {
+     "minimum": 0.833,
+     "recommended": 0.7
+    },
+    "missing_minimum": [
+     "citation",
+     "keywords"
+    ],
+    "standard_version": "0.1.0"
+   }
+  },
+  {
+   "id": "MFL-2026-079",
+   "title": "Forest/Non-forest 2000/Forest loss 2001-2024",
+   "description": "Forest/non-forest baseline for 2000 and annual forest loss from 2001 to 2024 in Ucayali, derived from MINAM’s GEOBOSQUES forest monitoring dataset and spatially aggregated by provinces and districts.",
+   "resource_type": "dataset",
+   "themes": [
+    "pressures-drivers"
+   ],
+   "geography": [
+    "PER"
+   ],
+   "license": {
+    "spdx": null,
+    "url": null,
+    "text": "Free download from the Peruvian government source (MINAM/GEOBOSQUES, SERNANP, INEI); no formal license stated"
+   },
+   "contacts": [
+    {
+     "organization": "Alliance Bioversity-CIAT",
+     "roles": [
+      "producer"
+     ]
+    },
+    {
+     "name": "Beatriz Rodríguez",
+     "email": "b.rodriguez@cgiar.org",
+     "roles": [
+      "point-of-contact"
+     ]
+    }
+   ],
+   "access": "public",
+   "data": [
+    {
+     "name": "Page at geobosques.minam.gob.pe",
+     "kind": "vector",
+     "method": "landing_page",
+     "url": "https://geobosques.minam.gob.pe/geobosque/view/descargas.php?122345gxxe345w34gg#download",
+     "files": "Ucayali_Forest_NonForest2000_ForestLoss2001_2024.shp (complete shapefile set, 8 files)",
+     "size": "175.2 MB"
+    }
+   ],
+   "temporal": {
+    "start": "2000",
+    "end": "2024",
+    "text": "2000-2024"
+   },
+   "spatial": {
+    "bbox": [
+     -75.9479,
+     -11.4476,
+     -70.4953,
+     -7.262
+    ],
+    "crs": "EPSG:4326"
+   },
+   "update_frequency": "unknown",
+   "source_updated": "2026",
+   "created": "2026-09-15",
+   "updated": "2026-10-15",
+   "mosaic": {
+    "landscapes": [
+     "PER-PCL"
+    ],
+    "intake": {
+     "status": "published",
+     "submitted_on": "2026-09-15"
+    }
+   },
+   "meta": {
+    "status": "incomplete",
+    "completeness": {
+     "minimum": 0.833,
+     "recommended": 0.6
+    },
+    "missing_minimum": [
+     "citation",
+     "keywords"
+    ],
+    "standard_version": "0.1.0"
+   }
+  },
+  {
+   "id": "MFL-2026-090",
+   "title": "Conflicts",
+   "description": "Locations and resources affected by conflicts and competing uses",
+   "resource_type": "dataset",
+   "themes": [
+    "socio-economic-livelihoods"
+   ],
+   "geography": [
+    "KEN"
+   ],
+   "license": {
+    "spdx": null,
+    "url": null,
+    "text": "Restricted — contact data owner"
+   },
+   "contacts": [
+    {
+     "organization": "ILRI",
+     "roles": [
+      "producer"
+     ]
+    },
+    {
+     "name": "Ambica Paliwal",
+     "email": "a.paliwal@cgiar.org",
+     "roles": [
+      "point-of-contact"
+     ]
+    }
+   ],
+   "access": "restricted",
+   "access_note": "Internal Available on Request",
+   "data": [
+    {
+     "name": "Data held by the owner (on request)",
+     "kind": "vector",
+     "method": "request",
+     "access": "restricted"
+    }
+   ],
+   "temporal": {
+    "start": "2026",
+    "end": "2026",
+    "text": "2026"
+   },
+   "spatial": {
+    "resolution": {
+     "text": "Basin level"
+    }
+   },
+   "update_frequency": "irregular",
+   "source_updated": "2026",
+   "created": "2026-09-30",
+   "updated": "2026-09-30",
+   "mosaic": {
+    "landscapes": [
+     "KEN-LVB"
+    ],
+    "intake": {
+     "status": "published",
+     "submitted_on": "2026-09-30"
+    }
+   },
+   "meta": {
+    "status": "incomplete",
+    "completeness": {
+     "minimum": 0.846,
+     "recommended": 0.5
+    },
+    "missing_minimum": [
+     "citation",
+     "keywords"
+    ],
+    "standard_version": "0.1.0"
+   }
+  },
+  {
+   "id": "MFL-2026-104",
+   "title": "Fatick Department living landscape boundary",
+   "description": "Canonical MOSAIC delineation of the Fatick Department living landscape (SEN-FK), used to define the landscape across the catalogue. Source: GADM: level 2 unit Fatick departement (GADM v2 attribute schema; geometry identical to GADM 3.6 and 4.1 SEN.3.1_1). Full-detail Shapefile and GeoPackage in the dated release boundaries-2026-10-14 of MOSAIC-mfl/catalog; a simplified outline is attached to the landscape's STAC collection.",
+   "resource_type": "dataset",
+   "themes": [
+    "boundaries-admin-units"
+   ],
+   "geography": [
+    "SEN"
+   ],
+   "license": {
+    "spdx": null,
+    "url": "https://gadm.org/license.html",
+    "text": "Source terms (https://gadm.org/license.html)"
+   },
+   "contacts": [
+    {
+     "organization": "Alliance Bioversity-CIAT (MOSAIC)",
+     "roles": [
+      "producer"
+     ]
+    },
+    {
+     "name": "Lizeth Llanos",
+     "email": "l.llanos@cgiar.org",
+     "roles": [
+      "point-of-contact"
+     ]
+    }
+   ],
+   "citation": "Departement boundary: GADM (gadm.org).",
+   "access": "public",
+   "data": [
+    {
+     "name": "Download from github.com",
+     "kind": "vector",
+     "method": "download",
+     "url": "https://github.com/MOSAIC-mfl/catalog/releases/download/boundaries-2026-10-14/SEN-FK_Fatick_Department_boundary_2026-10-14.zip",
+     "files": "SEN-FK_Fatick_Department_boundary_2026-10-14.zip",
+     "size": "16 KB",
+     "vector": {
+      "geometry_type": "polygon",
+      "feature_count": 1,
+      "attributes": [
+       {
+        "name": "code",
+        "type": "string"
+       },
+       {
+        "name": "name",
+        "type": "string"
+       },
+       {
+        "name": "country",
+        "type": "string"
+       },
+       {
+        "name": "system",
+        "type": "string"
+       },
+       {
+        "name": "area_km2",
+        "type": "number"
+       },
+       {
+        "name": "licence",
+        "type": "string"
+       },
+       {
+        "name": "lic_url",
+        "type": "string"
+       },
+       {
+        "name": "credit",
+        "type": "string"
+       },
+       {
+        "name": "note",
+        "type": "string"
+       },
+       {
+        "name": "version",
+        "type": "string"
+       }
+      ],
+      "crs": "EPSG:4326"
+     },
+     "derived": [
+      "vector.attributes",
+      "vector.crs",
+      "vector.feature_count",
+      "vector.geometry_type"
+     ]
+    }
+   ],
+   "temporal": {
+    "start": "2026",
+    "end": "2026",
+    "text": "2026"
+   },
+   "spatial": {
+    "resolution": {
+     "text": "Landscape boundary"
+    },
+    "bbox": [
+     -16.79207,
+     13.92839,
+     -16.10546,
+     14.60836
+    ],
+    "crs": "EPSG:4326"
+   },
+   "update_frequency": "static",
+   "source_updated": "2026-10-14",
+   "created": "2026-10-21",
+   "updated": "2026-10-21",
+   "mosaic": {
+    "landscapes": [
+     "SEN-FK"
+    ],
+    "intake": {
+     "status": "published",
+     "submitted_on": "2026-10-21"
+    }
+   },
+   "derived": [
+    "spatial.crs"
+   ],
+   "meta": {
+    "status": "incomplete",
+    "completeness": {
+     "minimum": 0.917,
+     "recommended": 0.8
+    },
+    "missing_minimum": [
+     "keywords"
+    ],
+    "standard_version": "0.1.0"
+   }
+  }
+ ]
+}

@@ -1,0 +1,20 @@
+{
+ "catalogue": "mosaic",
+ "standard_version": "0.1.0",
+ "generated_at": "2026-10-30T20:27:34Z",
+ "commit": "fb199ef8f1a0fa370e79b8840878b3ccfd0cee95",
+ "counts": {
+  "published": 102,
+  "complete": 0,
+  "incomplete": 102,
+  "skipped": {}
+ },
+ "include_incomplete": true,
+ "files": {
+  "catalog": "catalog.json",
+  "schema": "schema/",
+  "vocab": "vocab/",
+  "crosswalks": "crosswalks/"
+ },
+ "records": []
+}

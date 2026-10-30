@@ -1,0 +1,78 @@
+# Crosswalk: CGIAR Climate Data Hub (CDH) record YAML -> MOSAIC record.
+#
+# Direction: READING CDH records into MOSAIC (the API's CDH translator uses this file).
+# MOSAIC does not write CDH records. Checked against cdh-metadata-standard v0.5.0
+# (commit 8cec4dc) and cdh-catalog (commit 18e5333), 2026-10-30.
+#
+# Rules: nothing is invented. A CDH value without a MOSAIC place is kept as a keyword
+# or reported by the translator; it is never silently dropped.
+source: cdh
+source_version: v0.5.0
+
+fields:
+  id: id                                   # kept as is; the API prefixes the catalogue -> cdh:<id>
+  title: title
+  description: description
+  note: note
+  resource_type: resource_type              # same four values; MOSAIC adds `model`
+  keywords: keywords                        # same shape: string or {term, scheme, uri}
+  cdh.domain: themes                        # via vocabularies.domain_to_theme; the domain id is also kept as a keyword
+  spatial.geography: geography              # CDH slug -> M49 code (CDH vocab/geography.json) -> our ISO3 / m49:<code>
+  spatial.bbox: spatial.bbox                # one box or a list of boxes, same convention
+  spatial.crs: spatial.crs
+  license: license.spdx                     # SPDX expression; LicenseRef-* -> license.text + url from additional_links[rel=license]
+  access: access                            # via vocabularies.access; CDH omits it when public -> MOSAIC writes it explicitly
+  access_note: access_note
+  contact[]: contacts[]                     # organization, name, email, ror, orcid, url, roles
+  citation: citation                        # title, authors{family, given, organization, orcid}, date, publisher
+  doi: doi
+  related_publications[]: related[]         # relation IsDocumentedBy unless stated otherwise
+  funding[]: funding[]
+  temporal.date: temporal                   # date -> start = end = date
+  temporal.start_date: temporal.start
+  temporal.end_date: temporal.end           # null = open-ended, same meaning
+  temporal.update_frequency: update_frequency
+  version: version
+  created: created
+  updated: updated
+  data[]: data[]                            # one MOSAIC access point per CDH location:
+  data[].name: data[].name                  #   name = "<data name> (<location title>)"
+  data[].locations[].url: data[].url
+  data[].media_type: data[].media_type      #   kind derived from media_type / structures (raster, vector, tabular)
+  data[].description: data[].description
+  data[].file_size: data[].size
+  structures[].variables[]: data[].raster.bands[]   # for gridded data; tabular columns -> data[].tabular.columns[]
+  processing[].derived_from[]: related[]    # relation IsDerivedFrom
+  additional_links[]: related[]             # rel describedby -> IsDocumentedBy; license -> license.url
+  series: related[]                         # relation IsPartOf, scheme url
+  cdh.usage: note                           # intended_uses / not_recommended_for appended to the note (no MOSAIC field yet)
+
+not_mapped:                                 # kept in the API's raw copy; no MOSAIC field in v0.1
+  - cdh_schema_version
+  - extensions
+  - attribution                             # TODO decide: MOSAIC field or part of citation
+  - parent / previous_version / deprecated   # hierarchy and version chain: handled by the API when needed
+  - climate.*                               # climate-specific block (models, scenarios, ...): candidate MOSAIC `climate` extension
+  - commodities                             # agriculture block: candidate keyword source (scheme cdh-commodity)
+  - dimensions / file_index / href_template
+
+vocabularies:
+  domain_to_theme:                          # CDH domain -> MOSAIC theme (all eight have one)
+    adaptation: climate-adaptation
+    agricultural-production: agrobiodiversity-crops
+    boundaries: boundaries-admin-units
+    climate: climate
+    hydrology: water-hydrology
+    land: land-cover-land-use
+    mitigation: climate-mitigation
+    socioeconomic: socio-economic-livelihoods
+  access:
+    public: public
+    restricted: restricted
+    non-public: internal
+  contact_role:                             # same ids; MOSAIC adds host and funder
+    licensor: licensor
+    producer: producer
+    processor: processor
+    point-of-contact: point-of-contact
+    maintainer: maintainer

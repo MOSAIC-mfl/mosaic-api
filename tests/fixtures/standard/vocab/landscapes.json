@@ -1,0 +1,154 @@
+{
+  "scheme": {
+    "id": "mosaic-landscapes",
+    "title": "MOSAIC living landscapes",
+    "description": "Living landscapes of the MFL programme. Boundaries are published by the catalogue."
+  },
+  "concepts": [
+    {
+      "id": "COL-CUM",
+      "label": "Cumbal (Nariño)",
+      "countries": [
+        "COL"
+      ],
+      "bbox": [
+        -78.0702,
+        0.8386,
+        -77.7535,
+        1.0784
+      ]
+    },
+    {
+      "id": "PER-PCL",
+      "label": "Pucallpa – Ucayali",
+      "countries": [
+        "PER"
+      ],
+      "bbox": [
+        -75.9479,
+        -9.4181,
+        -74.3225,
+        -7.9501
+      ]
+    },
+    {
+      "id": "SEN-FK",
+      "label": "Fatick Department",
+      "countries": [
+        "SEN"
+      ],
+      "bbox": [
+        -16.7921,
+        13.9284,
+        -16.1055,
+        14.6084
+      ]
+    },
+    {
+      "id": "CIV-NZ",
+      "label": "N'Zi Watershed",
+      "countries": [
+        "CIV"
+      ],
+      "bbox": [
+        -5.3792,
+        5.95,
+        -3.8583,
+        9.4333
+      ]
+    },
+    {
+      "id": "TUN-NW",
+      "label": "Northwestern Tunisia",
+      "countries": [
+        "TUN"
+      ],
+      "bbox": [
+        8.9235,
+        35.7384,
+        9.4464,
+        36.4324
+      ]
+    },
+    {
+      "id": "ETH-OG",
+      "label": "Omo-Gibe Basin",
+      "countries": [
+        "ETH"
+      ],
+      "bbox": [
+        34.9533,
+        4.431,
+        38.4128,
+        9.3685
+      ]
+    },
+    {
+      "id": "KEN-LVB",
+      "label": "Lake Victoria Basin (Kenya)",
+      "countries": [
+        "KEN"
+      ],
+      "bbox": [
+        33.9499,
+        -0.4243,
+        35.343,
+        0.6557
+      ]
+    },
+    {
+      "id": "KEN-LEI",
+      "label": "LEILA (Southern Kenya Rangelands)",
+      "countries": [
+        "KEN"
+      ],
+      "bbox": [
+        35.9962,
+        -3.1869,
+        38.5194,
+        -0.7526
+      ]
+    },
+    {
+      "id": "ZWE-MB",
+      "label": "Mbire – Lower Zambezi Valley",
+      "countries": [
+        "ZWE"
+      ],
+      "bbox": [
+        28.8445,
+        -17.4339,
+        32.0584,
+        -15.6073
+      ]
+    },
+    {
+      "id": "IND-CH",
+      "label": "Central India Highlands",
+      "countries": [
+        "IND"
+      ],
+      "bbox": [
+        78.2942,
+        22.2022,
+        81.1975,
+        25.9555
+      ]
+    },
+    {
+      "id": "MEK-3S",
+      "label": "3S Basins (Sekong, Sesan, Srepok)",
+      "countries": [
+        "KHM",
+        "LAO",
+        "VNM"
+      ],
+      "bbox": [
+        105.95,
+        11.8519,
+        108.7757,
+        16.3852
+      ]
+    }
+  ]
+}

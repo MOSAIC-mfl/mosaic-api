@@ -1,0 +1,96 @@
+"""The HTTP contract, its safety rules, and the static export (same answers as the live API)."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+
+from mosaic_api.adapters.fetch import FetchError, Location, SafeFetcher
+from mosaic_api.adapters.inbound.exporter import export
+from mosaic_api.adapters.inbound.http import create_app
+from mosaic_api.application.catalog import CatalogService
+
+
+@pytest.fixture
+def client(catalog: CatalogService) -> TestClient:
+    return TestClient(create_app(catalog, ["http://localhost:4321"], max_page_size=50))
+
+
+def test_search_and_filters(client: TestClient) -> None:
+    page = client.get("/v1/resources", params={"q": "forest", "include_facets": True}).json()
+    assert [i["id"] for i in page["items"]] == ["mosaic:MFL-2026-079"]
+    assert page["facets"]["source"] == {"mosaic": 1}
+    cdh = client.get("/v1/resources", params={"source": "cdh", "spatial": "no"}).json()
+    assert [i["id"] for i in cdh["items"]] == ["cdh:ecocrop"]
+    restricted = client.get("/v1/resources", params={"access": "restricted,internal"}).json()
+    assert {i["id"] for i in restricted["items"]} == {"mosaic:MFL-2026-090"}
+
+
+def test_resource_detail_and_jsonld(client: TestClient) -> None:
+    d = client.get("/v1/resources/cdh/esa-worldcover-2021").json()
+    assert d["record"]["id"] == "esa-worldcover-2021"
+    assert d["provenance"]["source_name"] == "CGIAR Climate Data Hub"
+    assert d["quality"]["status"] == "complete"
+    ld = client.get("/v1/resources/cdh/esa-worldcover-2021/jsonld")
+    assert ld.headers["content-type"] == "application/ld+json"
+    assert ld.json()["@type"] == "Dataset" and ld.json()["identifier"] == "https://doi.org/10.5281/zenodo.7254221"
+
+
+def test_errors_are_problem_json(client: TestClient) -> None:
+    r = client.get("/v1/resources/mosaic/NOPE")
+    assert r.status_code == 404 and r.headers["content-type"] == "application/problem+json"
+    assert client.get("/v1/resources", params={"page_size": 51}).status_code == 422
+    assert client.get("/v1/resources", params={"bbox": "0,0,1"}).status_code == 422
+    assert client.get("/v1/resources", params={"bbox": "0,95,1,96"}).status_code == 422
+    assert client.get("/v1/resources", params={"q": "x" * 201}).status_code == 422
+
+
+def test_read_only_and_headers(client: TestClient) -> None:
+    assert client.post("/v1/resources").status_code == 405
+    r = client.get("/v1/manifest", headers={"Origin": "http://localhost:4321"})
+    assert r.headers["x-content-type-options"] == "nosniff"
+    assert r.headers["access-control-allow-origin"] == "http://localhost:4321"
+    other = client.get("/v1/manifest", headers={"Origin": "https://evil.example"})
+    assert "access-control-allow-origin" not in other.headers
+
+
+def test_emails_can_be_hidden(catalog: CatalogService) -> None:
+    from mosaic_api.application.catalog import CatalogOptions
+
+    hidden = CatalogService(catalog._snap, catalog._std, CatalogOptions(expose_emails=False))  # type: ignore[attr-defined]
+    detail = hidden.get("mosaic:MFL-2026-079")
+    assert detail is not None and all("email" not in c for c in detail.record["contacts"])
+
+
+def test_static_export_matches_live_api(tmp_path: Path, catalog: CatalogService, client: TestClient) -> None:
+    out = tmp_path / "site"
+    manifest = export(client.app, catalog, out)  # type: ignore[arg-type]
+    assert manifest["counts"]["resources"] == 7
+    for ref in [*manifest["files"]["summaries"], manifest["files"]["search"]]:
+        data = (out / ref["path"]).read_bytes()
+        assert hashlib.sha256(data).hexdigest() == ref["sha256"]
+    on_disk = json.loads((out / "v1/resources/mosaic/MFL-2026-104.json").read_text(encoding="utf-8"))
+    assert on_disk == client.get("/v1/resources/mosaic/MFL-2026-104").json()
+    assert (out / "v1/openapi.json").exists() and (out / ".nojekyll").exists()
+
+
+def test_fetcher_refuses_unsafe_locations(tmp_path: Path) -> None:
+    f = SafeFetcher(frozenset({"example.org"}))
+    with pytest.raises(FetchError):
+        f.check("http://example.org/x")  # not https
+    with pytest.raises(FetchError):
+        f.check("https://evil.example/x")  # host not allowed
+    (tmp_path / "a").mkdir()
+    with pytest.raises(FetchError):
+        Location(str(tmp_path / "a"), f).read("../secret")
+
+
+def test_openapi_lists_only_get_routes(client: TestClient) -> None:
+    spec = client.get("/openapi.json").json()
+    methods = {m for path in spec["paths"].values() for m in path}
+    assert methods == {"get"}
+    assert "/v1/resources/{source_id}/{local_id}" in spec["paths"]

@@ -1,0 +1,59 @@
+{
+  "scheme": {
+    "id": "mosaic-update-frequency",
+    "title": "Update Frequency",
+    "description": "How often the data is updated at its source."
+  },
+  "concepts": [
+    {
+      "id": "static",
+      "label": "Static",
+      "description": "Not updated."
+    },
+    {
+      "id": "continual",
+      "label": "Continual",
+      "description": "Updated continually."
+    },
+    {
+      "id": "daily",
+      "label": "Daily",
+      "description": ""
+    },
+    {
+      "id": "weekly",
+      "label": "Weekly",
+      "description": ""
+    },
+    {
+      "id": "monthly",
+      "label": "Monthly",
+      "description": ""
+    },
+    {
+      "id": "quarterly",
+      "label": "Quarterly",
+      "description": ""
+    },
+    {
+      "id": "seasonal",
+      "label": "Seasonal",
+      "description": "Once per season."
+    },
+    {
+      "id": "annual",
+      "label": "Annual",
+      "description": ""
+    },
+    {
+      "id": "irregular",
+      "label": "Irregular",
+      "description": "Updated when needed, with no fixed schedule."
+    },
+    {
+      "id": "unknown",
+      "label": "Unknown",
+      "description": "The source does not say."
+    }
+  ]
+}

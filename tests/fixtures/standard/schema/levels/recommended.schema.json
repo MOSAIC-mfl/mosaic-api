@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mosaic-mfl.github.io/mosaic-catalog/schema/v0.1.0/levels/recommended.schema.json",
+  "title": "MOSAIC recommended (level 1)",
+  "description": "Fields that make a record more useful and FAIR. Missing ones are warnings, never errors.",
+  "required": [
+    "temporal",
+    "spatial",
+    "update_frequency",
+    "created",
+    "updated"
+  ],
+  "properties": {
+    "temporal": {
+      "required": [
+        "start"
+      ],
+      "x-message": "period without a machine-readable start"
+    },
+    "spatial": {
+      "required": [
+        "bbox"
+      ],
+      "x-message": "no bounding box"
+    },
+    "contacts": {
+      "contains": {
+        "required": [
+          "roles"
+        ],
+        "properties": {
+          "roles": {
+            "contains": {
+              "const": "licensor"
+            }
+          }
+        }
+      },
+      "x-message": "no contact with the licensor role"
+    },
+    "license": {
+      "if": {
+        "not": {
+          "required": [
+            "spdx"
+          ],
+          "properties": {
+            "spdx": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "x-message": "non-standard licence without the URL of its terms"
+    },
+    "keywords": {
+      "contains": {
+        "type": "object",
+        "required": [
+          "uri"
+        ]
+      },
+      "x-message": "no keyword linked to a vocabulary (e.g. AGROVOC)"
+    },
+    "data": {
+      "items": {
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "vector"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "vector"
+              ],
+              "properties": {
+                "vector": {
+                  "required": [
+                    "geometry_type"
+                  ]
+                }
+              }
+            },
+            "x-field": "data_classification",
+            "x-message": "vector data without geometry_type (point, line, polygon, mixed)"
+          },
+          {
+            "if": {
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "tabular"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "tabular"
+              ],
+              "properties": {
+                "tabular": {
+                  "required": [
+                    "spatial"
+                  ]
+                }
+              }
+            },
+            "x-field": "data_classification",
+            "x-message": "table without tabular.spatial (does it have coordinates or a geometry?)"
+          }
+        ]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "anyOf": [
+        {
+          "required": [
+            "doi"
+          ]
+        },
+        {
+          "required": [
+            "citation"
+          ],
+          "properties": {
+            "citation": {
+              "type": "object",
+              "required": [
+                "authors"
+              ]
+            }
+          }
+        }
+      ],
+      "x-field": "citation",
+      "x-message": "citation without structured authors and no DOI"
+    }
+  ]
+}

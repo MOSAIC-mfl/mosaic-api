@@ -1,0 +1,71 @@
+[project]
+name = "mosaic-api"
+version = "0.1.0"
+description = "MOSAIC API: federated, read-only metadata API (hexagonal architecture)"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.110",
+  "pydantic>=2.6",
+  "httpx>=0.27",
+  "pyyaml>=6.0",
+  "jsonschema>=4.21",
+  "referencing>=0.35",
+]
+
+[project.optional-dependencies]
+serve = ["uvicorn>=0.29"]
+dev = ["uvicorn>=0.29", "pytest>=8", "ruff>=0.6", "mypy>=1.10", "types-PyYAML", "types-jsonschema", "import-linter>=2.0"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "ASYNC"]
+ignore = ["RUF001", "RUF002", "RUF003", "UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.mypy]
+strict = true
+mypy_path = "src"
+plugins = ["pydantic.mypy"]
+
+# Hexagonal architecture, enforced: the core never imports adapters, FastAPI or I/O libraries.
+[tool.importlinter]
+root_package = "mosaic_api"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Layers: inbound adapters -> application -> domain"
+type = "layers"
+layers = [
+  "mosaic_api.cli",
+  "mosaic_api.bootstrap",
+  "mosaic_api.adapters",
+  "mosaic_api.application",
+  "mosaic_api.ports",
+  "mosaic_api.domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Domain and application know no framework or I/O"
+type = "forbidden"
+source_modules = ["mosaic_api.domain", "mosaic_api.application", "mosaic_api.ports"]
+forbidden_modules = ["fastapi", "starlette", "httpx", "yaml", "jsonschema", "uvicorn", "mosaic_api.adapters", "mosaic_api.config"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["mosaic_api", "conftest"]

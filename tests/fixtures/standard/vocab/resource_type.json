@@ -1,0 +1,34 @@
+{
+  "scheme": {
+    "id": "mosaic-resource-type",
+    "title": "Resource Type",
+    "description": "Kind of resource a record describes."
+  },
+  "concepts": [
+    {
+      "id": "dataset",
+      "label": "Dataset",
+      "description": "Data in any form: raster, vector, tabular or a mix."
+    },
+    {
+      "id": "service",
+      "label": "Service",
+      "description": "An endpoint that serves data: WMS/WFS, OGC API, STAC API, Earth Engine, REST."
+    },
+    {
+      "id": "document",
+      "label": "Document",
+      "description": "A report, plan, manual or article that is the resource itself."
+    },
+    {
+      "id": "software",
+      "label": "Software",
+      "description": "Code, scripts, notebooks or tools."
+    },
+    {
+      "id": "model",
+      "label": "Model",
+      "description": "A trained or calibrated model and its parameters."
+    }
+  ]
+}

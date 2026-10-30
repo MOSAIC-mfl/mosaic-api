@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mosaic-mfl.github.io/mosaic-catalog/schema/v0.1.0/profiles/mosaic.schema.json",
+  "title": "MOSAIC profile",
+  "description": "What a record registered by MOSAIC itself carries. Not enforced in v0.1 (warnings only); set profiles.mosaic.enforce: true in mosaic.config.yaml to make it required.",
+  "required": [
+    "mosaic"
+  ],
+  "properties": {
+    "id": {
+      "pattern": "^MFL-[0-9]{4}-[0-9]{3,}$"
+    },
+    "mosaic": {
+      "required": [
+        "landscapes"
+      ]
+    }
+  }
+}

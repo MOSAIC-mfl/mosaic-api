@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mosaic-mfl.github.io/mosaic-catalog/schema/v0.1.0/levels/minimum.schema.json",
+  "title": "MOSAIC minimum (level 0)",
+  "description": "Enough metadata to find, understand, cite and access a resource without opening its files. A record that fails this level is INCOMPLETE: it is listed in review/minimum_gaps and published flagged as incomplete (or hidden, depending on the catalogue configuration).",
+  "required": [
+    "id",
+    "title",
+    "description",
+    "resource_type",
+    "themes",
+    "keywords",
+    "geography",
+    "license",
+    "contacts",
+    "access",
+    "data"
+  ],
+  "properties": {
+    "license": {
+      "anyOf": [
+        {
+          "required": [
+            "spdx"
+          ],
+          "properties": {
+            "spdx": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "required": [
+            "text"
+          ],
+          "properties": {
+            "text": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "x-message": "licence unknown: give an SPDX id or at least the text of the terms"
+    },
+    "data": {
+      "items": {
+        "required": [
+          "kind",
+          "method"
+        ]
+      },
+      "x-message": "every access point needs a kind (raster, vector, tabular, document, mixed, other) and a method (download, landing_page, service, request)"
+    }
+  },
+  "allOf": [
+    {
+      "anyOf": [
+        {
+          "required": [
+            "citation"
+          ]
+        },
+        {
+          "required": [
+            "doi"
+          ]
+        }
+      ],
+      "x-field": "citation",
+      "x-message": "no citation and no DOI"
+    },
+    {
+      "if": {
+        "required": [
+          "access"
+        ],
+        "properties": {
+          "access": {
+            "const": "public"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "contains": {
+              "required": [
+                "url"
+              ]
+            }
+          }
+        }
+      },
+      "x-field": "data",
+      "x-message": "public resource with no access point URL"
+    },
+    {
+      "if": {
+        "required": [
+          "access"
+        ],
+        "properties": {
+          "access": {
+            "enum": [
+              "restricted",
+              "internal"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "access_note"
+        ]
+      },
+      "x-field": "access_note",
+      "x-message": "restricted/internal resource without access_note (how to obtain it)"
+    }
+  ]
+}

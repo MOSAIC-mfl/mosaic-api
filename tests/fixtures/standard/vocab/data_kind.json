@@ -1,0 +1,39 @@
+{
+  "scheme": {
+    "id": "mosaic-data-kind",
+    "title": "Data Kind",
+    "description": "What kind of data an access point leads to. Drives the 'data type' facet and which detail block applies."
+  },
+  "concepts": [
+    {
+      "id": "raster",
+      "label": "Raster",
+      "description": "Gridded data: GeoTIFF/COG, NetCDF, Zarr, Earth Engine images."
+    },
+    {
+      "id": "vector",
+      "label": "Vector",
+      "description": "Points, lines or polygons: Shapefile, GeoPackage, GeoJSON, FlatGeobuf."
+    },
+    {
+      "id": "tabular",
+      "label": "Tabular",
+      "description": "Tables: CSV, Excel, Parquet, with or without a geometry column."
+    },
+    {
+      "id": "document",
+      "label": "Document",
+      "description": "A report, plan or article meant to be read (PDF, Word, web page)."
+    },
+    {
+      "id": "mixed",
+      "label": "Mixed",
+      "description": "Several kinds of data behind one access point; describe them in the description."
+    },
+    {
+      "id": "other",
+      "label": "Other",
+      "description": "Anything else (code, model files...); say what in the description."
+    }
+  ]
+}

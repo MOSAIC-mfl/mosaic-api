@@ -1,0 +1,967 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mosaic-mfl.github.io/mosaic-catalog/schema/v0.1.0/record.schema.json",
+  "title": "MOSAIC metadata record (structure)",
+  "description": "Shape and types of every field a MOSAIC record can hold. Nothing is required here: a record that breaks this schema is INVALID (malformed); what a record must contain is checked by the level schemas (minimum, recommended) and the profiles, which only make it INCOMPLETE. Extension blocks are validated separately against the extension schema the record declares.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "Permanent identifier, unique in its catalogue. Never reused or changed. MOSAIC uses MFL-YYYY-NNN.",
+      "$ref": "#/$defs/identifier"
+    },
+    "slug": {
+      "description": "Optional readable alias for URLs. May change; the id may not.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 80
+    },
+    "title": {
+      "$ref": "#/$defs/text",
+      "maxLength": 300,
+      "description": "Name of the resource, as the source names it when it has a name."
+    },
+    "description": {
+      "description": "What the resource is: content, coverage, method in brief.",
+      "$ref": "#/$defs/text"
+    },
+    "note": {
+      "description": "Caveats and interpretation-critical remarks. Not a place for leftovers.",
+      "$ref": "#/$defs/text"
+    },
+    "resource_type": {
+      "description": "Kind of resource: dataset, service, document, software or model.",
+      "$ref": "vocab.schema.json#/$defs/resourceType"
+    },
+    "themes": {
+      "description": "MOSAIC themes; the first one is the primary theme.",
+      "type": "array",
+      "items": {
+        "$ref": "vocab.schema.json#/$defs/theme"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "keywords": {
+      "description": "Search terms. A plain string, or a term linked to a vocabulary such as AGROVOC.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/text"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "term"
+            ],
+            "properties": {
+              "term": {
+                "$ref": "#/$defs/text"
+              },
+              "scheme": {
+                "description": "Vocabulary id, e.g. agrovoc, gemet, sdg.",
+                "type": "string",
+                "pattern": "^[a-z0-9-]+$"
+              },
+              "uri": {
+                "$ref": "#/$defs/url"
+              },
+              "lang": {
+                "$ref": "#/$defs/language"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "geography": {
+      "description": "Where the resource applies: ISO 3166-1 alpha-3 countries, m49:<code> regions, or global.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "vocab.schema.json#/$defs/geography"
+      }
+    },
+    "license": {
+      "$ref": "#/$defs/license"
+    },
+    "contacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/contact"
+      },
+      "description": "People and organizations responsible for the resource, each with one or more roles. A contact with the licensor role is recommended."
+    },
+    "citation": {
+      "description": "How to cite the resource: a formatted string, or a structured citation.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/text"
+        },
+        {
+          "$ref": "#/$defs/citation"
+        }
+      ]
+    },
+    "doi": {
+      "$ref": "#/$defs/doi"
+    },
+    "access": {
+      "description": "Access condition of the data: public, restricted or internal. Always explicit.",
+      "$ref": "vocab.schema.json#/$defs/access"
+    },
+    "access_note": {
+      "description": "How to obtain the data when it is not public: who to ask and how.",
+      "$ref": "#/$defs/text"
+    },
+    "data": {
+      "description": "Ways to reach the resource. Each entry is one access point.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/accessPoint"
+      }
+    },
+    "temporal": {
+      "$ref": "#/$defs/temporal"
+    },
+    "spatial": {
+      "description": "Where the data is, as coordinates: bounding box(es) and CRS.",
+      "$ref": "#/$defs/spatial"
+    },
+    "version": {
+      "description": "Version label of this release, as the source names it.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "update_frequency": {
+      "description": "How often the source updates the data.",
+      "$ref": "vocab.schema.json#/$defs/updateFrequency"
+    },
+    "source_updated": {
+      "description": "Date the source last updated the data (not the record). YYYY, YYYY-MM or YYYY-MM-DD.",
+      "$ref": "#/$defs/date"
+    },
+    "language": {
+      "description": "Languages of the content (BCP 47), when language matters (documents, labels).",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/language"
+      },
+      "uniqueItems": true
+    },
+    "funding": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/text"
+          },
+          "url": {
+            "$ref": "#/$defs/url"
+          },
+          "ror": {
+            "$ref": "#/$defs/ror"
+          },
+          "award": {
+            "$ref": "#/$defs/text"
+          }
+        }
+      },
+      "description": "Who paid for producing the data."
+    },
+    "related": {
+      "description": "Other resources this one connects to (connect, don't duplicate).",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/related"
+      }
+    },
+    "created": {
+      "description": "Date the record was created (filled from git history; not authored).",
+      "$ref": "#/$defs/date"
+    },
+    "updated": {
+      "description": "Date the record was last changed (filled from git history; not authored).",
+      "$ref": "#/$defs/date"
+    },
+    "derived": {
+      "$ref": "#/$defs/fieldPaths",
+      "description": "Record fields filled by a tool that read the data (e.g. spatial.bbox). A person may overwrite them; then remove the path."
+    },
+    "mosaic": {
+      "$ref": "#/$defs/mosaicBlock"
+    },
+    "extensions": {
+      "description": "Extension blocks this record uses, as name@version (e.g. biodiversity@0.1.0). Each name is also a top-level key.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*@[0-9]+\\.[0-9]+\\.[0-9]+$"
+      }
+    }
+  },
+  "$defs": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S",
+      "x-message": "empty text"
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,99}$",
+      "x-message": "id may only use letters, digits, '.', '_' and '-'"
+    },
+    "url": {
+      "type": "string",
+      "pattern": "^(https?|ftp|s3|gs|ee)://\\S+$",
+      "x-message": "not an absolute URL (http, https, ftp, s3, gs or ee)"
+    },
+    "date": {
+      "description": "ISO 8601 date: YYYY, YYYY-MM or YYYY-MM-DD.",
+      "type": "string",
+      "pattern": "^[0-9]{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12][0-9]|3[01]))?)?$",
+      "x-message": "not an ISO 8601 date (YYYY, YYYY-MM or YYYY-MM-DD)"
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+      "x-message": "language must be a BCP 47 code such as en or es-PE"
+    },
+    "doi": {
+      "description": "DOI without the resolver, e.g. 10.5061/dryad.6djh9w18f.",
+      "type": "string",
+      "pattern": "^10\\.[0-9]{4,9}/\\S+$",
+      "x-message": "DOI must look like 10.xxxx/suffix, without https://doi.org/"
+    },
+    "ror": {
+      "type": "string",
+      "pattern": "^https://ror\\.org/0[a-z0-9]{8}$",
+      "x-message": "ROR must be https://ror.org/0xxxxxxxx"
+    },
+    "orcid": {
+      "type": "string",
+      "pattern": "^https://orcid\\.org/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$",
+      "x-message": "ORCID must be https://orcid.org/0000-0000-0000-0000"
+    },
+    "license": {
+      "description": "Licence of the data. spdx when it is a standard licence (SPDX expression); otherwise text with the url of its terms when there is one. Unknown parts are null.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "spdx": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Za-z0-9.+-]+( (AND|OR|WITH) [A-Za-z0-9.+-]+)*$"
+        },
+        "url": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "text": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "name"
+          ]
+        },
+        {
+          "required": [
+            "organization"
+          ]
+        },
+        {
+          "required": [
+            "email"
+          ]
+        }
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/text"
+        },
+        "organization": {
+          "$ref": "#/$defs/text"
+        },
+        "email": {
+          "type": "string",
+          "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+        },
+        "url": {
+          "$ref": "#/$defs/url"
+        },
+        "ror": {
+          "$ref": "#/$defs/ror"
+        },
+        "orcid": {
+          "$ref": "#/$defs/orcid"
+        },
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "vocab.schema.json#/$defs/contactRole"
+          }
+        }
+      },
+      "x-message": "a contact needs at least a name, an organization or an email"
+    },
+    "citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "text"
+          ]
+        },
+        {
+          "required": [
+            "title",
+            "authors"
+          ]
+        }
+      ],
+      "properties": {
+        "text": {
+          "description": "The citation as the source formats it.",
+          "$ref": "#/$defs/text"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "authors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "required": [
+                  "family"
+                ]
+              },
+              {
+                "required": [
+                  "organization"
+                ]
+              }
+            ],
+            "properties": {
+              "family": {
+                "$ref": "#/$defs/text"
+              },
+              "given": {
+                "$ref": "#/$defs/text"
+              },
+              "organization": {
+                "$ref": "#/$defs/text"
+              },
+              "orcid": {
+                "$ref": "#/$defs/orcid"
+              }
+            }
+          }
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "publisher": {
+          "$ref": "#/$defs/text"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "temporal": {
+      "description": "Period the data covers. end null = still running. text keeps the source wording.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/date"
+        },
+        "end": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "text": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "spatial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bbox": {
+          "description": "[west, south, east, north] in WGS84 degrees, or a list of such boxes for disjoint areas (no union box).",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/bboxCoords"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/bboxCoords"
+              }
+            }
+          ]
+        },
+        "crs": {
+          "$ref": "#/$defs/crs"
+        },
+        "resolution": {
+          "description": "Spatial detail of the data as a whole: a grid size ({value, unit}) or the unit of aggregation in words ({text}, e.g. district level). Raster pixel size can also go in data[].raster.resolution.",
+          "$ref": "#/$defs/resolution"
+        }
+      }
+    },
+    "crs": {
+      "type": "string",
+      "pattern": "^(EPSG|ESRI|OGC):[A-Za-z0-9.]+$",
+      "x-message": "CRS must look like EPSG:4326"
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "value",
+            "unit"
+          ]
+        },
+        {
+          "required": [
+            "text"
+          ]
+        }
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "enum": [
+            "m",
+            "km",
+            "degree",
+            "arcsec",
+            "arcmin"
+          ]
+        },
+        "text": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/text"
+        },
+        "type": {
+          "enum": [
+            "string",
+            "integer",
+            "number",
+            "boolean",
+            "date",
+            "datetime",
+            "geometry",
+            "other"
+          ]
+        },
+        "unit": {
+          "$ref": "#/$defs/text"
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "rasterBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resolution": {
+          "$ref": "#/$defs/resolution"
+        },
+        "crs": {
+          "$ref": "#/$defs/crs"
+        },
+        "bands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/text"
+              },
+              "description": {
+                "$ref": "#/$defs/text"
+              },
+              "unit": {
+                "$ref": "#/$defs/text"
+              },
+              "data_type": {
+                "enum": [
+                  "uint8",
+                  "int8",
+                  "uint16",
+                  "int16",
+                  "uint32",
+                  "int32",
+                  "float32",
+                  "float64",
+                  "other"
+                ]
+              },
+              "nodata": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "vectorBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "geometry_type": {
+          "enum": [
+            "point",
+            "line",
+            "polygon",
+            "mixed"
+          ],
+          "description": "point, line, polygon or mixed. Point data = vector with geometry_type point (or a spatial table with coordinate_columns)."
+        },
+        "feature_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "crs": {
+          "$ref": "#/$defs/crs"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        }
+      }
+    },
+    "tabularBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "spatial": {
+          "description": "Whether the table locates its rows on the map (coordinates or a geometry column). false = a plain table, e.g. statistics by district name.",
+          "type": "boolean"
+        },
+        "coordinate_columns": {
+          "description": "Columns that hold point coordinates, e.g. {x: lon, y: lat}.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "$ref": "#/$defs/text"
+            },
+            "y": {
+              "$ref": "#/$defs/text"
+            },
+            "crs": {
+              "$ref": "#/$defs/crs"
+            }
+          }
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "geometry_column": {
+          "description": "Column that holds a geometry (WKT, WKB, GeoJSON).",
+          "$ref": "#/$defs/text"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": [
+                  "coordinate_columns"
+                ]
+              },
+              {
+                "required": [
+                  "geometry_column"
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "spatial": {
+                "const": true
+              }
+            }
+          },
+          "x-message": "a table with coordinate_columns or geometry_column is spatial: spatial must be true"
+        }
+      ]
+    },
+    "documentBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pages": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "language": {
+          "$ref": "#/$defs/language"
+        }
+      }
+    },
+    "serviceBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "service_type": {
+          "enum": [
+            "wms",
+            "wmts",
+            "wfs",
+            "ogc-api-features",
+            "ogc-api-records",
+            "stac-api",
+            "earth-engine",
+            "arcgis-rest",
+            "rest",
+            "other"
+          ]
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          }
+        },
+        "auth_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "accessPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/text"
+        },
+        "kind": {
+          "description": "Kind of data behind the point: raster, vector, tabular, document, mixed or other.",
+          "$ref": "vocab.schema.json#/$defs/dataKind"
+        },
+        "method": {
+          "description": "How the point is used: download, landing_page, service or request.",
+          "$ref": "vocab.schema.json#/$defs/accessMethod"
+        },
+        "url": {
+          "$ref": "#/$defs/url"
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        },
+        "media_type": {
+          "description": "IANA media type, e.g. image/tiff; application=geotiff.",
+          "type": "string",
+          "pattern": "^[a-z]+/[a-zA-Z0-9.+-]+(;.*)?$"
+        },
+        "access": {
+          "description": "Access of this point when it differs from the record (e.g. an internal copy of public data).",
+          "$ref": "vocab.schema.json#/$defs/access"
+        },
+        "size": {
+          "description": "Human-readable size, e.g. 175.2 MB.",
+          "$ref": "#/$defs/text"
+        },
+        "files": {
+          "description": "File names or a short description of the file set.",
+          "$ref": "#/$defs/text"
+        },
+        "raster": {
+          "$ref": "#/$defs/rasterBlock"
+        },
+        "vector": {
+          "$ref": "#/$defs/vectorBlock"
+        },
+        "tabular": {
+          "$ref": "#/$defs/tabularBlock"
+        },
+        "document": {
+          "$ref": "#/$defs/documentBlock"
+        },
+        "service": {
+          "$ref": "#/$defs/serviceBlock"
+        },
+        "derived": {
+          "$ref": "#/$defs/fieldPaths"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "raster"
+            ]
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "raster"
+              }
+            }
+          },
+          "x-message": "a 'raster' block needs kind: raster"
+        },
+        {
+          "if": {
+            "required": [
+              "vector"
+            ]
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "vector"
+              }
+            }
+          },
+          "x-message": "a 'vector' block needs kind: vector"
+        },
+        {
+          "if": {
+            "required": [
+              "tabular"
+            ]
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "tabular"
+              }
+            }
+          },
+          "x-message": "a 'tabular' block needs kind: tabular"
+        },
+        {
+          "if": {
+            "required": [
+              "document"
+            ]
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "document"
+              }
+            }
+          },
+          "x-message": "a 'document' block needs kind: document"
+        },
+        {
+          "if": {
+            "required": [
+              "service"
+            ]
+          },
+          "then": {
+            "properties": {
+              "method": {
+                "const": "service"
+              }
+            }
+          },
+          "x-message": "a 'service' block needs method: service"
+        }
+      ]
+    },
+    "related": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation",
+        "scheme",
+        "value"
+      ],
+      "properties": {
+        "relation": {
+          "$ref": "vocab.schema.json#/$defs/relation"
+        },
+        "scheme": {
+          "enum": [
+            "doi",
+            "handle",
+            "url",
+            "ark",
+            "mosaic",
+            "other"
+          ]
+        },
+        "value": {
+          "$ref": "#/$defs/text"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "mosaicBlock": {
+      "description": "MOSAIC profile fields. Optional today; required when the mosaic profile is enforced.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "landscapes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "vocab.schema.json#/$defs/landscape"
+          }
+        },
+        "intake": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "draft",
+                "in-review",
+                "published",
+                "withdrawn"
+              ]
+            },
+            "submitted_by": {
+              "$ref": "#/$defs/text"
+            },
+            "submitted_on": {
+              "$ref": "#/$defs/date"
+            }
+          }
+        }
+      }
+    },
+    "bboxCoords": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        }
+      ],
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "fieldPaths": {
+      "description": "Fields filled by a tool that read the data, not by a person (dot paths, e.g. vector.geometry_type). A person may overwrite such a value; then remove its path from the list.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z_]+(\\.[a-z_]+)*$"
+      }
+    }
+  }
+}

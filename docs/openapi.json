@@ -1,0 +1,1307 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "MOSAIC API",
+  "description": "Read-only API of MOSAIC, a network of metadata. It gathers records from several catalogues (MOSAIC, CGIAR Climate Data Hub, ...) and serves them in the MOSAIC metadata model. Each resource keeps its provenance: MOSAIC links to the data where it lives.",
+  "version": "0.1.0"
+ },
+ "paths": {
+  "/v1/manifest": {
+   "get": {
+    "tags": [
+     "catalogue"
+    ],
+    "summary": "Manifest",
+    "operationId": "manifest_v1_manifest_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Manifest"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Unprocessable Content",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not Found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/sources": {
+   "get": {
+    "tags": [
+     "catalogue"
+    ],
+    "summary": "Sources",
+    "description": "Catalogues MOSAIC reads from, with the date and outcome of the last harvest.",
+    "operationId": "sources_v1_sources_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/SourceOut"
+         },
+         "type": "array",
+         "title": "Response Sources V1 Sources Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Unprocessable Content",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not Found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/facets": {
+   "get": {
+    "tags": [
+     "catalogue"
+    ],
+    "summary": "Facets",
+    "description": "Counts per filter value over the whole catalogue. Facets: source, resource_type, theme, landscape, geography, data_kind, geometry, spatial, method, access, license, status",
+    "operationId": "facets_v1_facets_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "additionalProperties": {
+           "type": "integer"
+          },
+          "type": "object"
+         },
+         "type": "object",
+         "title": "Response Facets V1 Facets Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Unprocessable Content",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not Found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/labels": {
+   "get": {
+    "tags": [
+     "catalogue"
+    ],
+    "summary": "Labels",
+    "description": "Display labels for facet values (from the MOSAIC vocabularies).",
+    "operationId": "labels_v1_labels_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Labels"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Unprocessable Content",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not Found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/resources": {
+   "get": {
+    "tags": [
+     "resources"
+    ],
+    "summary": "List Resources",
+    "description": "Search and filter. OR inside one filter (comma-separated), AND across filters.",
+    "operationId": "list_resources_v1_resources_get",
+    "parameters": [
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "maxLength": 200,
+       "description": "Words to search (all must match).",
+       "default": "",
+       "title": "Q"
+      },
+      "description": "Words to search (all must match)."
+     },
+     {
+      "name": "source",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Source"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "resource_type",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Resource Type"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "theme",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Theme"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "landscape",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Landscape"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "geography",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Geography"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "data_kind",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Data Kind"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "geometry",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Geometry"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "spatial",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Spatial"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "method",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Method"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "access",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Access"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "license",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "License"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "status",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Comma-separated values (OR).",
+       "title": "Status"
+      },
+      "description": "Comma-separated values (OR)."
+     },
+     {
+      "name": "bbox",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "pattern": "^-?[\\d.]+,-?[\\d.]+,-?[\\d.]+,-?[\\d.]+$"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "west,south,east,north",
+       "title": "Bbox"
+      },
+      "description": "west,south,east,north"
+     },
+     {
+      "name": "year_from",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer",
+         "maximum": 3000,
+         "minimum": 1000
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Year From"
+      }
+     },
+     {
+      "name": "year_to",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer",
+         "maximum": 3000,
+         "minimum": 1000
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Year To"
+      }
+     },
+     {
+      "name": "sort",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$ref": "#/components/schemas/Sort",
+       "default": "relevance"
+      }
+     },
+     {
+      "name": "page",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100000,
+       "minimum": 1,
+       "default": 1,
+       "title": "Page"
+      }
+     },
+     {
+      "name": "page_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "default": 20,
+       "title": "Page Size"
+      }
+     },
+     {
+      "name": "include_facets",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Include Facets"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResourcePage"
+        }
+       }
+      }
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      },
+      "description": "Unprocessable Content"
+     },
+     "404": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      },
+      "description": "Not Found"
+     }
+    }
+   }
+  },
+  "/v1/resources/{source_id}/{local_id}": {
+   "get": {
+    "tags": [
+     "resources"
+    ],
+    "summary": "Get Resource",
+    "description": "One resource: the full record in the MOSAIC model, its provenance and its quality.",
+    "operationId": "get_resource_v1_resources__source_id___local_id__get",
+    "parameters": [
+     {
+      "name": "source_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Source Id"
+      }
+     },
+     {
+      "name": "local_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Local Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResourceDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      },
+      "description": "Unprocessable Content"
+     },
+     "404": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      },
+      "description": "Not Found"
+     }
+    }
+   }
+  },
+  "/v1/resources/{source_id}/{local_id}/jsonld": {
+   "get": {
+    "tags": [
+     "resources"
+    ],
+    "summary": "Get Resource Jsonld",
+    "description": "schema.org Dataset (JSON-LD), for search engines and FAIR harvesters.",
+    "operationId": "get_resource_jsonld_v1_resources__source_id___local_id__jsonld_get",
+    "parameters": [
+     {
+      "name": "source_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Source Id"
+      }
+     },
+     {
+      "name": "local_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Local Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      },
+      "description": "Unprocessable Content"
+     },
+     "404": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      },
+      "description": "Not Found"
+     }
+    }
+   }
+  },
+  "/v1/summaries": {
+   "get": {
+    "tags": [
+     "resources"
+    ],
+    "summary": "Summaries",
+    "description": "Every resource as a light card (what the static site loads for in-browser search).",
+    "operationId": "summaries_v1_summaries_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/ResourceSummary"
+         },
+         "type": "array",
+         "title": "Response Summaries V1 Summaries Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Unprocessable Content",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not Found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "Labels": {
+    "properties": {
+     "labels": {
+      "additionalProperties": {
+       "additionalProperties": {
+        "type": "string"
+       },
+       "type": "object"
+      },
+      "type": "object",
+      "title": "Labels"
+     }
+    },
+    "type": "object",
+    "required": [
+     "labels"
+    ],
+    "title": "Labels",
+    "description": "Display labels for facet values, per facet (from the MOSAIC vocabularies)."
+   },
+   "Manifest": {
+    "properties": {
+     "api_version": {
+      "type": "string",
+      "title": "Api Version"
+     },
+     "standard_version": {
+      "type": "string",
+      "title": "Standard Version"
+     },
+     "harvested_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Harvested At"
+     },
+     "counts": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "Counts"
+     },
+     "sources": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Sources"
+     },
+     "files": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Files",
+      "description": "Static export only: file paths with hashes."
+     }
+    },
+    "type": "object",
+    "required": [
+     "api_version",
+     "standard_version",
+     "harvested_at",
+     "counts",
+     "sources"
+    ],
+    "title": "Manifest"
+   },
+   "Problem": {
+    "properties": {
+     "type": {
+      "type": "string",
+      "title": "Type",
+      "default": "about:blank"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "status": {
+      "type": "integer",
+      "title": "Status"
+     },
+     "detail": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Detail"
+     }
+    },
+    "type": "object",
+    "required": [
+     "title",
+     "status"
+    ],
+    "title": "Problem",
+    "description": "RFC 9457 problem details."
+   },
+   "ProvenanceOut": {
+    "properties": {
+     "source": {
+      "type": "string",
+      "title": "Source",
+      "description": "Catalogue id, e.g. mosaic, cdh."
+     },
+     "source_name": {
+      "type": "string",
+      "title": "Source Name"
+     },
+     "record_url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Record Url",
+      "description": "The record in its own catalogue."
+     },
+     "format": {
+      "type": "string",
+      "title": "Format"
+     },
+     "fetched_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Fetched At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "source",
+     "source_name",
+     "format",
+     "fetched_at"
+    ],
+    "title": "ProvenanceOut"
+   },
+   "QualityOut": {
+    "properties": {
+     "status": {
+      "type": "string",
+      "title": "Status",
+      "description": "complete | incomplete (against the MOSAIC minimum)."
+     },
+     "completeness": {
+      "additionalProperties": {
+       "type": "number"
+      },
+      "type": "object",
+      "title": "Completeness"
+     },
+     "missing_minimum": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Missing Minimum"
+     }
+    },
+    "type": "object",
+    "required": [
+     "status",
+     "completeness",
+     "missing_minimum"
+    ],
+    "title": "QualityOut"
+   },
+   "ResourceDetail": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "source": {
+      "type": "string",
+      "title": "Source"
+     },
+     "local_id": {
+      "type": "string",
+      "title": "Local Id"
+     },
+     "record": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Record",
+      "description": "The resource as a MOSAIC standard record (see the standard's schema)."
+     },
+     "landscapes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Landscapes"
+     },
+     "landscapes_derived": {
+      "type": "boolean",
+      "title": "Landscapes Derived"
+     },
+     "facets": {
+      "additionalProperties": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "type": "object",
+      "title": "Facets"
+     },
+     "provenance": {
+      "$ref": "#/components/schemas/ProvenanceOut"
+     },
+     "quality": {
+      "$ref": "#/components/schemas/QualityOut"
+     },
+     "same_as": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Same As"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "source",
+     "local_id",
+     "record",
+     "landscapes",
+     "landscapes_derived",
+     "facets",
+     "provenance",
+     "quality",
+     "same_as"
+    ],
+    "title": "ResourceDetail",
+    "description": "The full resource in the MOSAIC model, plus where it came from and how complete it is."
+   },
+   "ResourcePage": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/ResourceSummary"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "page": {
+      "type": "integer",
+      "title": "Page"
+     },
+     "page_size": {
+      "type": "integer",
+      "title": "Page Size"
+     },
+     "facets": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "additionalProperties": {
+          "type": "integer"
+         },
+         "type": "object"
+        },
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Facets",
+      "description": "Counts over ALL results of the query."
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "page",
+     "page_size"
+    ],
+    "title": "ResourcePage"
+   },
+   "ResourceSummary": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id",
+      "description": "Global id <source>:<local id>, e.g. mosaic:MFL-2026-079."
+     },
+     "source": {
+      "type": "string",
+      "title": "Source"
+     },
+     "local_id": {
+      "type": "string",
+      "title": "Local Id"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description",
+      "description": "First 300 characters."
+     },
+     "resource_type": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Resource Type"
+     },
+     "themes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Themes"
+     },
+     "geography": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Geography"
+     },
+     "landscapes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Landscapes"
+     },
+     "landscapes_derived": {
+      "type": "boolean",
+      "title": "Landscapes Derived"
+     },
+     "facets": {
+      "additionalProperties": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "type": "object",
+      "title": "Facets",
+      "description": "Values this resource shows in each filter."
+     },
+     "bbox": {
+      "items": {
+       "items": {
+        "type": "number"
+       },
+       "type": "array"
+      },
+      "type": "array",
+      "title": "Bbox"
+     },
+     "period": {
+      "anyOf": [
+       {
+        "items": {
+         "anyOf": [
+          {
+           "type": "integer"
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Period",
+      "description": "[start year, end year]; null = open/unknown."
+     },
+     "access": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Access"
+     },
+     "license": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "License",
+      "description": "SPDX id, or the licence text."
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     },
+     "completeness": {
+      "additionalProperties": {
+       "type": "number"
+      },
+      "type": "object",
+      "title": "Completeness"
+     },
+     "same_as": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Same As"
+     },
+     "updated": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Updated"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "source",
+     "local_id",
+     "title",
+     "resource_type",
+     "themes",
+     "geography",
+     "landscapes",
+     "landscapes_derived",
+     "facets",
+     "bbox",
+     "access",
+     "status",
+     "completeness",
+     "same_as",
+     "updated"
+    ],
+    "title": "ResourceSummary",
+    "description": "A light card for lists and maps."
+   },
+   "Sort": {
+    "type": "string",
+    "enum": [
+     "relevance",
+     "title",
+     "updated",
+     "year"
+    ],
+    "title": "Sort"
+   },
+   "SourceOut": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "homepage": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Homepage"
+     },
+     "format": {
+      "type": "string",
+      "title": "Format"
+     },
+     "harvested_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Harvested At"
+     },
+     "records": {
+      "type": "integer",
+      "title": "Records"
+     },
+     "records_with_issues": {
+      "type": "integer",
+      "title": "Records With Issues"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "homepage",
+     "format",
+     "harvested_at",
+     "records",
+     "records_with_issues",
+     "error"
+    ],
+    "title": "SourceOut"
+   }
+  }
+ }
+}

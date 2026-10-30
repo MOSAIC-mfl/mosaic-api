@@ -1,0 +1,43 @@
+# Crosswalk: MOSAIC schema-1 records (repo `catalog`, records/*.yaml on main) -> MOSAIC standard v0.1.
+#
+# Direction: one-off migration, applied by scripts/migrate_schema1.py. The old repo is only read
+# (git show <ref>:records/...); it is never modified. Nothing is invented: a value the old record
+# does not have stays empty and is listed in review/.
+source: mosaic-schema1
+source_ref: main
+
+fields:
+  id: id
+  title: title
+  description: description
+  theme: themes                       # legacy label -> theme id (vocab/themes.json legacy_label)
+  country: geography                  # country name -> ISO 3166-1 alpha-3; "Global" -> global; region -> m49:<code>
+  living_landscape: mosaic.landscapes # code kept when it is a living landscape; NATIONAL / GLOBAL -> left out (note)
+  license: license                    # text kept verbatim; SPDX id when it is a standard licence; url from the SPDX id or from a URL in the text
+  source: contacts[]                  # {organization: <source>, roles: [producer]}
+  contact: contacts[]                 # "Name (email)" and variants -> {name, email, roles: [point-of-contact]}
+  citation: citation                  # string kept verbatim
+  doi: doi                            # resolver prefix removed
+  access_level: access                # Open -> public, Restricted -> restricted, Internal -> internal
+  download_url: data[] / access_note  # each URL -> one access point; text without a URL on a non-public record -> access_note
+  data_type: data[].kind              # Vector / Raster / Tabular / Mixed -> vector / raster / tabular / mixed (every access point);
+                                      # data[].method: a file URL -> download, other URL -> landing_page, no URL -> request
+  file_names: data[0].files
+  file_size: data[0].size
+  gee_asset_id: data[]                # {method: service, service_type: earth-engine, access: internal}; asset id in the
+                                      # description, no URL until the asset is public (decision 2026-09-29)
+  spatial_resolution: spatial.resolution  # "<number> m" -> {value, unit: m} (also data[0].raster.resolution on raster data);
+                                      # anything else -> {text} verbatim
+  temporal_coverage: temporal         # years parsed into start / end; the original text always kept in temporal.text
+  bbox: spatial.bbox                  # {xmin, ymin, xmax, ymax} -> [west, south, east, north]
+  crs: spatial.crs
+  update_frequency: update_frequency  # Unknown, Static, Annual, Seasonal; On-demand -> irregular
+  last_updated: source_updated        # when it is a date (YYYY[-MM[-DD]]); 'NA' -> left out
+  date_registered: mosaic.intake.submitted_on, created   # created falls back to the first commit of the file in the old repo
+  (git history): created, updated     # dates of the first and last commit of the record in the old repo
+
+not_migrated:                         # internal working fields; they stay in the old repo's history
+  - processing_status
+  - migration_status
+  - current_location
+  - server_path

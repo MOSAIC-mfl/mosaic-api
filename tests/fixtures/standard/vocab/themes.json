@@ -1,0 +1,102 @@
+{
+  "scheme": {
+    "id": "mosaic-themes",
+    "title": "MOSAIC themes",
+    "description": "Closed list used to browse and filter the catalogue. A record has one or more; the first is its primary theme. v0.1: the 13 MFL categories plus climate, adaptation and mitigation (guided by the Climate Data Hub domains)."
+  },
+  "concepts": [
+    {
+      "id": "boundaries-admin-units",
+      "label": "Boundaries / admin units",
+      "description": "Administrative units, landscape and watershed boundaries used to delineate or aggregate data.",
+      "legacy_label": "Boundaries / admin units"
+    },
+    {
+      "id": "land-cover-land-use",
+      "label": "Land cover / land use",
+      "description": "What covers the land and how it is used, including change between dates.",
+      "legacy_label": "Land cover / land use"
+    },
+    {
+      "id": "ecosystem-condition",
+      "label": "Ecosystem condition",
+      "description": "State of ecosystems: vegetation, soil and water condition indicators.",
+      "legacy_label": "Ecosystem condition"
+    },
+    {
+      "id": "degradation-land-health",
+      "label": "Degradation / land health",
+      "description": "Soil properties, erosion and land degradation.",
+      "legacy_label": "Degradation / land health"
+    },
+    {
+      "id": "water-hydrology",
+      "label": "Water / hydrology",
+      "description": "Water bodies, river networks, rainfall and other hydro-climatic observations.",
+      "legacy_label": "Water / hydrology"
+    },
+    {
+      "id": "biodiversity-ecosystems",
+      "label": "Biodiversity / ecosystems",
+      "description": "Species, habitats, protected and conservation areas.",
+      "legacy_label": "Biodiversity / ecosystems"
+    },
+    {
+      "id": "pressures-drivers",
+      "label": "Pressures / drivers",
+      "description": "Pressures on the landscape: deforestation, fire, human footprint, vulnerability.",
+      "legacy_label": "Pressures / drivers"
+    },
+    {
+      "id": "ecosystem-services",
+      "label": "Ecosystem services",
+      "description": "Benefits people obtain from ecosystems and their assessment.",
+      "legacy_label": "Ecosystem services"
+    },
+    {
+      "id": "hotspots-leverage-points",
+      "label": "Hotspots / leverage points",
+      "description": "Places or factors where intervention has the largest effect.",
+      "legacy_label": "Hotspots / leverage points"
+    },
+    {
+      "id": "scenarios-future-risks",
+      "label": "Scenarios / future risks",
+      "description": "Projections, scenarios and future risk assessments.",
+      "legacy_label": "Scenarios / future risks"
+    },
+    {
+      "id": "decision-support-outputs",
+      "label": "Decision-support outputs",
+      "description": "Products made to inform decisions: plans, prioritisation maps, dashboards.",
+      "legacy_label": "Decision-support outputs"
+    },
+    {
+      "id": "agrobiodiversity-crops",
+      "label": "Agrobiodiversity / crops",
+      "description": "Crops, crop fields, varieties, production and yield.",
+      "legacy_label": "Agrobiodiversity / crops"
+    },
+    {
+      "id": "socio-economic-livelihoods",
+      "label": "Socio-economic / livelihoods",
+      "description": "Population, livelihoods, markets, institutions and other socio-economic data.",
+      "legacy_label": "Socio-economic / livelihoods"
+    },
+    {
+      "id": "climate",
+      "label": "Climate",
+      "description": "Observed, reanalysis, projected and scenario climate data: temperature, precipitation and other variables."
+    },
+    {
+      "id": "climate-adaptation",
+      "label": "Climate adaptation",
+      "description": "Vulnerability, exposure, climate risk assessment and adaptation planning."
+    },
+    {
+      "id": "climate-mitigation",
+      "label": "Climate mitigation",
+      "description": "Emissions, carbon stocks, sequestration and mitigation pathways."
+    }
+  ]
+}

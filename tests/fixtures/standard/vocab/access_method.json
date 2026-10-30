@@ -1,0 +1,29 @@
+{
+  "scheme": {
+    "id": "mosaic-access-method",
+    "title": "Access Method",
+    "description": "How an access point is used: download a file, visit a page, call a service, or ask for the data."
+  },
+  "concepts": [
+    {
+      "id": "download",
+      "label": "Download",
+      "description": "A direct link to a file or a bundle of files."
+    },
+    {
+      "id": "landing_page",
+      "label": "Landing page",
+      "description": "A page at the source that describes the data and links to it."
+    },
+    {
+      "id": "service",
+      "label": "Service",
+      "description": "An API or map service (WMS/WFS, OGC API, STAC API, Earth Engine, REST)."
+    },
+    {
+      "id": "request",
+      "label": "Request",
+      "description": "The data is obtained by asking; see access_note."
+    }
+  ]
+}

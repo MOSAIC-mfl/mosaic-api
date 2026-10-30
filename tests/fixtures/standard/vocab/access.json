@@ -1,0 +1,24 @@
+{
+  "scheme": {
+    "id": "mosaic-access",
+    "title": "Access",
+    "description": "Access condition of a resource or of one of its access points. Always explicit: it is never assumed to be public."
+  },
+  "concepts": [
+    {
+      "id": "public",
+      "label": "Public",
+      "description": "Anyone can obtain the data without asking."
+    },
+    {
+      "id": "restricted",
+      "label": "Restricted",
+      "description": "The record is public, but the data needs a request, an account or an agreement."
+    },
+    {
+      "id": "internal",
+      "label": "Internal",
+      "description": "Catalogued for the network; the data is not available outside the team that holds it."
+    }
+  ]
+}

@@ -156,3 +156,12 @@ def test_sort_and_ids_ignore_case(client: TestClient) -> None:
     assert client.get("/v1/resources", params={"sort": "nonsense"}).status_code == 422
     detail = client.get("/v1/resources/MOSAIC/mfl-2026-079")
     assert detail.status_code == 200 and detail.json()["id"] == "mosaic:MFL-2026-079"
+
+
+def test_sort_order_and_summary_fields(client: TestClient) -> None:
+    az = [i["title"] for i in client.get("/v1/resources", params={"sort": "title"}).json()["items"]]
+    za = [i["title"] for i in client.get("/v1/resources", params={"sort": "title", "order": "DESC"}).json()["items"]]
+    assert za == list(reversed(az))
+    item = client.get("/v1/resources", params={"q": "worldcover"}).json()["items"][0]
+    assert item["producer"] == "European Space Agency (ESA)"
+    assert item["access_url"].startswith("https://")

@@ -92,7 +92,7 @@ class CatalogService:
 
     def search(self, q: search.Query, with_facets: bool = False) -> ResourcePage:
         filters, warnings = self.resolve_filters(q.filters)
-        q = search.Query(q.text, filters, q.bbox, q.year_from, q.year_to, q.sort, q.page, q.page_size)
+        q = search.Query(q.text, filters, q.bbox, q.year_from, q.year_to, q.sort, q.descending, q.page, q.page_size)
         page = search.run(self._snap.resources, q, self._texts)
         counts = None
         if with_facets:

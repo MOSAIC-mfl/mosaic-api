@@ -499,6 +499,24 @@
       }
      },
      {
+      "name": "order",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "$ref": "#/components/schemas/Order"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "asc | desc; default: the sort's natural order.",
+       "title": "Order"
+      },
+      "description": "asc | desc; default: the sort's natural order."
+     },
+     {
       "name": "page",
       "in": "query",
       "required": false,
@@ -810,6 +828,14 @@
     ],
     "title": "Manifest"
    },
+   "Order": {
+    "type": "string",
+    "enum": [
+     "asc",
+     "desc"
+    ],
+    "title": "Order"
+   },
    "Problem": {
     "properties": {
      "type": {
@@ -1026,6 +1052,14 @@
       ],
       "title": "Facets",
       "description": "Counts over ALL results of the query."
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Warnings",
+      "description": "Filter values that match nothing known."
      }
     },
     "type": "object",
@@ -1198,6 +1232,30 @@
        }
       ],
       "title": "Updated"
+     },
+     "producer": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Producer",
+      "description": "First producer organization (or person)."
+     },
+     "access_url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Access Url",
+      "description": "First access point URL, public ones first."
      }
     },
     "type": "object",

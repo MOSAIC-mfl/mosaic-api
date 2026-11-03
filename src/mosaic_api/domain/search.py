@@ -39,6 +39,7 @@ class Query:
     year_from: int | None = None
     year_to: int | None = None
     sort: Sort = Sort.RELEVANCE
+    descending: bool | None = None  # None = the natural order of the sort (newest / best first)
     page: int = 1
     page_size: int = 20
 
@@ -118,7 +119,9 @@ def run(resources: Iterable[Resource], q: Query, texts: dict[str, str]) -> Page:
         Sort.UPDATED: lambda r: (r.updated or "",),
         Sort.YEAR: lambda r: (_years(r)[1] or _years(r)[0] or 0,),
     }
-    hits.sort(key=keys[q.sort], reverse=q.sort in (Sort.UPDATED, Sort.YEAR))
+    natural_desc = q.sort in (Sort.UPDATED, Sort.YEAR)
+    reverse = natural_desc if q.descending is None else (q.descending != (q.sort == Sort.RELEVANCE))
+    hits.sort(key=keys[q.sort], reverse=reverse)
     start = (q.page - 1) * q.page_size
     items: Sequence[Resource] = hits[start : start + q.page_size]
     return Page(list(items), len(hits), q.page, q.page_size)

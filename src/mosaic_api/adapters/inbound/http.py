@@ -6,6 +6,7 @@ route by the static exporter to produce the files published on GitHub Pages. One
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
@@ -19,6 +20,16 @@ from ...application.dto import Labels, Manifest, Problem, ResourceDetail, Resour
 from ...domain import search
 from ...domain.facets import FACETS
 from ...domain.jsonld import to_jsonld
+
+
+class Order(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+    @classmethod
+    def _missing_(cls, value: object) -> Order | None:
+        return next((m for m in cls if m.value == str(value).strip().lower()), None)
+
 
 Csv = Annotated[str | None, Query(max_length=500, description="Comma-separated values (OR).")]
 
@@ -148,6 +159,7 @@ def create_app(catalog: CatalogService, cors_origins: list[str] | None = None, m
         year_from: Annotated[int | None, Query(ge=1000, le=3000)] = None,
         year_to: Annotated[int | None, Query(ge=1000, le=3000)] = None,
         sort: search.Sort = search.Sort.RELEVANCE,
+        order: Annotated[Order | None, Query(description="asc | desc; default: the sort's natural order.")] = None,
         page: Annotated[int, Query(ge=1, le=100_000)] = 1,
         page_size: Annotated[int, Query(ge=1)] = 20,
         include_facets: bool = False,
@@ -182,6 +194,7 @@ def create_app(catalog: CatalogService, cors_origins: list[str] | None = None, m
             year_from=year_from,
             year_to=year_to,
             sort=sort,
+            descending=None if order is None else order == Order.DESC,
             page=page,
             page_size=page_size,
         )

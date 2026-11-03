@@ -34,6 +34,18 @@ class QualityOut(Out):
     missing_minimum: list[str]
 
 
+def _producer(r: Resource) -> str | None:
+    for c in r.contacts:
+        if "producer" in c.roles:
+            return c.organization or c.name
+    return None
+
+
+def _access_url(r: Resource) -> str | None:
+    points = sorted((p for p in r.data if p.url), key=lambda p: (p.access or r.access) != "public")
+    return points[0].url if points else None
+
+
 class ResourceSummary(Out):
     """A light card for lists and maps."""
 
@@ -56,6 +68,8 @@ class ResourceSummary(Out):
     completeness: dict[str, float]
     same_as: list[str]
     updated: str | None
+    producer: str | None = Field(None, description="First producer organization (or person).")
+    access_url: str | None = Field(None, description="First access point URL, public ones first.")
 
     @classmethod
     def of(cls, r: Resource) -> ResourceSummary:
@@ -84,6 +98,8 @@ class ResourceSummary(Out):
             completeness=r.quality.completeness,
             same_as=list(r.same_as),
             updated=r.updated,
+            producer=_producer(r),
+            access_url=_access_url(r),
         )
 
 

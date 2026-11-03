@@ -14,7 +14,7 @@ publishes it under MOSAIC's name. These are the threats and what covers them.
 | Personal data | Contact e-mails are public by project decision; `http.expose_emails: false` removes them. They are never logged | `dto.py`, `config.py` |
 | Write or abuse of the API | GET routes only (a test checks this); bounded parameters (`q` ≤ 200 characters, `page_size` ≤ 100, validated bbox and years); errors as RFC 9457 problem+json | `adapters/inbound/http.py` |
 | Cross-origin misuse | CORS allow-list (`http.cors_origins`), GET only | `http.py` |
-| Clickjacking, MIME sniffing | `X-Frame-Options: DENY`, `CSP frame-ancestors 'none'`, `nosniff`, `Referrer-Policy: no-referrer` | `http.py` |
+| Clickjacking, MIME sniffing, injected scripts | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer`. CSP `default-src 'none'` on every JSON response. `/docs` and `/redoc` get a CSP that only lets in the Swagger UI / ReDoc files from cdn.jsdelivr.net | `http.py` |
 | Supply chain (GitHub Actions) | Least-privilege `permissions`; pin actions to SHAs before publishing; Dependabot + `pip-audit` (to enable when the repo exists) | `.github/workflows` |
 
 **Pending when a live server exists:**

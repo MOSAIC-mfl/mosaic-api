@@ -2,6 +2,15 @@
 
 ## [0.1.0] - unreleased (local draft)
 
+### Fixed
+- `/docs` was blank: the strict CSP blocked Swagger UI. The docs pages now get their own CSP
+  (scripts and styles from cdn.jsdelivr.net only).
+
+### Added (later)
+- `GET /`: a browser (`Accept: text/html`) is redirected to `/docs`. Any other client gets a short
+  JSON description. The decision uses content negotiation, not the User-Agent, so `fetch()` from the
+  website is never redirected.
+
 ### Added
 - Hexagonal core:
   - MOSAIC model (Pydantic, frozen);

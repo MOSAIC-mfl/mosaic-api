@@ -94,3 +94,25 @@ def test_openapi_lists_only_get_routes(client: TestClient) -> None:
     methods = {m for path in spec["paths"].values() for m in path}
     assert methods == {"get"}
     assert "/v1/resources/{source_id}/{local_id}" in spec["paths"]
+
+
+def test_root_redirects_browsers_only(client: TestClient) -> None:
+    browser = client.get(
+        "/",
+        headers={"Accept": "text/html,application/xhtml+xml,*/*;q=0.8", "User-Agent": "Mozilla/5.0"},
+        follow_redirects=False,
+    )
+    assert browser.status_code == 307 and browser.headers["location"] == "/docs"
+    # fetch() from the website: browser User-Agent, but it asks for JSON -> no redirect
+    fetch = client.get("/", headers={"Accept": "*/*", "User-Agent": "Mozilla/5.0"}, follow_redirects=False)
+    assert fetch.status_code == 200 and fetch.json()["docs"] == "/docs"
+    assert client.get("/", headers={"Accept": "application/json"}).json()["name"] == "MOSAIC API"
+    # API routes are never redirected, whatever the client asks for
+    assert client.get("/v1/manifest", headers={"Accept": "text/html"}, follow_redirects=False).status_code == 200
+
+
+def test_docs_page_may_load_swagger_ui(client: TestClient) -> None:
+    docs = client.get("/docs")
+    assert docs.status_code == 200
+    assert "https://cdn.jsdelivr.net" in docs.headers["content-security-policy"]
+    assert client.get("/v1/manifest").headers["content-security-policy"] == "default-src 'none'; frame-ancestors 'none'"

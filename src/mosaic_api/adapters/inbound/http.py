@@ -11,7 +11,7 @@ from typing import Annotated
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from ...application.catalog import API_VERSION, CatalogService
@@ -23,15 +23,37 @@ from ...domain.jsonld import to_jsonld
 Csv = Annotated[str | None, Query(max_length=500, description="Comma-separated values (OR).")]
 
 
+DOCS_PATHS = ("/docs", "/redoc")
+# JSON responses never need to load anything: lock them down completely.
+API_CSP = "default-src 'none'; frame-ancestors 'none'"
+# The documentation pages (Swagger UI / ReDoc) load their script and styles from jsDelivr and run an
+# inline bootstrap script; they get exactly that and nothing more.
+DOCS_CSP = (
+    "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+    "font-src https://fonts.gstatic.com; img-src 'self' data: https://fastapi.tiangolo.com https://cdn.redoc.ly; "
+    "connect-src 'self'; worker-src blob:; frame-ancestors 'none'"
+)
+
+
 class SecurityHeaders(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         resp = await call_next(request)
         resp.headers["X-Content-Type-Options"] = "nosniff"
         resp.headers["Referrer-Policy"] = "no-referrer"
         resp.headers["X-Frame-Options"] = "DENY"
-        resp.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+        is_docs = request.url.path.startswith(DOCS_PATHS)
+        resp.headers["Content-Security-Policy"] = DOCS_CSP if is_docs else API_CSP
         resp.headers.setdefault("Cache-Control", "public, max-age=300")
         return resp
+
+
+def wants_html(request: Request) -> bool:
+    """A browser navigating to a page asks for HTML first (Accept: text/html,...). API clients
+    (fetch, httpx, curl) ask for JSON or */*. Content negotiation, not the User-Agent: a fetch()
+    from the website also carries a browser User-Agent and must still get JSON."""
+    accept = request.headers.get("accept", "")
+    return "text/html" in accept.split(",")[0] or accept.startswith("text/html")
 
 
 def _split(value: str | None) -> frozenset[str]:
@@ -63,6 +85,20 @@ def create_app(catalog: CatalogService, cors_origins: list[str] | None = None, m
         detail = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors())
         body = Problem(title="Invalid request", status=422, detail=detail)
         return JSONResponse(body.model_dump(), status_code=422, media_type="application/problem+json")
+
+    @app.get("/", include_in_schema=False, response_model=None)
+    def root(request: Request) -> RedirectResponse | dict[str, str]:
+        """Browsers are sent to the interactive docs; programs get a short description as JSON."""
+        if wants_html(request):
+            return RedirectResponse(url="/docs", status_code=307)
+        return {
+            "name": "MOSAIC API",
+            "version": API_VERSION,
+            "description": "Read-only API of MOSAIC, a network of metadata.",
+            "docs": "/docs",
+            "openapi": "/openapi.json",
+            "manifest": "/v1/manifest",
+        }
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:

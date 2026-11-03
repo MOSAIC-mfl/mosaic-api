@@ -185,3 +185,51 @@ class Problem(Out):
     title: str
     status: int
     detail: str | None = None
+
+
+class SectionOut(Out):
+    """One section of a landscape page. `kind` names the module that draws it on the website."""
+
+    id: str
+    kind: str = Field(description="overview | map-explorer | catalogue-datasets | data-status | <custom>")
+    title: str | None = None
+    intro: str | None = None
+    options: dict[str, Any] | None = None
+    config: dict[str, Any] | None = Field(
+        None, description="Configuration of the section (map-explorer: see the standard's landscape/explorer schema)."
+    )
+
+
+class DataStatusOut(Out):
+    """What the catalogue holds for the landscape and how complete it is."""
+
+    total: int
+    complete: int
+    incomplete: int
+    stated: int = Field(description="Resources that name the landscape; the others cover it by bounding box.")
+    by_kind: dict[str, int]
+    by_theme: dict[str, int]
+    by_access: dict[str, int]
+    missing_minimum: dict[str, int] = Field(description="Minimum field -> resources missing it.")
+
+
+class LandscapeSummaryOut(Out):
+    code: str = Field(description="Landscape code, e.g. KEN-LVB.")
+    slug: str = Field(description="Code in lower case, used in page URLs.")
+    label: str
+    countries: list[str]
+    bbox: list[float] | None
+    title: str
+    summary: str | None
+    status: str = Field(description="draft | review | published")
+    curated: bool = Field(description="false = the default page (no profile written yet).")
+    sections: list[SectionOut]
+    counts: dict[str, int]
+    records: list[str] = Field(description="Catalogue records the profile names (source:id).")
+
+
+class LandscapeOut(LandscapeSummaryOut):
+    credits: list[dict[str, Any]]
+    origin: dict[str, Any] | None
+    data_status: DataStatusOut
+    linked: list[ResourceSummary] = Field(description="Named records that cover the landscape.")

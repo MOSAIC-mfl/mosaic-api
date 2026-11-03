@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .adapters.fetch import Location, SafeFetcher
+from .adapters.landscapes.dist import DistLandscapes
 from .adapters.quality.schema_assessor import SchemaAssessor
 from .adapters.sources.git_yaml import GitYamlSource
 from .adapters.sources.mosaic_catalog import MosaicCatalogSource
@@ -14,6 +15,7 @@ from .adapters.translators.cdh import CdhTranslator
 from .adapters.translators.mosaic import MosaicTranslator
 from .application.catalog import CatalogOptions, CatalogService
 from .application.harvest import HarvestService, SourceBinding
+from .application.landscapes import LandscapeService
 from .config import Settings, SourceConfig
 from .ports import CatalogSource, Translator
 from .ports.sources import SourceInfo
@@ -59,3 +61,8 @@ def catalog_service(settings: Settings) -> CatalogService:
     if snap is None:
         raise RuntimeError("no harvested data yet: run `python -m mosaic_api harvest` first")
     return CatalogService(snap, standard(settings).load(), CatalogOptions(expose_emails=settings.http.expose_emails))
+
+
+def landscape_service(settings: Settings, catalog: CatalogService) -> LandscapeService:
+    """Profiles are read from the same place as the standard (mosaic-catalog's published dist)."""
+    return LandscapeService(DistLandscapes(Location(settings.resolve(settings.standard), fetcher(settings))), catalog)

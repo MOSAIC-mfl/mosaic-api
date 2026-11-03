@@ -109,3 +109,19 @@ These are in `domain/facets.py`; the catalogue's `docs/standard.md` §5.1 descri
 | `geometry` | Vector `geometry_type`, `point` for tables with `coordinate_columns`, `not_specified` for vector data without a type |
 | `spatial` | `yes` for raster, vector, or a table with `spatial: true`; `no` for tables with `spatial: false` and/or documents; otherwise `not_specified` |
 | any other | The value in the record, or `not_specified` |
+
+## 6. Landscape pages
+
+```
+mosaic-catalog dist/landscapes/ ──▶ adapters/landscapes/dist.py (DistLandscapes)
+                                         │ port LandscapeProfiles
+                                         ▼
+                              application/landscapes.py (LandscapeService) ◀── CatalogService (resources)
+                                         │
+                              GET /v1/landscapes, /v1/landscapes/{code}  (+ static export)
+```
+
+- `domain/landscape.py`: the profile as published (`LandscapeProfile`), the records it names, and
+  `data_status` (what the catalogue holds for the landscape and what the minimum still lacks). Pure.
+- The profile's sections are served as written: the website draws them. The API never reads the
+  data files a profile points to.

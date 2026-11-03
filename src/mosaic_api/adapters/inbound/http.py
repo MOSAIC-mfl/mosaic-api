@@ -16,7 +16,18 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from ...application.catalog import API_VERSION, CatalogService
-from ...application.dto import Labels, Manifest, Problem, ResourceDetail, ResourcePage, ResourceSummary, SourceOut
+from ...application.dto import (
+    Labels,
+    LandscapeOut,
+    LandscapeSummaryOut,
+    Manifest,
+    Problem,
+    ResourceDetail,
+    ResourcePage,
+    ResourceSummary,
+    SourceOut,
+)
+from ...application.landscapes import LandscapeService
 from ...domain import search
 from ...domain.facets import FACETS
 from ...domain.jsonld import to_jsonld
@@ -71,7 +82,12 @@ def _split(value: str | None) -> frozenset[str]:
     return frozenset(v.strip() for v in value.split(",") if v.strip()) if value else frozenset()
 
 
-def create_app(catalog: CatalogService, cors_origins: list[str] | None = None, max_page_size: int = 100) -> FastAPI:
+def create_app(
+    catalog: CatalogService,
+    cors_origins: list[str] | None = None,
+    max_page_size: int = 100,
+    landscapes: LandscapeService | None = None,
+) -> FastAPI:
     app = FastAPI(
         title="MOSAIC API",
         version=API_VERSION,
@@ -220,5 +236,21 @@ def create_app(catalog: CatalogService, cors_origins: list[str] | None = None, m
     def summaries() -> list[ResourceSummary]:
         """Every resource as a light card (what the static site loads for in-browser search)."""
         return catalog.summaries()
+
+    if landscapes is not None:
+
+        @app.get("/v1/landscapes", response_model=list[LandscapeSummaryOut], tags=["landscapes"])
+        def list_landscapes() -> list[LandscapeSummaryOut]:
+            """Every living landscape with its page sections and how many resources cover it."""
+            return landscapes.list()
+
+        @app.get("/v1/landscapes/{code}", response_model=LandscapeOut, tags=["landscapes"])
+        def get_landscape(code: str) -> LandscapeOut:
+            """One landscape page: its profile (sections and their configuration) and its data status.
+            The code is case-insensitive (KEN-LVB or ken-lvb)."""
+            found = landscapes.get(code)
+            if found is None:
+                raise HTTPException(404, "landscape not found")
+            return found
 
     return app

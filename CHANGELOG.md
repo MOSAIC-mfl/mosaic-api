@@ -2,6 +2,13 @@
 
 ## [0.1.0] - unreleased (local draft)
 
+### Added
+- Landscape pages: `GET /v1/landscapes` and `GET /v1/landscapes/{code}` (static:
+  `v1/landscapes.json`, `v1/landscapes/<CODE>.json`). Profiles come from mosaic-catalog's
+  `dist/landscapes/` (port `LandscapeProfiles`, adapter `DistLandscapes`); the API adds each
+  landscape's data status from the catalogue. A catalogue published without profiles gives an empty
+  list, not an error.
+
 ### Fixed
 - **Filters, sorting and ids now ignore case, accents and symbols:**
   - `source=MOSAIC`, `geography=Perú`, `theme=Pressures / drivers`, `license=cc by 4.0`,

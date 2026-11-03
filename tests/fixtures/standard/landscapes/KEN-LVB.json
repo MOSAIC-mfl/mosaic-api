@@ -1,0 +1,46 @@
+{
+ "profile": "mosaic-landscape-profile@0.1",
+ "landscape": {
+  "code": "KEN-LVB",
+  "label": "Lake Victoria Basin (Kenya)",
+  "countries": [
+   "KEN"
+  ],
+  "bbox": [
+   33.9,
+   -0.4,
+   35.3,
+   0.7
+  ]
+ },
+ "curated": true,
+ "title": "Lake Victoria Basin",
+ "summary": "A fixture profile.",
+ "status": "draft",
+ "credits": [
+  {
+   "name": "Andrés Aguilar"
+  }
+ ],
+ "sections": [
+  {
+   "id": "explorer",
+   "kind": "map-explorer",
+   "title": "Basin Explorer",
+   "config": {
+    "title": "Explorer",
+    "overlays": [
+     {
+      "id": "conflicts",
+      "record": "mosaic:MFL-2026-090"
+     }
+    ]
+   }
+  },
+  {
+   "id": "datasets",
+   "kind": "catalogue-datasets",
+   "title": "Datasets"
+  }
+ ]
+}

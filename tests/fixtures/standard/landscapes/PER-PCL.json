@@ -1,0 +1,36 @@
+{
+ "profile": "mosaic-landscape-profile@0.1",
+ "landscape": {
+  "code": "PER-PCL",
+  "label": "Pucallpa – Ucayali",
+  "countries": [
+   "PER"
+  ],
+  "bbox": [
+   -75.9,
+   -9.4,
+   -74.3,
+   -7.9
+  ]
+ },
+ "curated": false,
+ "title": "Pucallpa – Ucayali",
+ "status": "published",
+ "sections": [
+  {
+   "id": "overview",
+   "kind": "overview",
+   "title": "Overview"
+  },
+  {
+   "id": "datasets",
+   "kind": "catalogue-datasets",
+   "title": "Datasets"
+  },
+  {
+   "id": "data-status",
+   "kind": "data-status",
+   "title": "Data status"
+  }
+ ]
+}

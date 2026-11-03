@@ -1,0 +1,44 @@
+{
+ "landscapes": [
+  {
+   "code": "KEN-LVB",
+   "slug": "ken-lvb",
+   "label": "Lake Victoria Basin (Kenya)",
+   "countries": [
+    "KEN"
+   ],
+   "bbox": [
+    33.9,
+    -0.4,
+    35.3,
+    0.7
+   ],
+   "title": "Lake Victoria Basin",
+   "status": "draft",
+   "curated": true,
+   "sections": [],
+   "file": "landscapes/KEN-LVB.json",
+   "sha256": "x"
+  },
+  {
+   "code": "PER-PCL",
+   "slug": "per-pcl",
+   "label": "Pucallpa – Ucayali",
+   "countries": [
+    "PER"
+   ],
+   "bbox": [
+    -75.9,
+    -9.4,
+    -74.3,
+    -7.9
+   ],
+   "title": "Pucallpa – Ucayali",
+   "status": "published",
+   "curated": false,
+   "sections": [],
+   "file": "landscapes/PER-PCL.json",
+   "sha256": "y"
+  }
+ ]
+}

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from mosaic_api.adapters.fetch import Location, SafeFetcher
+from mosaic_api.adapters.landscapes.dist import DistLandscapes
 from mosaic_api.adapters.quality.schema_assessor import SchemaAssessor
 from mosaic_api.adapters.sources.git_yaml import GitYamlSource
 from mosaic_api.adapters.sources.mosaic_catalog import MosaicCatalogSource
@@ -15,6 +16,7 @@ from mosaic_api.adapters.translators.cdh import CdhTranslator
 from mosaic_api.adapters.translators.mosaic import MosaicTranslator
 from mosaic_api.application.catalog import CatalogService
 from mosaic_api.application.harvest import HarvestService, SourceBinding
+from mosaic_api.application.landscapes import LandscapeService
 from mosaic_api.domain.standard import Standard
 from mosaic_api.ports.sources import SourceInfo
 
@@ -51,3 +53,8 @@ def make_harvest(
 def catalog(tmp_path: Path, dist_standard: DistStandard, standard: Standard) -> CatalogService:
     report = make_harvest(tmp_path, dist_standard).run()
     return CatalogService(report.snapshot, standard)
+
+
+@pytest.fixture
+def landscapes(catalog: CatalogService) -> LandscapeService:
+    return LandscapeService(DistLandscapes(Location(str(FIX / "standard"), FETCHER)), catalog)

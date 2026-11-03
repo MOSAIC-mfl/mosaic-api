@@ -40,7 +40,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1 if all(s.error for s in report.snapshot.sources) else 0
 
     catalog = bootstrap.catalog_service(settings)
-    app = create_app(catalog, settings.http.cors_origins, settings.http.max_page_size)
+    landscapes = bootstrap.landscape_service(settings, catalog)
+    app = create_app(catalog, settings.http.cors_origins, settings.http.max_page_size, landscapes)
     if args.cmd == "export":
         from .adapters.inbound.exporter import export
 

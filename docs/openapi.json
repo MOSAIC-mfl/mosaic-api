@@ -751,10 +751,172 @@
      }
     }
    }
+  },
+  "/v1/landscapes": {
+   "get": {
+    "tags": [
+     "landscapes"
+    ],
+    "summary": "List Landscapes",
+    "description": "Every living landscape with its page sections and how many resources cover it.",
+    "operationId": "list_landscapes_v1_landscapes_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/LandscapeSummaryOut"
+         },
+         "type": "array",
+         "title": "Response List Landscapes V1 Landscapes Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Unprocessable Content",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not Found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/landscapes/{code}": {
+   "get": {
+    "tags": [
+     "landscapes"
+    ],
+    "summary": "Get Landscape",
+    "description": "One landscape page: its profile (sections and their configuration) and its data status.\nThe code is case-insensitive (KEN-LVB or ken-lvb).",
+    "operationId": "get_landscape_v1_landscapes__code__get",
+    "parameters": [
+     {
+      "name": "code",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Code"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LandscapeOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      },
+      "description": "Unprocessable Content"
+     },
+     "404": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      },
+      "description": "Not Found"
+     }
+    }
+   }
   }
  },
  "components": {
   "schemas": {
+   "DataStatusOut": {
+    "properties": {
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "complete": {
+      "type": "integer",
+      "title": "Complete"
+     },
+     "incomplete": {
+      "type": "integer",
+      "title": "Incomplete"
+     },
+     "stated": {
+      "type": "integer",
+      "title": "Stated",
+      "description": "Resources that name the landscape; the others cover it by bounding box."
+     },
+     "by_kind": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "By Kind"
+     },
+     "by_theme": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "By Theme"
+     },
+     "by_access": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "By Access"
+     },
+     "missing_minimum": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "Missing Minimum",
+      "description": "Minimum field -> resources missing it."
+     }
+    },
+    "type": "object",
+    "required": [
+     "total",
+     "complete",
+     "incomplete",
+     "stated",
+     "by_kind",
+     "by_theme",
+     "by_access",
+     "missing_minimum"
+    ],
+    "title": "DataStatusOut",
+    "description": "What the catalogue holds for the landscape and how complete it is."
+   },
    "Labels": {
     "properties": {
      "labels": {
@@ -774,6 +936,245 @@
     ],
     "title": "Labels",
     "description": "Display labels for facet values, per facet (from the MOSAIC vocabularies)."
+   },
+   "LandscapeOut": {
+    "properties": {
+     "code": {
+      "type": "string",
+      "title": "Code",
+      "description": "Landscape code, e.g. KEN-LVB."
+     },
+     "slug": {
+      "type": "string",
+      "title": "Slug",
+      "description": "Code in lower case, used in page URLs."
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "countries": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Countries"
+     },
+     "bbox": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "number"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Bbox"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "summary": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Summary"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status",
+      "description": "draft | review | published"
+     },
+     "curated": {
+      "type": "boolean",
+      "title": "Curated",
+      "description": "false = the default page (no profile written yet)."
+     },
+     "sections": {
+      "items": {
+       "$ref": "#/components/schemas/SectionOut"
+      },
+      "type": "array",
+      "title": "Sections"
+     },
+     "counts": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "Counts"
+     },
+     "records": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Records",
+      "description": "Catalogue records the profile names (source:id)."
+     },
+     "credits": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Credits"
+     },
+     "origin": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Origin"
+     },
+     "data_status": {
+      "$ref": "#/components/schemas/DataStatusOut"
+     },
+     "linked": {
+      "items": {
+       "$ref": "#/components/schemas/ResourceSummary"
+      },
+      "type": "array",
+      "title": "Linked",
+      "description": "Named records that cover the landscape."
+     }
+    },
+    "type": "object",
+    "required": [
+     "code",
+     "slug",
+     "label",
+     "countries",
+     "bbox",
+     "title",
+     "summary",
+     "status",
+     "curated",
+     "sections",
+     "counts",
+     "records",
+     "credits",
+     "origin",
+     "data_status",
+     "linked"
+    ],
+    "title": "LandscapeOut"
+   },
+   "LandscapeSummaryOut": {
+    "properties": {
+     "code": {
+      "type": "string",
+      "title": "Code",
+      "description": "Landscape code, e.g. KEN-LVB."
+     },
+     "slug": {
+      "type": "string",
+      "title": "Slug",
+      "description": "Code in lower case, used in page URLs."
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "countries": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Countries"
+     },
+     "bbox": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "number"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Bbox"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "summary": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Summary"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status",
+      "description": "draft | review | published"
+     },
+     "curated": {
+      "type": "boolean",
+      "title": "Curated",
+      "description": "false = the default page (no profile written yet)."
+     },
+     "sections": {
+      "items": {
+       "$ref": "#/components/schemas/SectionOut"
+      },
+      "type": "array",
+      "title": "Sections"
+     },
+     "counts": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "Counts"
+     },
+     "records": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Records",
+      "description": "Catalogue records the profile names (source:id)."
+     }
+    },
+    "type": "object",
+    "required": [
+     "code",
+     "slug",
+     "label",
+     "countries",
+     "bbox",
+     "title",
+     "summary",
+     "status",
+     "curated",
+     "sections",
+     "counts",
+     "records"
+    ],
+    "title": "LandscapeSummaryOut"
    },
    "Manifest": {
     "properties": {
@@ -1279,6 +1680,73 @@
     ],
     "title": "ResourceSummary",
     "description": "A light card for lists and maps."
+   },
+   "SectionOut": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "kind": {
+      "type": "string",
+      "title": "Kind",
+      "description": "overview | map-explorer | catalogue-datasets | data-status | <custom>"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     },
+     "intro": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Intro"
+     },
+     "options": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Options"
+     },
+     "config": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Config",
+      "description": "Configuration of the section (map-explorer: see the standard's landscape/explorer schema)."
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "kind"
+    ],
+    "title": "SectionOut",
+    "description": "One section of a landscape page. `kind` names the module that draws it on the website."
    },
    "Sort": {
     "type": "string",

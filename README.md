@@ -58,7 +58,15 @@ D:\Code\Mosaic\
 | `GET /v1/resources?q=&theme=&…` | `v1/summaries/<hash>.json` + `v1/search/<hash>.json` | Search and filters. Live: on the server. Static: in the browser, same rules |
 | `GET /v1/resources/{source}/{id}` | `v1/resources/{source}/{id}.json` | One resource: MOSAIC record, provenance, quality, links |
 | `GET /v1/resources/{source}/{id}/jsonld` | `v1/resources/{source}/{id}.jsonld` | schema.org Dataset (FAIR, search engines) |
+| `GET /v1/landscapes` | `v1/landscapes.json` | Every living landscape: its page sections, dataset counts, the records its profile names |
+| `GET /v1/landscapes/{code}` | `v1/landscapes/{CODE}.json` | One landscape page: its profile (sections and their configuration) and its data status |
 | `GET /openapi.json` | `v1/openapi.json` | The contract |
+
+Landscape profiles are written in mosaic-catalog (`landscapes/<CODE>/`, published in its
+`dist/landscapes/`) and read from the same place as the standard. The API serves them as published
+and adds what only the catalogue knows: which resources cover the landscape and how complete their
+metadata is (`data_status`: totals, data types, themes, access, minimum fields missing). The code is
+case-insensitive (`KEN-LVB` or `ken-lvb`).
 
 Filters are `source`, `resource_type`, `theme`, `landscape`, `geography`, `data_kind`, `geometry`,
 `spatial`, `method`, `access`, `license` and `status`. Values are comma-separated, combined with OR

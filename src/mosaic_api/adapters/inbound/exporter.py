@@ -10,6 +10,8 @@ would return. Layout under the export folder:
     v1/search/<sha8>.json                normalized searchable text per resource (in-browser search)
     v1/resources/<source>/<id>.json      one resource (= GET /v1/resources/<source>/<id>)
     v1/resources/<source>/<id>.jsonld    schema.org Dataset
+    v1/landscapes.json                   living landscapes and their page sections (= GET /v1/landscapes)
+    v1/landscapes/<CODE>.json            one landscape page (= GET /v1/landscapes/<CODE>)
     v1/openapi.json                      the contract (TypeScript types for the website come from it)
 
 Only manifest.json changes name-stably; a client reads it first and fetches the hashed files it
@@ -81,6 +83,14 @@ def export(app: FastAPI, catalog: CatalogService, out: Path) -> dict[str, Any]:
         _write(out, f"v1/resources/{source}/{local}.jsonld", _dump(get(f"/v1/resources/{source}/{local}/jsonld")))
     files["resource"] = "v1/resources/{source}/{local_id}.json"
     files["resource_jsonld"] = "v1/resources/{source}/{local_id}.jsonld"
+
+    if any(r.path == "/v1/landscapes" for r in app.routes if hasattr(r, "path")):
+        index = get("/v1/landscapes")
+        _write(out, "v1/landscapes.json", _dump(index))
+        for land in index:
+            _write(out, f"v1/landscapes/{land['code']}.json", _dump(get(f"/v1/landscapes/{land['code']}")))
+        files["landscapes"] = "v1/landscapes.json"
+        files["landscape"] = "v1/landscapes/{code}.json"
 
     manifest = {**get("/v1/manifest"), "files": files}
     _write(out, "v1/manifest.json", json.dumps(manifest, ensure_ascii=False, indent=1).encode("utf-8"))

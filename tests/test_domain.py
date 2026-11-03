@@ -116,3 +116,11 @@ def test_fold_handles_case_accents_symbols_and_other_scripts() -> None:
     assert fold("ລາວ Lao") == "ລາວ lao"  # non-Latin letters are kept
     assert key("CC BY 4.0") == key("cc-by-4.0") == "cc-by-4-0"
     assert key("Land cover / land use") == "land-cover-land-use"
+
+
+def test_fold_matches_the_website_rule() -> None:
+    """Same expectations as mosaic-web src/lib/domain/text.test.ts."""
+    from mosaic_api.domain.text import fold
+
+    assert fold("हिंदी नक्शा") == "हद नकश"  # marks of any script removed, as in the browser
+    assert fold("Ｆｕｌｌ ﬁle") == "full file"

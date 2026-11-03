@@ -4,7 +4,7 @@ Used for word search, for filter values and for ids in URLs, so "PERU", "Perú" 
 same, and "CC BY 4.0", "cc-by-4.0" and "CC-BY-4.0" are the same.
 
 * case-insensitive (``casefold``: also handles ß -> ss);
-* accent-insensitive (NFKD, combining marks removed; ø, æ, œ, đ, ł, þ transliterated);
+* accent-insensitive (NFKD, all marks (Unicode category M) removed; ø, æ, œ, đ, ł, þ transliterated);
 * any run of spaces, punctuation or symbols is one separator;
 * letters of any script are kept (non-Latin titles stay searchable).
 
@@ -23,7 +23,7 @@ _SEPARATORS = re.compile(r"[\W_]+", re.UNICODE)
 def fold(text: str) -> str:
     """Normalized words separated by single spaces: 'Côte d’Ivoire – 2021' -> 'cote d ivoire 2021'."""
     s = unicodedata.normalize("NFKD", text.casefold())
-    s = "".join(ch for ch in s if not unicodedata.combining(ch)).translate(_EXTRA)
+    s = "".join(ch for ch in s if not unicodedata.category(ch).startswith("M")).translate(_EXTRA)
     return _SEPARATORS.sub(" ", s).strip()
 
 

@@ -43,7 +43,8 @@ sources:
 
 http:
   cors_origins:
-    - http://localhost:4321
+    - http://localhost:4321     # mosaic-web: npm run dev / preview
+    - http://127.0.0.1:4321
     - https://mosaic-mfl.github.io
   max_page_size: 100
   expose_emails: true   # project decision: contact e-mails are public

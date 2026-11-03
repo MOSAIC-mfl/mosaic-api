@@ -12,6 +12,7 @@ from ..domain import facets as facet_rules
 from ..domain import search
 from ..domain.model import Resource
 from ..domain.standard import Standard
+from ..domain.text import key
 from ..ports import Snapshot
 from .dto import Labels, Manifest, ResourceDetail, ResourcePage, ResourceSummary, SourceOut
 
@@ -52,12 +53,46 @@ class CatalogService:
             return v.label(concept) if v else concept
 
         self._texts = {r.id: search.searchable_text(r, label) for r in snapshot.resources}
+        self._by_key = {key(r.id): r for r in snapshot.resources}
+        self._aliases = self._build_aliases()
+
+    def _build_aliases(self) -> dict[str, dict[str, str]]:
+        """Per facet: folded id or folded label -> canonical value. Lets people filter with
+        'PERU', 'Perú', 'Peru' or 'per' and get PER; 'CC BY 4.0' and get CC-BY-4.0."""
+        aliases: dict[str, dict[str, str]] = {f: {} for f in facet_rules.FACETS}
+        for facet, values in facet_rules.count(self._snap.resources).items():
+            for value in values:
+                aliases[facet][key(value)] = value
+        for facet, labels in self.labels().labels.items():
+            for value, lab in labels.items():
+                aliases.setdefault(facet, {}).setdefault(key(value), value)
+                aliases[facet].setdefault(key(lab), value)
+        return aliases
+
+    def resolve_filters(self, filters: dict[str, frozenset[str]]) -> tuple[dict[str, frozenset[str]], list[str]]:
+        """Canonical filter values, and a warning for each value that matches nothing known."""
+        out: dict[str, frozenset[str]] = {}
+        warnings: list[str] = []
+        for facet, values in filters.items():
+            known = self._aliases.get(facet, {})
+            resolved = set()
+            for v in values:
+                canon = known.get(key(v))
+                if canon is None:
+                    warnings.append(f"{facet}={v!r} matches no value of this filter")
+                    resolved.add(v)
+                else:
+                    resolved.add(canon)
+            out[facet] = frozenset(resolved)
+        return out, warnings
 
     @property
     def resources(self) -> list[Resource]:
         return self._snap.resources
 
     def search(self, q: search.Query, with_facets: bool = False) -> ResourcePage:
+        filters, warnings = self.resolve_filters(q.filters)
+        q = search.Query(q.text, filters, q.bbox, q.year_from, q.year_to, q.sort, q.page, q.page_size)
         page = search.run(self._snap.resources, q, self._texts)
         counts = None
         if with_facets:
@@ -69,13 +104,15 @@ class CatalogService:
             page=page.page,
             page_size=page.page_size,
             facets=counts,
+            warnings=warnings,
         )
 
     def summaries(self) -> list[ResourceSummary]:
         return [ResourceSummary.of(r) for r in self._snap.resources]
 
     def get(self, gid: str) -> ResourceDetail | None:
-        r = self._by_id.get(gid)
+        """Exact id first; otherwise case-, accent- and separator-insensitive (mosaic:mfl-2026-079)."""
+        r = self._by_id.get(gid) or self._by_key.get(key(gid))
         return ResourceDetail.of(r, self._opts.expose_emails) if r else None
 
     def facets(self) -> dict[str, dict[str, int]]:

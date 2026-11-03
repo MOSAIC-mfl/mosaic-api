@@ -6,15 +6,14 @@ port, so the API and the catalogue always use the same lists.
 
 from __future__ import annotations
 
-import re
-import unicodedata
 from dataclasses import dataclass, field
 from typing import Any
 
+from .text import key
+
 
 def slugify(text: str) -> str:
-    s = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
-    return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+    return key(text)
 
 
 @dataclass(frozen=True)

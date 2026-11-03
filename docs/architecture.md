@@ -64,9 +64,17 @@ answers as files, so the static API **is** the live API, frozen at harvest time.
 2. Fetch the files it lists that are not cached yet: `summaries/<hash>.json` and
    `search/<hash>.json`. Hashed names never change, so they can be cached for good, in the browser
    (HTTP cache or IndexedDB) and on the CDN.
-3. Filter and search in the browser with the same rules as `domain/search.py`:
-   - normalize text: NFKD, ASCII, lowercase, non-alphanumerics become spaces;
-   - every word must appear;
+3. Filter and search in the browser with the same rules as `domain/search.py` and
+   `domain/text.py`:
+   - **fold** every text before comparing it: casefold (ß→ss); NFKD with accents removed; ø, æ,
+     œ, đ, ł and þ transliterated; any run of spaces, punctuation or symbols becomes one
+     separator; letters of any script are kept. `fold("Côte d’Ivoire – 2021")` gives
+     `"cote d ivoire 2021"`;
+   - **words:** every word of the folded query must appear in the folded searchable text
+     (`search/<hash>.json` is already folded);
+   - **filters:** compare `key(value)`, which is `fold` with `-` as the separator, on both sides.
+     `CC BY 4.0`, `cc-by-4.0` and `CC-BY-4.0` are therefore the same, and so are `PER` and `per`.
+     A value may also be given by its label (`Perú` → `PER`), resolved with `v1/labels.json`;
    - OR inside a filter, AND across filters (`summary.facets` already carries each resource's
      values);
    - bbox intersection and year overlap.

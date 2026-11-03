@@ -3,6 +3,13 @@
 ## [0.1.0] - unreleased (local draft)
 
 ### Fixed
+- **Filters, sorting and ids now ignore case, accents and symbols:**
+  - `source=MOSAIC`, `geography=Perú`, `theme=Pressures / drivers`, `license=cc by 4.0`,
+    `sort=Title` and `/v1/resources/MOSAIC/mfl-2026-079` all work;
+  - a filter value can also be given by its label;
+  - values that match nothing are reported in `warnings`;
+  - one folding rule, `domain/text.py`, is used everywhere. It also handles ß, ø and æ, and keeps
+    non-Latin letters, which the first version dropped.
 - `/docs` was blank: the strict CSP blocked Swagger UI. The docs pages now get their own CSP
   (scripts and styles from cdn.jsdelivr.net only).
 

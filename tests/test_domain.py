@@ -106,3 +106,13 @@ def test_landscapes_derived_from_bbox_but_not_for_global_boxes() -> None:
         ((), False),
         (("KEN-LVB",), False),
     ]
+
+
+def test_fold_handles_case_accents_symbols_and_other_scripts() -> None:
+    from mosaic_api.domain.text import fold, key
+
+    assert fold("Côte d’Ivoire – 2021") == "cote d ivoire 2021"
+    assert fold("STRAßE Ørsted Æble") == "strasse orsted aeble"
+    assert fold("ລາວ Lao") == "ລາວ lao"  # non-Latin letters are kept
+    assert key("CC BY 4.0") == key("cc-by-4.0") == "cc-by-4-0"
+    assert key("Land cover / land use") == "land-cover-land-use"

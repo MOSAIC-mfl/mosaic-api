@@ -127,6 +127,7 @@ class ResourcePage(Out):
     page: int
     page_size: int
     facets: dict[str, dict[str, int]] | None = Field(None, description="Counts over ALL results of the query.")
+    warnings: list[str] = Field(default_factory=list, description="Filter values that match nothing known.")
 
 
 class SourceOut(Out):

@@ -116,3 +116,43 @@ def test_docs_page_may_load_swagger_ui(client: TestClient) -> None:
     assert docs.status_code == 200
     assert "https://cdn.jsdelivr.net" in docs.headers["content-security-policy"]
     assert client.get("/v1/manifest").headers["content-security-policy"] == "default-src 'none'; frame-ancestors 'none'"
+
+
+@pytest.mark.parametrize(
+    ("params", "expected"),
+    [
+        ({"source": "MOSAIC"}, 4),
+        ({"source": " Mosaic "}, 4),
+        ({"source": "cdh"}, 3),
+        ({"geography": "PER"}, 1),
+        ({"geography": "per"}, 1),
+        ({"geography": "Perú"}, 1),  # label, with an accent
+        ({"theme": "Pressures / drivers"}, 1),  # label with symbols
+        ({"theme": "PRESSURES-DRIVERS"}, 1),
+        ({"license": "cc by 4.0"}, 3),  # CC-BY-4.0 (the three CDH records)
+        ({"access": "Restricted,INTERNAL"}, 1),
+        ({"landscape": "per-pcl"}, 1),
+        ({"spatial": "YES"}, 6),
+        ({"q": "DEFORESTACIÓN FOREST"}, 0),  # every word must appear
+        ({"q": "  Forest   LOSS "}, 1),
+        ({"q": "non-forest"}, 1),  # hyphen in the text and in the query
+    ],
+)
+def test_filters_and_search_ignore_case_accents_and_symbols(
+    client: TestClient, params: dict[str, str], expected: int
+) -> None:
+    page = client.get("/v1/resources", params=params).json()
+    assert page["total"] == expected, page
+    assert page["warnings"] == []
+
+
+def test_unknown_filter_value_is_reported(client: TestClient) -> None:
+    page = client.get("/v1/resources", params={"theme": "astrology"}).json()
+    assert page["total"] == 0 and page["warnings"] == ["theme='astrology' matches no value of this filter"]
+
+
+def test_sort_and_ids_ignore_case(client: TestClient) -> None:
+    assert client.get("/v1/resources", params={"sort": "Title"}).status_code == 200
+    assert client.get("/v1/resources", params={"sort": "nonsense"}).status_code == 422
+    detail = client.get("/v1/resources/MOSAIC/mfl-2026-079")
+    assert detail.status_code == 200 and detail.json()["id"] == "mosaic:MFL-2026-079"

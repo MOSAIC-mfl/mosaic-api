@@ -10,14 +10,13 @@ static export (the website applies the same rules in the browser to the exported
 
 from __future__ import annotations
 
-import re
-import unicodedata
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 
 from .facets import facet_values
 from .model import Bbox, Resource
+from .text import fold, key
 
 
 class Sort(str, Enum):
@@ -25,6 +24,11 @@ class Sort(str, Enum):
     TITLE = "title"
     UPDATED = "updated"
     YEAR = "year"
+
+    @classmethod
+    def _missing_(cls, value: object) -> Sort | None:  # "Title", " TITLE " -> Sort.TITLE
+        folded = key(str(value))
+        return next((m for m in cls if m.value == folded), None)
 
 
 @dataclass(frozen=True)
@@ -48,8 +52,8 @@ class Page:
 
 
 def normalize(text: str) -> str:
-    s = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
-    return re.sub(r"[^a-z0-9]+", " ", s).strip()
+    """Kept for callers of the first version; the rule lives in domain.text.fold."""
+    return fold(text)
 
 
 def searchable_text(r: Resource, label: Callable[[str, str], str]) -> str:
@@ -81,7 +85,7 @@ def matches(r: Resource, q: Query, text: str) -> bool:
         return False
     values = facet_values(r)
     for facet, wanted in q.filters.items():
-        if wanted and not wanted & set(values.get(facet, [])):
+        if wanted and not {key(w) for w in wanted} & {key(v) for v in values.get(facet, [])}:
             return False
     if q.bbox is not None:
         boxes = r.spatial.bbox if r.spatial else ()

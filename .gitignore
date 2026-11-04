@@ -7,3 +7,8 @@ __pycache__/
 *.egg-info/
 state/
 site/
+
+# local settings and secrets: never committed (copy .env.example when there is one)
+.env
+.env.*
+!.env.example

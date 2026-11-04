@@ -41,10 +41,10 @@ pytest -q && ruff check src tests && mypy src && lint-imports
 Local layout expected by the default config (repos side by side):
 
 ```
-D:\Code\Mosaic\
-  mosaic-api\            this repo
-  mosaic-catalog\dist\   python -m mosaic_catalog build   (standard + MOSAIC records)
-  cdh\cdh-catalog\       CDH records (git clone)
+<workspace>/
+  mosaic-api/            this repo
+  mosaic-catalog/dist/   python -m mosaic_catalog build   (standard + MOSAIC records)
+  cdh/cdh-catalog/       CDH records (git clone)
 ```
 
 ## Endpoints (v1)

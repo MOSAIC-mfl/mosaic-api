@@ -1,6 +1,6 @@
 # mosaic-api configuration. Paths are relative to this file.
 #
-# Local development: the repos sit side by side (D:\Code\Mosaic\mosaic-catalog, ...\cdh\cdh-catalog).
+# Local development: the repos sit side by side (<workspace>/mosaic-catalog, <workspace>/cdh/cdh-catalog).
 # Published (GitHub Actions): use the https locations in comments.
 
 # The MOSAIC standard (vocabularies, crosswalks, schemas) as published by mosaic-catalog.

@@ -1,6 +1,7 @@
 # mosaic-api
 
-> **Status: local draft (v0.1.0).** Not pushed anywhere, not reviewed yet.
+> **Status: v0.1.0, first publication.** Repository: https://github.com/MOSAIC-mfl/mosaic-api.
+> Static API: https://mosaic-mfl.github.io/mosaic-api/v1/manifest.json (once Pages is enabled).
 
 Read-only API of **MOSAIC**, a network of metadata. It reads several catalogues, translates their
 records into the **MOSAIC metadata model**, and serves them as JSON to the website and to anyone
@@ -47,6 +48,28 @@ Local layout expected by the default config (repos side by side):
   cdh/cdh-catalog/       CDH records (git clone)
 ```
 
+## Publishing (GitHub Actions → Pages)
+
+One workflow, [.github/workflows/pages.yml](.github/workflows/pages.yml):
+
+| Job | When | What |
+|---|---|---|
+| `check` | every pull request and every run | `ruff check`, `ruff format --check`, `mypy`, `lint-imports`, `pytest` |
+| `build` | push to `main`, daily (05:17 UTC), manual, `repository_dispatch: catalog-updated`; only if `check` passes | clones MOSAIC-mfl/catalog, builds its `dist/`, harvests every source with [config/mosaic-api.ci.yaml](config/mosaic-api.ci.yaml), exports the static API |
+| `deploy` | after `build` | publishes the export on GitHub Pages |
+
+The catalogue is taken from `main` of MOSAIC-mfl/catalog when it holds the metadata standard
+(`mosaic.config.yaml`), otherwise from the branch `metadata-standard-v0.1`. The repository
+variable `CATALOG_REF` forces a branch or tag. Nothing has to change when that branch is merged.
+
+Once, in the repository settings: **Settings → Pages → Build and deployment → Source: GitHub
+Actions**. Then run the workflow by hand (Actions → Check and publish → Run workflow) or push to
+`main`.
+
+When the catalogue publishes its own Pages site (mosaic-mfl.github.io/catalog), the workflow can
+read it over https with [config/mosaic-api.published.yaml](config/mosaic-api.published.yaml)
+instead of cloning it.
+
 ## Endpoints (v1)
 
 | Live | Static file | What |
@@ -84,5 +107,5 @@ inside a filter and AND across filters. There are also `bbox=w,s,e,n`, `year_fro
 
 ## Rules for changes
 
-- Branch `santiago/<topic>`, pull request, green checks.
+- A branch per topic, pull request, green checks (`check` runs on every pull request).
 - Lizeth reviews changes to the model, the translators or what is published.

@@ -1,0 +1,47 @@
+# mosaic-api configuration for the GitHub Actions pipeline (.github/workflows/pages.yml).
+# Paths are relative to this file.
+#
+# The workflow clones MOSAIC-mfl/catalog next to the repo (_catalog/) and builds its dist/ there,
+# so the API does not depend on the catalogue being published on Pages yet. Once the catalogue
+# publishes its own Pages site, config/mosaic-api.published.yaml (all https) can replace this file.
+
+standard: ../_catalog/dist
+
+state: ../state/snapshot.json
+export_dir: ../_site
+
+# Remote reads are only allowed to these hosts (https only, also after redirects).
+allowed_hosts:
+  - mosaic-mfl.github.io
+  - github.com
+  - codeload.github.com
+  - raw.githubusercontent.com
+max_download_mb: 50
+
+sources:
+  - id: mosaic
+    name: MOSAIC
+    type: mosaic_catalog
+    translator: mosaic
+    format: mosaic-v0.1
+    location: ../_catalog/dist
+    homepage: https://mosaic-mfl.github.io/website/
+    record_url_template: https://mosaic-mfl.github.io/website/catalogue/{id}/
+
+  - id: cdh
+    name: CGIAR Climate Data Hub
+    type: git_yaml
+    translator: cdh
+    format: cdh-yaml-v0.5
+    location: https://github.com/CGIAR-Climate-Data-Hub/cdh-catalog
+    ref: main
+    pattern: records/*/*.yaml
+    homepage: https://cgiar-climate-data-hub.github.io/
+    record_url_template: https://github.com/CGIAR-Climate-Data-Hub/cdh-catalog/blob/{ref}/{path}
+
+http:
+  cors_origins:
+    - http://localhost:4321
+    - https://mosaic-mfl.github.io
+  max_page_size: 100
+  expose_emails: true   # project decision: contact e-mails are public

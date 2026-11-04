@@ -7,6 +7,9 @@ __pycache__/
 *.egg-info/
 state/
 site/
+# written by the Pages workflow (clone of the catalogue, export)
+_catalog/
+_site/
 
 # local settings and secrets: never committed (copy .env.example when there is one)
 .env

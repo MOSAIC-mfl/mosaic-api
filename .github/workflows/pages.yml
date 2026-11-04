@@ -1,0 +1,104 @@
+# Check, test and publish the static API on GitHub Pages.
+#
+#   check   on every pull request and every run: ruff, format, mypy, import layers, pytest.
+#   build   only from main, after check passes: clone and build the MOSAIC catalogue, harvest
+#           every source (incremental, from the cached snapshot), export the static API.
+#   deploy  publish the export on GitHub Pages (Settings > Pages > Source: GitHub Actions).
+#
+# The catalogue comes from MOSAIC-mfl/catalog: main when it already holds the metadata standard
+# (mosaic.config.yaml), otherwise the branch metadata-standard-v0.1, until that branch is merged.
+# Set the repository variable CATALOG_REF to force a branch or tag.
+name: Check and publish
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * *"          # daily: picks up catalogue and CDH changes
+  repository_dispatch:
+    types: [catalog-updated]      # for the catalogue to trigger a harvest (needs a token there)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('check-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests
+      - run: ruff format --check src tests
+      - run: mypy src
+      - run: lint-imports
+      - run: pytest -q
+
+  build:
+    needs: check
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Clone the MOSAIC catalogue
+        env:
+          CATALOG_REPO: https://github.com/MOSAIC-mfl/catalog.git
+          CATALOG_REF: ${{ vars.CATALOG_REF }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CATALOG_REF}" ]; then
+            git clone --quiet "$CATALOG_REPO" _catalog
+            if [ ! -f _catalog/mosaic.config.yaml ]; then
+              git -C _catalog checkout --quiet metadata-standard-v0.1
+            fi
+          else
+            git clone --quiet --branch "$CATALOG_REF" "$CATALOG_REPO" _catalog
+          fi
+          echo "Catalogue: $(git -C _catalog rev-parse --abbrev-ref HEAD) @ $(git -C _catalog rev-parse --short HEAD)"
+      # Full history on purpose: the build takes created / updated from git log.
+      - name: Build the catalogue (standard, records, landscape profiles)
+        run: |
+          pip install -e ./_catalog
+          python -m mosaic_catalog build --out _catalog/dist
+      - run: pip install -e .
+      # The previous snapshot makes the harvest incremental.
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: state
+          key: snapshot-${{ github.run_id }}
+          restore-keys: snapshot-
+      - run: python -m mosaic_api --config config/mosaic-api.ci.yaml harvest
+      - run: python -m mosaic_api --config config/mosaic-api.ci.yaml export --out _site
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

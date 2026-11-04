@@ -1,8 +1,13 @@
 # Changelog
 
-## [0.1.0] - unreleased (local draft)
+## [0.1.0] - unreleased (first publication)
 
 ### Added
+- Pipeline `.github/workflows/pages.yml` (replaces `ci.yml` and `publish.yml`): `check` (lint,
+  format, types, import layers, tests) on every pull request; from `main`, daily, by hand or on
+  `catalog-updated`, `build` clones and builds MOSAIC-mfl/catalog, harvests with
+  `config/mosaic-api.ci.yaml`, exports, and `deploy` publishes on GitHub Pages. Actions pinned
+  by commit SHA.
 - Landscape pages: `GET /v1/landscapes` and `GET /v1/landscapes/{code}` (static:
   `v1/landscapes.json`, `v1/landscapes/<CODE>.json`). Profiles come from mosaic-catalog's
   `dist/landscapes/` (port `LandscapeProfiles`, adapter `DistLandscapes`); the API adds each

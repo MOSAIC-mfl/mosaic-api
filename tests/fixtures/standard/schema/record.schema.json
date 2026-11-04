@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mosaic-mfl.github.io/mosaic-catalog/schema/v0.1.0/record.schema.json",
+  "$id": "https://mosaic-mfl.github.io/catalog/schema/v0.1.0/record.schema.json",
   "title": "MOSAIC metadata record (structure)",
   "description": "Shape and types of every field a MOSAIC record can hold. Nothing is required here: a record that breaks this schema is INVALID (malformed); what a record must contain is checked by the level schemas (minimum, recommended) and the profiles, which only make it INCOMPLETE. Extension blocks are validated separately against the extension schema the record declares.",
   "type": "object",

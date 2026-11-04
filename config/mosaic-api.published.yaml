@@ -3,7 +3,7 @@
 # Published configuration (GitHub Actions): everything is read over https.
 
 # The MOSAIC standard (vocabularies, crosswalks, schemas) as published by mosaic-catalog.
-standard: https://mosaic-mfl.github.io/mosaic-catalog
+standard: https://mosaic-mfl.github.io/catalog
 
 state: ../state/snapshot.json
 export_dir: ../_site
@@ -22,7 +22,7 @@ sources:
     type: mosaic_catalog
     translator: mosaic
     format: mosaic-v0.1
-    location: https://mosaic-mfl.github.io/mosaic-catalog
+    location: https://mosaic-mfl.github.io/catalog
     homepage: https://mosaic-mfl.github.io/website/
     record_url_template: https://mosaic-mfl.github.io/website/catalogue/{id}/
 

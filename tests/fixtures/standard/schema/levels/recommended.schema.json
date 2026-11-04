@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mosaic-mfl.github.io/mosaic-catalog/schema/v0.1.0/levels/recommended.schema.json",
+  "$id": "https://mosaic-mfl.github.io/catalog/schema/v0.1.0/levels/recommended.schema.json",
   "title": "MOSAIC recommended (level 1)",
   "description": "Fields that make a record more useful and FAIR. Missing ones are warnings, never errors.",
   "required": [

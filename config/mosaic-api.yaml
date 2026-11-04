@@ -5,7 +5,7 @@
 
 # The MOSAIC standard (vocabularies, crosswalks, schemas) as published by mosaic-catalog.
 standard: ../../mosaic-catalog/dist
-# standard: https://mosaic-mfl.github.io/mosaic-catalog
+# standard: https://mosaic-mfl.github.io/catalog
 
 state: ../state/snapshot.json   # harvested resources (one JSON file, no database)
 export_dir: ../site             # static API written here for GitHub Pages
@@ -25,7 +25,7 @@ sources:
     translator: mosaic
     format: mosaic-v0.1
     location: ../../mosaic-catalog/dist
-    # location: https://mosaic-mfl.github.io/mosaic-catalog
+    # location: https://mosaic-mfl.github.io/catalog
     homepage: https://mosaic-mfl.github.io/website/
     record_url_template: https://mosaic-mfl.github.io/website/catalogue/{id}/
 

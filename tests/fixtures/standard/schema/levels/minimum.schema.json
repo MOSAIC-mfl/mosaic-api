@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mosaic-mfl.github.io/mosaic-catalog/schema/v0.1.0/levels/minimum.schema.json",
+  "$id": "https://mosaic-mfl.github.io/catalog/schema/v0.1.0/levels/minimum.schema.json",
   "title": "MOSAIC minimum (level 0)",
   "description": "Enough metadata to find, understand, cite and access a resource without opening its files. A record that fails this level is INCOMPLETE: it is listed in review/minimum_gaps and published flagged as incomplete (or hidden, depending on the catalogue configuration).",
   "required": [

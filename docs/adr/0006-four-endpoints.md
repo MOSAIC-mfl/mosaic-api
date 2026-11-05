@@ -21,6 +21,8 @@ summaries routes had no user. `/v1/resources` also took twelve filters plus bbox
 - **`GET /v1/resources/{source}/{id}`** is one resource.
 - **`GET /v1/landscapes`** and **`/v1/landscapes/{code}`** serve the landscape pages.
 - Removed: `/v1/manifest`, `/v1/facets`, `/v1/labels`, `/v1/summaries`, `/v1/resources/…/jsonld`.
+- On Pages, `v1/resources.json` is `/v1/resources` without filters (the whole catalogue): Pages
+  serves files and cannot filter. Filtered queries need the live API on a server.
 - On Pages, the files the website needs for in-browser search go to `v1/_index/` and are not part
   of the contract. `docs/` documents the files with their own contract (`docs/openapi.json`).
 

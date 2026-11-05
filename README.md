@@ -78,7 +78,7 @@ Four things, nothing else ([ADR-0006](docs/adr/0006-four-endpoints.md)):
 |---|---|---|
 | `GET /v1/sources` | `v1/sources.json` | The catalogues MOSAIC reads (MOSAIC, CGIAR Climate Data Hub, …): records, last harvest, errors |
 | `GET /v1/filters` | `v1/filters.json` | Read once before searching: versions and totals, the filters of `/v1/resources` with every option (`value`, `label`, `count`), and labels for the other coded values |
-| `GET /v1/resources?q=&source=&theme=&landscape=&geography=` | (searched in the browser) | The catalogue: search and filters, sorted and paged; `include_facets=true` adds the count of each filter value over all the results |
+| `GET /v1/resources?q=&source=&theme=&landscape=&geography=` | `v1/resources.json` (the whole catalogue, no filters) | The catalogue: search and filters, sorted and paged; `include_facets=true` adds the count of each filter value over all the results |
 | `GET /v1/resources/{source}/{id}` | `v1/resources/{source}/{id}.json` | One resource: MOSAIC record, provenance, quality |
 | `GET /v1/landscapes` | `v1/landscapes.json` | Every living landscape: its page sections, dataset counts, the records its profile names |
 | `GET /v1/landscapes/{code}` | `v1/landscapes/{CODE}.json` | One landscape page: its profile and its data status |
@@ -93,8 +93,11 @@ its id or by its label, ignoring case, accents and symbols (`geography=Perú` = 
 (every word must appear), `sort` (`relevance`, `title`, `updated`, `year`), `order`, `page`,
 `page_size` (at most 100).
 
-**On Pages there is no `?q=`:** GitHub Pages serves files. The website searches in the browser
-with the same rules, over files kept outside the contract (`v1/_index/`).
+**On Pages there is no `?q=` and no filters:** GitHub Pages only serves files and ignores the
+query string. `v1/resources.json` is the whole catalogue (every card carries its filter values in
+`facets`, so a client can filter it); filtered queries need the live API (`serve`) on a server.
+The website searches in the browser with the same rules, over files kept outside the contract
+(`v1/_index/`). The site root redirects to `docs/`.
 
 Landscape profiles are written in the catalogue (`landscapes/<CODE>/`, published in its
 `dist/landscapes/`) and read from the same place as the standard. The API serves them as published

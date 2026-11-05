@@ -11,7 +11,8 @@
   Removed: `resource_type`, `data_kind`, `geometry`, `spatial`, `method`, `access`, `license`,
   `status`, `bbox`, `year_from`, `year_to`.
 - Static export: in-browser search files under `v1/_index/` (internal); `docs/` with Swagger UI
-  and a contract of the files on Pages, so `…/mosaic-api/docs/` works.
+  and a contract of the files on Pages, so `…/mosaic-api/docs/` works; the site root redirects
+  there. `v1/resources.json` publishes the whole catalogue (Pages cannot filter).
 
 ### Added
 - Pipeline `.github/workflows/pages.yml` (replaces `ci.yml` and `publish.yml`): `check` (lint,

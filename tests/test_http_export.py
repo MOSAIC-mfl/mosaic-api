@@ -118,6 +118,10 @@ def test_static_export_matches_live_api(tmp_path: Path, catalog: CatalogService,
     for name in ("sources", "filters"):
         assert json.loads((out / f"v1/{name}.json").read_text(encoding="utf-8")) == client.get(f"/v1/{name}").json()
     assert not list(out.rglob("*.jsonld")) and not (out / "v1/manifest.json").exists()
+    everything = json.loads((out / "v1/resources.json").read_text(encoding="utf-8"))
+    assert everything["total"] == 7 and len(everything["items"]) == 7
+    assert set(everything["facets"]) == {"source", "theme", "landscape", "geography"}
+    assert 'http-equiv="refresh" content="0; url=docs/"' in (out / "index.html").read_text(encoding="utf-8")
     assert (out / "v1/openapi.json").exists() and (out / ".nojekyll").exists()
 
 
@@ -132,7 +136,7 @@ def test_static_docs_describe_the_files(tmp_path: Path, catalog: CatalogService,
         concrete = (
             path.replace("{source_id}", "mosaic").replace("{local_id}", "MFL-2026-079").replace("{code}", "PER-PCL")
         )
-        if "{" not in concrete and "landscapes" not in concrete:
+        if "landscapes" not in concrete:
             assert (out / concrete.lstrip("/")).exists(), concrete
 
 

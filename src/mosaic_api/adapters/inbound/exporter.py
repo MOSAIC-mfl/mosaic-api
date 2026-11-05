@@ -5,14 +5,17 @@ would return. Layout under the export folder:
 
     v1/sources.json                      = GET /v1/sources
     v1/filters.json                      = GET /v1/filters (versions, totals, filter options, labels)
+    v1/resources.json                    = GET /v1/resources with no filters: the whole catalogue
+                                           (every resource as a card, with the counts per filter)
     v1/resources/<source>/<id>.json      = GET /v1/resources/<source>/<id>
     v1/landscapes.json                   = GET /v1/landscapes
     v1/landscapes/<CODE>.json            = GET /v1/landscapes/<CODE>
     v1/openapi.json                      contract of the live API (the website's types come from it)
     docs/                                documentation of these files (Swagger UI, docs/openapi.json)
 
-Search with ?q= and filters needs the live API. On Pages the website searches in the browser, with
-the same rules, over files kept out of the public contract:
+GitHub Pages only serves files: it ignores ?q= and the filters. Filtering on Pages is done by the
+client over v1/resources.json (each card carries its filter values in `facets`), or with the live
+API. The website searches in the browser, with the same rules, over files kept out of the contract:
 
     v1/_index/index.json                 the files below, with their hashes
     v1/_index/summaries/<sha12>.json     resource cards, in shards of SHARD_SIZE (content-hashed:
@@ -33,6 +36,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ...application.catalog import CatalogService
+from ...domain import search as search_rules
 
 SHARD_SIZE = 2000
 # Swagger UI for docs/ (static page on Pages). Pinned; loaded from jsDelivr like the live /docs.
@@ -42,6 +46,7 @@ SWAGGER_UI = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14"
 STATIC_ROUTES: list[tuple[str, str, str]] = [
     ("/v1/sources", "/v1/sources.json", "Catalogues MOSAIC reads, with their records and last harvest"),
     ("/v1/filters", "/v1/filters.json", "Versions, totals, filter options (value, label, count) and labels"),
+    ("/v1/resources", "/v1/resources.json", "The whole catalogue: every resource as a card, with counts per filter"),
     (
         "/v1/resources/{source_id}/{local_id}",
         "/v1/resources/{source_id}/{local_id}.json",
@@ -87,6 +92,10 @@ def export(app: FastAPI, catalog: CatalogService, out: Path) -> dict[str, Any]:
     filters = get("/v1/filters")
     _write(out, "v1/filters.json", _dump(filters))
     _write(out, "v1/sources.json", _dump(get("/v1/sources")))
+    everything = catalog.search(
+        search_rules.Query(sort=search_rules.Sort.TITLE, page_size=max(len(catalog.resources), 1)), with_facets=True
+    )
+    _write(out, "v1/resources.json", _dump(everything.model_dump(mode="json")))
     for r in catalog.resources:
         source, local = r.gid.source, r.gid.local_id
         _write(out, f"v1/resources/{source}/{local}.json", _dump(get(f"/v1/resources/{source}/{local}")))
@@ -130,6 +139,13 @@ def static_openapi(live: dict[str, Any], routes: set[str]) -> dict[str, Any]:
         op["operationId"] = "static_" + op.get("operationId", file)
         op["responses"] = {k: v for k, v in op["responses"].items() if k == "200"}
         op["responses"]["404"] = {"description": "No such file (unknown id or code)."}
+        if route == "/v1/resources":
+            op["parameters"] = []
+            op["description"] = (
+                "Every resource as a card (sorted by title), the total, and the count of each filter value. "
+                "GitHub Pages serves files, so ?q= and the filters are not available here: filter on the client "
+                "with each card's `facets` (source, theme, landscape, geography), or use the live API."
+            )
         if route == "/v1/landscapes/{code}":
             for p in op.get("parameters", []):
                 if p["name"] == "code":
@@ -169,18 +185,20 @@ def _docs_html() -> str:
 
 
 def _index_html(filters: dict[str, Any], example: str) -> str:
+    """The site root opens the documentation; the links stay for clients without redirects."""
     t = filters["totals"]
     sources = ", ".join(o["label"] for o in filters["filters"]["source"])
     return f"""<!doctype html><html lang="en"><meta charset="utf-8"><title>MOSAIC API</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="0; url=docs/">
+<link rel="canonical" href="docs/">
 <body style="font-family:system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem;line-height:1.5">
-<h1>MOSAIC API (static)</h1>
+<h1>MOSAIC API</h1>
+<p>Opening the <a href="docs/">documentation</a>…</p>
 <p>{t["resources"]} resources from {sources}; standard v{filters["standard_version"]};
-harvested {filters["harvested_at"]}.</p>
-<p><a href="docs/">Documentation</a> ·
-<a href="v1/sources.json">v1/sources.json</a> ·
-<a href="v1/filters.json">v1/filters.json</a> ·
-<a href="v1/resources/{example}.json">a resource</a> ·
-<a href="v1/landscapes.json">v1/landscapes.json</a></p>
+harvested {filters["harvested_at"]}.
+Files: <a href="v1/sources.json">sources</a> · <a href="v1/filters.json">filters</a> ·
+<a href="v1/resources.json">resources</a> · <a href="v1/resources/{example}.json">a resource</a> ·
+<a href="v1/landscapes.json">landscapes</a></p>
 </body></html>
 """

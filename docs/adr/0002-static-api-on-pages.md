@@ -12,8 +12,8 @@ There is no budget for a server or a database. The data changes a few times a we
   hand. They publish JSON files on GitHub Pages.
 - The files are produced by calling the FastAPI app's routes, so they are exactly what the live API
   answers.
-- Large files have content-hashed names and are listed in `v1/manifest.json`; clients cache them
-  for good.
+- Large files have content-hashed names and are listed in `v1/_index/index.json`; clients cache
+  them for good. (Until 2026-11 this list was `v1/manifest.json`; see ADR-0006.)
 - Search and filtering run in the browser on the exported summaries, with the same rules as
   `domain/search.py`.
 - When a free server is available, `python -m mosaic_api serve` provides the same contract. The

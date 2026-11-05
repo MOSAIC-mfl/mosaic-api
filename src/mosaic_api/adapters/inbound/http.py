@@ -7,7 +7,7 @@ route by the static exporter to produce the files published on GitHub Pages. One
 from __future__ import annotations
 
 from enum import Enum
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -17,20 +17,16 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 
 from ...application.catalog import API_VERSION, CatalogService
 from ...application.dto import (
-    Labels,
+    FiltersOut,
     LandscapeOut,
     LandscapeSummaryOut,
-    Manifest,
     Problem,
     ResourceDetail,
     ResourcePage,
-    ResourceSummary,
     SourceOut,
 )
 from ...application.landscapes import LandscapeService
 from ...domain import search
-from ...domain.facets import FACETS
-from ...domain.jsonld import to_jsonld
 
 
 class Order(str, Enum):
@@ -42,7 +38,10 @@ class Order(str, Enum):
         return next((m for m in cls if m.value == str(value).strip().lower()), None)
 
 
-Csv = Annotated[str | None, Query(max_length=500, description="Comma-separated values (OR).")]
+def _csv(what: str) -> Any:
+    return Query(
+        max_length=500, description=f"{what}. Comma-separated values (OR). Values and labels: GET /v1/filters."
+    )
 
 
 DOCS_PATHS = ("/docs", "/redoc")
@@ -124,91 +123,48 @@ def create_app(
             "description": "Read-only API of MOSAIC, a network of metadata.",
             "docs": "/docs",
             "openapi": "/openapi.json",
-            "manifest": "/v1/manifest",
+            "endpoints": "/v1/sources, /v1/filters, /v1/resources, /v1/resources/{source}/{id}, /v1/landscapes",
         }
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    @app.get("/v1/manifest", response_model=Manifest, tags=["catalogue"])
-    def manifest() -> Manifest:
-        return catalog.manifest()
-
     @app.get("/v1/sources", response_model=list[SourceOut], tags=["catalogue"])
     def sources() -> list[SourceOut]:
-        """Catalogues MOSAIC reads from, with the date and outcome of the last harvest."""
+        """The catalogues MOSAIC reads (MOSAIC, CGIAR Climate Data Hub, ...): how many records each
+        one has, and the date and outcome of the last harvest."""
         return catalog.sources()
 
-    @app.get(
-        "/v1/facets",
-        response_model=dict[str, dict[str, int]],
-        tags=["catalogue"],
-        description="Counts per filter value over the whole catalogue. Facets: " + ", ".join(FACETS),
-    )
-    def facets() -> dict[str, dict[str, int]]:
-        return catalog.facets()
-
-    @app.get("/v1/labels", response_model=Labels, tags=["catalogue"])
-    def labels() -> Labels:
-        """Display labels for facet values (from the MOSAIC vocabularies)."""
-        return catalog.labels()
+    @app.get("/v1/filters", response_model=FiltersOut, tags=["catalogue"])
+    def filters() -> FiltersOut:
+        """Read once before searching: versions and totals, the filters of GET /v1/resources with
+        every option (value, label, count), and display labels for the other coded values."""
+        return catalog.filters()
 
     @app.get("/v1/resources", response_model=ResourcePage, tags=["resources"])
     def list_resources(
         q: Annotated[str, Query(max_length=200, description="Words to search (all must match).")] = "",
-        source: Csv = None,
-        resource_type: Csv = None,
-        theme: Csv = None,
-        landscape: Csv = None,
-        geography: Csv = None,
-        data_kind: Csv = None,
-        geometry: Csv = None,
-        spatial: Csv = None,
-        method: Csv = None,
-        access: Csv = None,
-        license: Csv = None,
-        status: Csv = None,
-        bbox: Annotated[
-            str | None, Query(pattern=r"^-?[\d.]+,-?[\d.]+,-?[\d.]+,-?[\d.]+$", description="west,south,east,north")
-        ] = None,
-        year_from: Annotated[int | None, Query(ge=1000, le=3000)] = None,
-        year_to: Annotated[int | None, Query(ge=1000, le=3000)] = None,
+        source: Annotated[str | None, _csv("Catalogue, e.g. mosaic, cdh")] = None,
+        theme: Annotated[str | None, _csv("Theme, e.g. water")] = None,
+        landscape: Annotated[str | None, _csv("Living landscape, e.g. KEN-LVB")] = None,
+        geography: Annotated[str | None, _csv("Country or region, e.g. KEN")] = None,
         sort: search.Sort = search.Sort.RELEVANCE,
         order: Annotated[Order | None, Query(description="asc | desc; default: the sort's natural order.")] = None,
         page: Annotated[int, Query(ge=1, le=100_000)] = 1,
         page_size: Annotated[int, Query(ge=1)] = 20,
-        include_facets: bool = False,
+        include_facets: Annotated[
+            bool, Query(description="Also return the count of each filter value over all the results.")
+        ] = False,
     ) -> ResourcePage:
-        """Search and filter. OR inside one filter (comma-separated), AND across filters."""
+        """The catalogue: search and filter. OR inside one filter (comma-separated), AND across
+        filters. Values are case-, accent- and symbol-insensitive, and a label works as well as its id."""
         if page_size > max_page_size:
             raise HTTPException(422, f"page_size must be at most {max_page_size}")
-        values = {
-            "source": source,
-            "resource_type": resource_type,
-            "theme": theme,
-            "landscape": landscape,
-            "geography": geography,
-            "data_kind": data_kind,
-            "geometry": geometry,
-            "spatial": spatial,
-            "method": method,
-            "access": access,
-            "license": license,
-            "status": status,
-        }
-        box = None
-        if bbox:
-            w, s, e, n = (float(x) for x in bbox.split(","))
-            if not (-180 <= w <= 180 and -180 <= e <= 180 and -90 <= s <= n <= 90):
-                raise HTTPException(422, "bbox out of range")
-            box = (w, s, e, n)
+        values = {"source": source, "theme": theme, "landscape": landscape, "geography": geography}
         query = search.Query(
             text=q,
             filters={k: _split(v) for k, v in values.items() if v},
-            bbox=box,
-            year_from=year_from,
-            year_to=year_to,
             sort=sort,
             descending=None if order is None else order == Order.DESC,
             page=page,
@@ -218,24 +174,12 @@ def create_app(
 
     @app.get("/v1/resources/{source_id}/{local_id}", response_model=ResourceDetail, tags=["resources"])
     def get_resource(source_id: str, local_id: str) -> ResourceDetail:
-        """One resource: the full record in the MOSAIC model, its provenance and its quality."""
+        """One resource, by catalogue and id: the full record in the MOSAIC model, where it comes from
+        (provenance) and how complete it is (quality)."""
         found = catalog.get(f"{source_id}:{local_id}")
         if found is None:
             raise HTTPException(404, "resource not found")
         return found
-
-    @app.get("/v1/resources/{source_id}/{local_id}/jsonld", tags=["resources"])
-    def get_resource_jsonld(source_id: str, local_id: str) -> JSONResponse:
-        """schema.org Dataset (JSON-LD), for search engines and FAIR harvesters."""
-        found = catalog.get(f"{source_id}:{local_id}")
-        if found is None:
-            raise HTTPException(404, "resource not found")
-        return JSONResponse(to_jsonld(found.record, found.provenance.record_url), media_type="application/ld+json")
-
-    @app.get("/v1/summaries", response_model=list[ResourceSummary], tags=["resources"])
-    def summaries() -> list[ResourceSummary]:
-        """Every resource as a light card (what the static site loads for in-browser search)."""
-        return catalog.summaries()
 
     if landscapes is not None:
 

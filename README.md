@@ -1,7 +1,7 @@
 # mosaic-api
 
 > **Status: v0.1.0, first publication.** Repository: https://github.com/MOSAIC-mfl/mosaic-api.
-> Static API: https://mosaic-mfl.github.io/mosaic-api/v1/manifest.json (once Pages is enabled).
+> Static API: https://mosaic-mfl.github.io/mosaic-api/ · documentation: https://mosaic-mfl.github.io/mosaic-api/docs/
 
 Read-only API of **MOSAIC**, a network of metadata. It reads several catalogues, translates their
 records into the **MOSAIC metadata model**, and serves them as JSON to the website and to anyone
@@ -12,7 +12,7 @@ follow. Every resource keeps its provenance: MOSAIC links to the data where it l
  catalogues (repos / APIs)        mosaic-api                                         consumers
  ┌─────────────────────┐   harvest ┌──────────────────────────────────────────────┐   ┌──────────┐
  │ mosaic-catalog dist │──────────▶│ source adapters → translators → CORE          │──▶│ website  │
- │ cdh-catalog (YAML)  │──────────▶│ (MOSAIC model, quality, facets, search,       │   │ others   │
+ │ cdh-catalog (YAML)  │──────────▶│ (MOSAIC model, quality, filters, search,      │   │ others   │
  │ … (STAC, Dataverse) │──────────▶│  cross-catalogue links)  → FastAPI / exporter │   └──────────┘
  └─────────────────────┘           └──────────────────────────────────────────────┘
 ```
@@ -72,30 +72,35 @@ instead of cloning it.
 
 ## Endpoints (v1)
 
-| Live | Static file | What |
-|---|---|---|
-| `GET /v1/manifest` | `v1/manifest.json` | Versions, counts, sources and, in the static API, the list of files with their hashes |
-| `GET /v1/sources` | `v1/sources.json` | Catalogues read, last harvest, errors |
-| `GET /v1/facets` | `v1/facets.json` | Counts per filter value |
-| `GET /v1/labels` | `v1/labels.json` | Labels for filter values (from the vocabularies) |
-| `GET /v1/resources?q=&theme=&…` | `v1/summaries/<hash>.json` + `v1/search/<hash>.json` | Search and filters. Live: on the server. Static: in the browser, same rules |
-| `GET /v1/resources/{source}/{id}` | `v1/resources/{source}/{id}.json` | One resource: MOSAIC record, provenance, quality, links |
-| `GET /v1/resources/{source}/{id}/jsonld` | `v1/resources/{source}/{id}.jsonld` | schema.org Dataset (FAIR, search engines) |
-| `GET /v1/landscapes` | `v1/landscapes.json` | Every living landscape: its page sections, dataset counts, the records its profile names |
-| `GET /v1/landscapes/{code}` | `v1/landscapes/{CODE}.json` | One landscape page: its profile (sections and their configuration) and its data status |
-| `GET /openapi.json` | `v1/openapi.json` | The contract |
+Four things, nothing else ([ADR-0006](docs/adr/0006-four-endpoints.md)):
 
-Landscape profiles are written in mosaic-catalog (`landscapes/<CODE>/`, published in its
+| Live | File on Pages | What |
+|---|---|---|
+| `GET /v1/sources` | `v1/sources.json` | The catalogues MOSAIC reads (MOSAIC, CGIAR Climate Data Hub, …): records, last harvest, errors |
+| `GET /v1/filters` | `v1/filters.json` | Read once before searching: versions and totals, the filters of `/v1/resources` with every option (`value`, `label`, `count`), and labels for the other coded values |
+| `GET /v1/resources?q=&source=&theme=&landscape=&geography=` | (searched in the browser) | The catalogue: search and filters, sorted and paged; `include_facets=true` adds the count of each filter value over all the results |
+| `GET /v1/resources/{source}/{id}` | `v1/resources/{source}/{id}.json` | One resource: MOSAIC record, provenance, quality |
+| `GET /v1/landscapes` | `v1/landscapes.json` | Every living landscape: its page sections, dataset counts, the records its profile names |
+| `GET /v1/landscapes/{code}` | `v1/landscapes/{CODE}.json` | One landscape page: its profile and its data status |
+
+Documentation: `/docs` on the live API; on Pages, [`docs/`](https://mosaic-mfl.github.io/mosaic-api/docs/)
+describes the files (Swagger UI, "Try it out" works). The full contract of the live API is
+`/openapi.json` (on Pages: `v1/openapi.json`).
+
+**Filters** of `/v1/resources`: `source`, `theme`, `landscape`, `geography`. Values are
+comma-separated, combined with OR inside a filter and AND across filters; a value can be given by
+its id or by its label, ignoring case, accents and symbols (`geography=Perú` = `PER`). Also `q`
+(every word must appear), `sort` (`relevance`, `title`, `updated`, `year`), `order`, `page`,
+`page_size` (at most 100).
+
+**On Pages there is no `?q=`:** GitHub Pages serves files. The website searches in the browser
+with the same rules, over files kept outside the contract (`v1/_index/`).
+
+Landscape profiles are written in the catalogue (`landscapes/<CODE>/`, published in its
 `dist/landscapes/`) and read from the same place as the standard. The API serves them as published
 and adds what only the catalogue knows: which resources cover the landscape and how complete their
-metadata is (`data_status`: totals, data types, themes, access, minimum fields missing). The code is
-case-insensitive (`KEN-LVB` or `ken-lvb`).
-
-Filters are `source`, `resource_type`, `theme`, `landscape`, `geography`, `data_kind`, `geometry`,
-`spatial`, `method`, `access`, `license` and `status`. Values are comma-separated, combined with OR
-inside a filter and AND across filters. There are also `bbox=w,s,e,n`, `year_from`, `year_to`,
-`sort` (`relevance`, `title`, `updated`, `year`), `page`, `page_size` (at most 100) and
-`include_facets`.
+metadata is (`data_status`). The code is case-insensitive in the live API (`KEN-LVB` or `ken-lvb`);
+the files on Pages use capitals.
 
 ## Documentation
 

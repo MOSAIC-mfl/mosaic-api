@@ -24,37 +24,76 @@ def test_search_and_filters(client: TestClient) -> None:
     page = client.get("/v1/resources", params={"q": "forest", "include_facets": True}).json()
     assert [i["id"] for i in page["items"]] == ["mosaic:MFL-2026-079"]
     assert page["facets"]["source"] == {"mosaic": 1}
-    cdh = client.get("/v1/resources", params={"source": "cdh", "spatial": "no"}).json()
-    assert [i["id"] for i in cdh["items"]] == ["cdh:ecocrop"]
-    restricted = client.get("/v1/resources", params={"access": "restricted,internal"}).json()
-    assert {i["id"] for i in restricted["items"]} == {"mosaic:MFL-2026-090"}
+    assert set(page["facets"]) == {"source", "theme", "landscape", "geography"}
+    cdh = client.get("/v1/resources", params={"source": "cdh"}).json()
+    assert cdh["total"] == 3 and {i["source"] for i in cdh["items"]} == {"cdh"}
 
 
-def test_resource_detail_and_jsonld(client: TestClient) -> None:
+def test_only_the_simple_filters_exist(client: TestClient) -> None:
+    spec = client.get("/openapi.json").json()
+    params = {p["name"] for p in spec["paths"]["/v1/resources"]["get"]["parameters"]}
+    assert params == {
+        "q",
+        "source",
+        "theme",
+        "landscape",
+        "geography",
+        "sort",
+        "order",
+        "page",
+        "page_size",
+        "include_facets",
+    }
+    assert set(spec["paths"]) == {
+        "/v1/sources",
+        "/v1/filters",
+        "/v1/resources",
+        "/v1/resources/{source_id}/{local_id}",
+        "/v1/landscapes",
+        "/v1/landscapes/{code}",
+    } - ({"/v1/landscapes", "/v1/landscapes/{code}"} - set(spec["paths"]))
+
+
+def test_filters_endpoint(client: TestClient) -> None:
+    f = client.get("/v1/filters").json()
+    assert f["totals"]["resources"] == 7 and f["api_version"]
+    assert set(f["filters"]) == {"source", "theme", "landscape", "geography"}
+    sources = {o["value"]: o for o in f["filters"]["source"]}
+    assert sources["mosaic"]["count"] == 4 and sources["cdh"]["label"] == "CGIAR Climate Data Hub"
+    peru = next(o for o in f["filters"]["geography"] if o["value"] == "PER")
+    assert peru["label"] == "Peru" and peru["count"] == 1
+    assert f["labels"]["access"]["restricted"] == "Restricted"
+    assert "theme" not in f["labels"]
+
+
+def test_resource_detail(client: TestClient) -> None:
     d = client.get("/v1/resources/cdh/esa-worldcover-2021").json()
     assert d["record"]["id"] == "esa-worldcover-2021"
     assert d["provenance"]["source_name"] == "CGIAR Climate Data Hub"
     assert d["quality"]["status"] == "complete"
-    ld = client.get("/v1/resources/cdh/esa-worldcover-2021/jsonld")
-    assert ld.headers["content-type"] == "application/ld+json"
-    assert ld.json()["@type"] == "Dataset" and ld.json()["identifier"] == "https://doi.org/10.5281/zenodo.7254221"
+    for gone in (
+        "/v1/manifest",
+        "/v1/facets",
+        "/v1/labels",
+        "/v1/summaries",
+        "/v1/resources/cdh/esa-worldcover-2021/jsonld",
+    ):
+        assert client.get(gone).status_code == 404, gone
 
 
 def test_errors_are_problem_json(client: TestClient) -> None:
     r = client.get("/v1/resources/mosaic/NOPE")
     assert r.status_code == 404 and r.headers["content-type"] == "application/problem+json"
     assert client.get("/v1/resources", params={"page_size": 51}).status_code == 422
-    assert client.get("/v1/resources", params={"bbox": "0,0,1"}).status_code == 422
-    assert client.get("/v1/resources", params={"bbox": "0,95,1,96"}).status_code == 422
     assert client.get("/v1/resources", params={"q": "x" * 201}).status_code == 422
 
 
 def test_read_only_and_headers(client: TestClient) -> None:
     assert client.post("/v1/resources").status_code == 405
-    r = client.get("/v1/manifest", headers={"Origin": "http://localhost:4321"})
+    r = client.get("/v1/filters", headers={"Origin": "http://localhost:4321"})
     assert r.headers["x-content-type-options"] == "nosniff"
     assert r.headers["access-control-allow-origin"] == "http://localhost:4321"
-    other = client.get("/v1/manifest", headers={"Origin": "https://evil.example"})
+    other = client.get("/v1/filters", headers={"Origin": "https://evil.example"})
     assert "access-control-allow-origin" not in other.headers
 
 
@@ -68,14 +107,33 @@ def test_emails_can_be_hidden(catalog: CatalogService) -> None:
 
 def test_static_export_matches_live_api(tmp_path: Path, catalog: CatalogService, client: TestClient) -> None:
     out = tmp_path / "site"
-    manifest = export(client.app, catalog, out)  # type: ignore[arg-type]
-    assert manifest["counts"]["resources"] == 7
-    for ref in [*manifest["files"]["summaries"], manifest["files"]["search"]]:
+    summary = export(client.app, catalog, out)  # type: ignore[arg-type]
+    assert summary["totals"]["resources"] == 7
+    index = json.loads((out / "v1/_index/index.json").read_text(encoding="utf-8"))
+    for ref in [*index["summaries"], index["search"]]:
         data = (out / ref["path"]).read_bytes()
         assert hashlib.sha256(data).hexdigest() == ref["sha256"]
     on_disk = json.loads((out / "v1/resources/mosaic/MFL-2026-104.json").read_text(encoding="utf-8"))
     assert on_disk == client.get("/v1/resources/mosaic/MFL-2026-104").json()
+    for name in ("sources", "filters"):
+        assert json.loads((out / f"v1/{name}.json").read_text(encoding="utf-8")) == client.get(f"/v1/{name}").json()
+    assert not list(out.rglob("*.jsonld")) and not (out / "v1/manifest.json").exists()
     assert (out / "v1/openapi.json").exists() and (out / ".nojekyll").exists()
+
+
+def test_static_docs_describe_the_files(tmp_path: Path, catalog: CatalogService, client: TestClient) -> None:
+    out = tmp_path / "site"
+    export(client.app, catalog, out)  # type: ignore[arg-type]
+    assert "swagger-ui-bundle.js" in (out / "docs/index.html").read_text(encoding="utf-8")
+    spec = json.loads((out / "docs/openapi.json").read_text(encoding="utf-8"))
+    assert spec["servers"] == [{"url": "..", "description": "This site"}]
+    for path in spec["paths"]:
+        assert path.endswith(".json")
+        concrete = (
+            path.replace("{source_id}", "mosaic").replace("{local_id}", "MFL-2026-079").replace("{code}", "PER-PCL")
+        )
+        if "{" not in concrete and "landscapes" not in concrete:
+            assert (out / concrete.lstrip("/")).exists(), concrete
 
 
 def test_fetcher_refuses_unsafe_locations(tmp_path: Path) -> None:
@@ -108,14 +166,14 @@ def test_root_redirects_browsers_only(client: TestClient) -> None:
     assert fetch.status_code == 200 and fetch.json()["docs"] == "/docs"
     assert client.get("/", headers={"Accept": "application/json"}).json()["name"] == "MOSAIC API"
     # API routes are never redirected, whatever the client asks for
-    assert client.get("/v1/manifest", headers={"Accept": "text/html"}, follow_redirects=False).status_code == 200
+    assert client.get("/v1/filters", headers={"Accept": "text/html"}, follow_redirects=False).status_code == 200
 
 
 def test_docs_page_may_load_swagger_ui(client: TestClient) -> None:
     docs = client.get("/docs")
     assert docs.status_code == 200
     assert "https://cdn.jsdelivr.net" in docs.headers["content-security-policy"]
-    assert client.get("/v1/manifest").headers["content-security-policy"] == "default-src 'none'; frame-ancestors 'none'"
+    assert client.get("/v1/filters").headers["content-security-policy"] == "default-src 'none'; frame-ancestors 'none'"
 
 
 @pytest.mark.parametrize(
@@ -129,10 +187,7 @@ def test_docs_page_may_load_swagger_ui(client: TestClient) -> None:
         ({"geography": "Perú"}, 1),  # label, with an accent
         ({"theme": "Pressures / drivers"}, 1),  # label with symbols
         ({"theme": "PRESSURES-DRIVERS"}, 1),
-        ({"license": "cc by 4.0"}, 3),  # CC-BY-4.0 (the three CDH records)
-        ({"access": "Restricted,INTERNAL"}, 1),
         ({"landscape": "per-pcl"}, 1),
-        ({"spatial": "YES"}, 6),
         ({"q": "DEFORESTACIÓN FOREST"}, 0),  # every word must appear
         ({"q": "  Forest   LOSS "}, 1),
         ({"q": "non-forest"}, 1),  # hyphen in the text and in the query

@@ -6,54 +6,13 @@
   "version": "0.1.0"
  },
  "paths": {
-  "/v1/manifest": {
-   "get": {
-    "tags": [
-     "catalogue"
-    ],
-    "summary": "Manifest",
-    "operationId": "manifest_v1_manifest_get",
-    "responses": {
-     "200": {
-      "description": "Successful Response",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Manifest"
-        }
-       }
-      }
-     },
-     "422": {
-      "description": "Unprocessable Content",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Problem"
-        }
-       }
-      }
-     },
-     "404": {
-      "description": "Not Found",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Problem"
-        }
-       }
-      }
-     }
-    }
-   }
-  },
   "/v1/sources": {
    "get": {
     "tags": [
      "catalogue"
     ],
     "summary": "Sources",
-    "description": "Catalogues MOSAIC reads from, with the date and outcome of the last harvest.",
+    "description": "The catalogues MOSAIC reads (MOSAIC, CGIAR Climate Data Hub, ...): how many records each\none has, and the date and outcome of the last harvest.",
     "operationId": "sources_v1_sources_get",
     "responses": {
      "200": {
@@ -93,70 +52,21 @@
     }
    }
   },
-  "/v1/facets": {
+  "/v1/filters": {
    "get": {
     "tags": [
      "catalogue"
     ],
-    "summary": "Facets",
-    "description": "Counts per filter value over the whole catalogue. Facets: source, resource_type, theme, landscape, geography, data_kind, geometry, spatial, method, access, license, status",
-    "operationId": "facets_v1_facets_get",
+    "summary": "Filters",
+    "description": "Read once before searching: versions and totals, the filters of GET /v1/resources with\nevery option (value, label, count), and display labels for the other coded values.",
+    "operationId": "filters_v1_filters_get",
     "responses": {
      "200": {
       "description": "Successful Response",
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": {
-          "additionalProperties": {
-           "type": "integer"
-          },
-          "type": "object"
-         },
-         "type": "object",
-         "title": "Response Facets V1 Facets Get"
-        }
-       }
-      }
-     },
-     "422": {
-      "description": "Unprocessable Content",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Problem"
-        }
-       }
-      }
-     },
-     "404": {
-      "description": "Not Found",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Problem"
-        }
-       }
-      }
-     }
-    }
-   }
-  },
-  "/v1/labels": {
-   "get": {
-    "tags": [
-     "catalogue"
-    ],
-    "summary": "Labels",
-    "description": "Display labels for facet values (from the MOSAIC vocabularies).",
-    "operationId": "labels_v1_labels_get",
-    "responses": {
-     "200": {
-      "description": "Successful Response",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Labels"
+         "$ref": "#/components/schemas/FiltersOut"
         }
        }
       }
@@ -190,7 +100,7 @@
      "resources"
     ],
     "summary": "List Resources",
-    "description": "Search and filter. OR inside one filter (comma-separated), AND across filters.",
+    "description": "The catalogue: search and filter. OR inside one filter (comma-separated), AND across\nfilters. Values are case-, accent- and symbol-insensitive, and a label works as well as its id.",
     "operationId": "list_resources_v1_resources_get",
     "parameters": [
      {
@@ -220,29 +130,10 @@
          "type": "null"
         }
        ],
-       "description": "Comma-separated values (OR).",
+       "description": "Catalogue, e.g. mosaic, cdh. Comma-separated values (OR). Values and labels: GET /v1/filters.",
        "title": "Source"
       },
-      "description": "Comma-separated values (OR)."
-     },
-     {
-      "name": "resource_type",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "string",
-         "maxLength": 500
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "description": "Comma-separated values (OR).",
-       "title": "Resource Type"
-      },
-      "description": "Comma-separated values (OR)."
+      "description": "Catalogue, e.g. mosaic, cdh. Comma-separated values (OR). Values and labels: GET /v1/filters."
      },
      {
       "name": "theme",
@@ -258,10 +149,10 @@
          "type": "null"
         }
        ],
-       "description": "Comma-separated values (OR).",
+       "description": "Theme, e.g. water. Comma-separated values (OR). Values and labels: GET /v1/filters.",
        "title": "Theme"
       },
-      "description": "Comma-separated values (OR)."
+      "description": "Theme, e.g. water. Comma-separated values (OR). Values and labels: GET /v1/filters."
      },
      {
       "name": "landscape",
@@ -277,10 +168,10 @@
          "type": "null"
         }
        ],
-       "description": "Comma-separated values (OR).",
+       "description": "Living landscape, e.g. KEN-LVB. Comma-separated values (OR). Values and labels: GET /v1/filters.",
        "title": "Landscape"
       },
-      "description": "Comma-separated values (OR)."
+      "description": "Living landscape, e.g. KEN-LVB. Comma-separated values (OR). Values and labels: GET /v1/filters."
      },
      {
       "name": "geography",
@@ -296,198 +187,10 @@
          "type": "null"
         }
        ],
-       "description": "Comma-separated values (OR).",
+       "description": "Country or region, e.g. KEN. Comma-separated values (OR). Values and labels: GET /v1/filters.",
        "title": "Geography"
       },
-      "description": "Comma-separated values (OR)."
-     },
-     {
-      "name": "data_kind",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "string",
-         "maxLength": 500
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "description": "Comma-separated values (OR).",
-       "title": "Data Kind"
-      },
-      "description": "Comma-separated values (OR)."
-     },
-     {
-      "name": "geometry",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "string",
-         "maxLength": 500
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "description": "Comma-separated values (OR).",
-       "title": "Geometry"
-      },
-      "description": "Comma-separated values (OR)."
-     },
-     {
-      "name": "spatial",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "string",
-         "maxLength": 500
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "description": "Comma-separated values (OR).",
-       "title": "Spatial"
-      },
-      "description": "Comma-separated values (OR)."
-     },
-     {
-      "name": "method",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "string",
-         "maxLength": 500
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "description": "Comma-separated values (OR).",
-       "title": "Method"
-      },
-      "description": "Comma-separated values (OR)."
-     },
-     {
-      "name": "access",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "string",
-         "maxLength": 500
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "description": "Comma-separated values (OR).",
-       "title": "Access"
-      },
-      "description": "Comma-separated values (OR)."
-     },
-     {
-      "name": "license",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "string",
-         "maxLength": 500
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "description": "Comma-separated values (OR).",
-       "title": "License"
-      },
-      "description": "Comma-separated values (OR)."
-     },
-     {
-      "name": "status",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "string",
-         "maxLength": 500
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "description": "Comma-separated values (OR).",
-       "title": "Status"
-      },
-      "description": "Comma-separated values (OR)."
-     },
-     {
-      "name": "bbox",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "string",
-         "pattern": "^-?[\\d.]+,-?[\\d.]+,-?[\\d.]+,-?[\\d.]+$"
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "description": "west,south,east,north",
-       "title": "Bbox"
-      },
-      "description": "west,south,east,north"
-     },
-     {
-      "name": "year_from",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "integer",
-         "maximum": 3000,
-         "minimum": 1000
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "title": "Year From"
-      }
-     },
-     {
-      "name": "year_to",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "anyOf": [
-        {
-         "type": "integer",
-         "maximum": 3000,
-         "minimum": 1000
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "title": "Year To"
-      }
+      "description": "Country or region, e.g. KEN. Comma-separated values (OR). Values and labels: GET /v1/filters."
      },
      {
       "name": "sort",
@@ -545,9 +248,11 @@
       "required": false,
       "schema": {
        "type": "boolean",
+       "description": "Also return the count of each filter value over all the results.",
        "default": false,
        "title": "Include Facets"
-      }
+      },
+      "description": "Also return the count of each filter value over all the results."
      }
     ],
     "responses": {
@@ -590,7 +295,7 @@
      "resources"
     ],
     "summary": "Get Resource",
-    "description": "One resource: the full record in the MOSAIC model, its provenance and its quality.",
+    "description": "One resource, by catalogue and id: the full record in the MOSAIC model, where it comes from\n(provenance) and how complete it is (quality).",
     "operationId": "get_resource_v1_resources__source_id___local_id__get",
     "parameters": [
      {
@@ -642,112 +347,6 @@
        }
       },
       "description": "Not Found"
-     }
-    }
-   }
-  },
-  "/v1/resources/{source_id}/{local_id}/jsonld": {
-   "get": {
-    "tags": [
-     "resources"
-    ],
-    "summary": "Get Resource Jsonld",
-    "description": "schema.org Dataset (JSON-LD), for search engines and FAIR harvesters.",
-    "operationId": "get_resource_jsonld_v1_resources__source_id___local_id__jsonld_get",
-    "parameters": [
-     {
-      "name": "source_id",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "title": "Source Id"
-      }
-     },
-     {
-      "name": "local_id",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "title": "Local Id"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Successful Response",
-      "content": {
-       "application/json": {
-        "schema": {}
-       }
-      }
-     },
-     "422": {
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Problem"
-        }
-       }
-      },
-      "description": "Unprocessable Content"
-     },
-     "404": {
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Problem"
-        }
-       }
-      },
-      "description": "Not Found"
-     }
-    }
-   }
-  },
-  "/v1/summaries": {
-   "get": {
-    "tags": [
-     "resources"
-    ],
-    "summary": "Summaries",
-    "description": "Every resource as a light card (what the static site loads for in-browser search).",
-    "operationId": "summaries_v1_summaries_get",
-    "responses": {
-     "200": {
-      "description": "Successful Response",
-      "content": {
-       "application/json": {
-        "schema": {
-         "items": {
-          "$ref": "#/components/schemas/ResourceSummary"
-         },
-         "type": "array",
-         "title": "Response Summaries V1 Summaries Get"
-        }
-       }
-      }
-     },
-     "422": {
-      "description": "Unprocessable Content",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Problem"
-        }
-       }
-      }
-     },
-     "404": {
-      "description": "Not Found",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Problem"
-        }
-       }
-      }
      }
     }
    }
@@ -917,8 +516,73 @@
     "title": "DataStatusOut",
     "description": "What the catalogue holds for the landscape and how complete it is."
    },
-   "Labels": {
+   "FilterOption": {
     "properties": {
+     "value": {
+      "type": "string",
+      "title": "Value",
+      "description": "What goes in the query, e.g. theme=water."
+     },
+     "label": {
+      "type": "string",
+      "title": "Label",
+      "description": "What people read, from the MOSAIC vocabularies."
+     },
+     "count": {
+      "type": "integer",
+      "title": "Count",
+      "description": "Resources with this value in the whole catalogue."
+     }
+    },
+    "type": "object",
+    "required": [
+     "value",
+     "label",
+     "count"
+    ],
+    "title": "FilterOption"
+   },
+   "FiltersOut": {
+    "properties": {
+     "api_version": {
+      "type": "string",
+      "title": "Api Version"
+     },
+     "standard_version": {
+      "type": "string",
+      "title": "Standard Version"
+     },
+     "harvested_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Harvested At"
+     },
+     "totals": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "Totals",
+      "description": "resources, complete, incomplete."
+     },
+     "filters": {
+      "additionalProperties": {
+       "items": {
+        "$ref": "#/components/schemas/FilterOption"
+       },
+       "type": "array"
+      },
+      "type": "object",
+      "title": "Filters",
+      "description": "One entry per filter of GET /v1/resources (source, theme, landscape, geography): the values present in the catalogue, most frequent first."
+     },
      "labels": {
       "additionalProperties": {
        "additionalProperties": {
@@ -927,15 +591,21 @@
        "type": "object"
       },
       "type": "object",
-      "title": "Labels"
+      "title": "Labels",
+      "description": "Display labels of the other coded values a resource shows (resource_type, data_kind, access, method, geometry, spatial, license, status)."
      }
     },
     "type": "object",
     "required": [
+     "api_version",
+     "standard_version",
+     "harvested_at",
+     "totals",
+     "filters",
      "labels"
     ],
-    "title": "Labels",
-    "description": "Display labels for facet values, per facet (from the MOSAIC vocabularies)."
+    "title": "FiltersOut",
+    "description": "Everything a client needs before searching: versions, totals, the filters of\nGET /v1/resources with their options, and display labels for the other coded values."
    },
    "LandscapeOut": {
     "properties": {
@@ -1176,59 +846,6 @@
     ],
     "title": "LandscapeSummaryOut"
    },
-   "Manifest": {
-    "properties": {
-     "api_version": {
-      "type": "string",
-      "title": "Api Version"
-     },
-     "standard_version": {
-      "type": "string",
-      "title": "Standard Version"
-     },
-     "harvested_at": {
-      "anyOf": [
-       {
-        "type": "string",
-        "format": "date-time"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Harvested At"
-     },
-     "counts": {
-      "additionalProperties": {
-       "type": "integer"
-      },
-      "type": "object",
-      "title": "Counts"
-     },
-     "sources": {
-      "items": {
-       "type": "string"
-      },
-      "type": "array",
-      "title": "Sources"
-     },
-     "files": {
-      "additionalProperties": true,
-      "type": "object",
-      "title": "Files",
-      "description": "Static export only: file paths with hashes."
-     }
-    },
-    "type": "object",
-    "required": [
-     "api_version",
-     "standard_version",
-     "harvested_at",
-     "counts",
-     "sources"
-    ],
-    "title": "Manifest"
-   },
    "Order": {
     "type": "string",
     "enum": [
@@ -1452,7 +1069,7 @@
        }
       ],
       "title": "Facets",
-      "description": "Counts over ALL results of the query."
+      "description": "With include_facets: counts per filter value over ALL results of the query."
      },
      "warnings": {
       "items": {

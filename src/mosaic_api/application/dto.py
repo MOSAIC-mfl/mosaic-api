@@ -142,7 +142,9 @@ class ResourcePage(Out):
     total: int
     page: int
     page_size: int
-    facets: dict[str, dict[str, int]] | None = Field(None, description="Counts over ALL results of the query.")
+    facets: dict[str, dict[str, int]] | None = Field(
+        None, description="With include_facets: counts per filter value over ALL results of the query."
+    )
     warnings: list[str] = Field(default_factory=list, description="Filter values that match nothing known.")
 
 
@@ -157,25 +159,28 @@ class SourceOut(Out):
     error: str | None
 
 
-class Labels(Out):
-    """Display labels for facet values, per facet (from the MOSAIC vocabularies)."""
-
-    labels: dict[str, dict[str, str]]
-
-
-class ShardRef(Out):
-    path: str
-    sha256: str
-    records: int
+class FilterOption(Out):
+    value: str = Field(description="What goes in the query, e.g. theme=water.")
+    label: str = Field(description="What people read, from the MOSAIC vocabularies.")
+    count: int = Field(description="Resources with this value in the whole catalogue.")
 
 
-class Manifest(Out):
+class FiltersOut(Out):
+    """Everything a client needs before searching: versions, totals, the filters of
+    GET /v1/resources with their options, and display labels for the other coded values."""
+
     api_version: str
     standard_version: str
     harvested_at: datetime | None
-    counts: dict[str, int]
-    sources: list[str]
-    files: dict[str, Any] = Field(default_factory=dict, description="Static export only: file paths with hashes.")
+    totals: dict[str, int] = Field(description="resources, complete, incomplete.")
+    filters: dict[str, list[FilterOption]] = Field(
+        description="One entry per filter of GET /v1/resources (source, theme, landscape, geography): "
+        "the values present in the catalogue, most frequent first."
+    )
+    labels: dict[str, dict[str, str]] = Field(
+        description="Display labels of the other coded values a resource shows (resource_type, data_kind, "
+        "access, method, geometry, spatial, license, status)."
+    )
 
 
 class Problem(Out):

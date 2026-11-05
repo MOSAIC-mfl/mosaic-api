@@ -34,6 +34,10 @@ FACETS = (
     "status",
 )
 
+# The facets people can filter by (GET /v1/resources and the website). The others stay as values
+# on each resource (``facets`` of a summary) for display.
+FILTERS = ("source", "theme", "landscape", "geography")
+
 
 def _license(r: Resource) -> str:
     if r.license.spdx:
@@ -84,10 +88,11 @@ def facet_values(r: Resource) -> dict[str, list[str]]:
     }
 
 
-def count(resources: Iterable[Resource]) -> dict[str, dict[str, int]]:
+def count(resources: Iterable[Resource], facets: Iterable[str] = FACETS) -> dict[str, dict[str, int]]:
     """Counts per facet value across resources (sorted by count, then value)."""
-    counters: dict[str, Counter[str]] = {f: Counter() for f in FACETS}
+    counters: dict[str, Counter[str]] = {f: Counter() for f in facets}
     for r in resources:
-        for facet, values in facet_values(r).items():
-            counters[facet].update(values)
+        values = facet_values(r)
+        for facet, counter in counters.items():
+            counter.update(values[facet])
     return {f: dict(sorted(c.items(), key=lambda kv: (-kv[1], kv[0]))) for f, c in counters.items()}

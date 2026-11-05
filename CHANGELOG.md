@@ -2,6 +2,17 @@
 
 ## [0.1.0] - unreleased (first publication)
 
+### Changed
+- **Four endpoints** (ADR-0006): `GET /v1/sources`, `GET /v1/filters` (new: versions, totals,
+  filter options with label and count, labels; replaces `manifest`, `facets` and `labels`),
+  `GET /v1/resources` and `GET /v1/resources/{source}/{id}`, plus the landscape routes.
+  Removed: `/v1/manifest`, `/v1/facets`, `/v1/labels`, `/v1/summaries` and the JSON-LD route.
+- `/v1/resources` filters: `source`, `theme`, `landscape`, `geography` (plus `q`, sort, paging).
+  Removed: `resource_type`, `data_kind`, `geometry`, `spatial`, `method`, `access`, `license`,
+  `status`, `bbox`, `year_from`, `year_to`.
+- Static export: in-browser search files under `v1/_index/` (internal); `docs/` with Swagger UI
+  and a contract of the files on Pages, so `…/mosaic-api/docs/` works.
+
 ### Added
 - Pipeline `.github/workflows/pages.yml` (replaces `ci.yml` and `publish.yml`): `check` (lint,
   format, types, import layers, tests) on every pull request; from `main`, daily, by hand or on

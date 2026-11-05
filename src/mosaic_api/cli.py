@@ -46,8 +46,8 @@ def main(argv: list[str] | None = None) -> int:
         from .adapters.inbound.exporter import export
 
         out = args.out or Path(settings.resolve(settings.export_dir))
-        manifest = export(app, catalog, out)
-        print(f"Static API: {manifest['counts']['resources']} resources -> {out}")
+        summary = export(app, catalog, out)
+        print(f"Static API: {summary['totals']['resources']} resources -> {out}")
         return 0
     if args.cmd == "openapi":
         text = json.dumps(app.openapi(), indent=1, ensure_ascii=False)

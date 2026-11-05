@@ -5,7 +5,7 @@
 ```
 src/mosaic_api/
   domain/        the MOSAIC model and its rules: model, facets, search, cross-catalogue
-                 linking, JSON-LD. Pure Python + Pydantic (types only). No I/O.
+                 linking. Pure Python + Pydantic (types only). No I/O.
   ports/         interfaces the core needs: CatalogSource, Translator, QualityAssessor,
                  SnapshotStore, StandardProvider (typing.Protocol)
   application/   use cases: HarvestService (write side), CatalogService (read side),
@@ -54,16 +54,18 @@ store.save(snapshot)
 
 ## 3. Read side: queries and the static API
 
-`CatalogService` holds the snapshot in memory and answers search, get, facets, labels and sources.
+`CatalogService` holds the snapshot in memory and answers sources, filters, search and get.
 `create_app()` exposes these as GET routes. The exporter calls the same routes and writes the
 answers as files, so the static API **is** the live API, frozen at harvest time.
 
 **What the website does with the static API:**
 
-1. Fetch `v1/manifest.json`. It is small and the only file that changes name-stably.
-2. Fetch the files it lists that are not cached yet: `summaries/<hash>.json` and
-   `search/<hash>.json`. Hashed names never change, so they can be cached for good, in the browser
-   (HTTP cache or IndexedDB) and on the CDN.
+1. Fetch `v1/filters.json` (versions, totals, filter options and labels), `v1/sources.json` and
+   `v1/_index/index.json`. The index is internal (not in the contract): it lists the hashed files
+   for in-browser search.
+2. Fetch the files the index lists that are not cached yet: `_index/summaries/<hash>.json` and
+   `_index/search/<hash>.json`. Hashed names never change, so they can be cached for good, in the
+   browser (HTTP cache or IndexedDB) and on the CDN.
 3. Filter and search in the browser with the same rules as `domain/search.py` and
    `domain/text.py`:
    - **fold** every text before comparing it: casefold (ß→ss); NFKD with accents removed; ø, æ,
@@ -74,10 +76,10 @@ answers as files, so the static API **is** the live API, frozen at harvest time.
      (`search/<hash>.json` is already folded);
    - **filters:** compare `key(value)`, which is `fold` with `-` as the separator, on both sides.
      `CC BY 4.0`, `cc-by-4.0` and `CC-BY-4.0` are therefore the same, and so are `PER` and `per`.
-     A value may also be given by its label (`Perú` → `PER`), resolved with `v1/labels.json`;
-   - OR inside a filter, AND across filters (`summary.facets` already carries each resource's
-     values);
-   - bbox intersection and year overlap.
+     A value may also be given by its label (`Perú` → `PER`), resolved with the labels in
+     `v1/filters.json`;
+   - OR inside a filter, AND across filters, over the four filters (`source`, `theme`,
+     `landscape`, `geography`; `summary.facets` already carries each resource's values).
 4. Fetch `v1/resources/<source>/<id>.json` when a card is opened.
 
 **Scale:**

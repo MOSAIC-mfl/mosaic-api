@@ -46,8 +46,9 @@ def test_no_profiles_published_means_no_landscapes(tmp_path: Path, catalog: Cata
 
 def test_export_writes_landscape_files(tmp_path: Path, catalog: CatalogService, landscapes: LandscapeService) -> None:
     out = tmp_path / "site"
-    manifest = export(create_app(catalog, landscapes=landscapes), catalog, out)
-    assert manifest["files"]["landscape"] == "v1/landscapes/{code}.json"
+    export(create_app(catalog, landscapes=landscapes), catalog, out)
+    docs = json.loads((out / "docs/openapi.json").read_text(encoding="utf-8"))
+    assert "/v1/landscapes/{code}.json" in docs["paths"]
     page = json.loads((out / "v1/landscapes/KEN-LVB.json").read_text(encoding="utf-8"))
     assert page["title"] == "Lake Victoria Basin"
     assert len(json.loads((out / "v1/landscapes.json").read_text(encoding="utf-8"))) == 2

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -54,6 +55,15 @@ def test_harvest_quality_and_incremental(tmp_path: Path, dist_standard: DistStan
     second = make_harvest(tmp_path, dist_standard).run()
     assert second.translated == {"mosaic": 0, "cdh": 0}
     assert second.reused == {"mosaic": 4, "cdh": 3}
+
+
+def test_a_snapshot_of_an_older_model_is_ignored(tmp_path: Path, dist_standard: DistStandard) -> None:
+    # e.g. the cache of the pipeline holds a v0.1 snapshot: the harvest starts again instead of failing
+    old = {"standard_version": "0.1.0", "sources": [], "resources": [{"license": {"spdx": "CC-BY-4.0"}}]}
+    (tmp_path / "snapshot.json").write_text(json.dumps(old), encoding="utf-8")
+    report = make_harvest(tmp_path, dist_standard).run()
+    assert report.translated == {"mosaic": 4, "cdh": 3}
+    assert json.loads((tmp_path / "snapshot.json").read_text(encoding="utf-8"))["snapshot_format"] == 2
 
 
 class Broken:

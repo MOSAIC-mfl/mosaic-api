@@ -34,6 +34,9 @@
   list, not an error.
 
 ### Fixed
+- **A snapshot of an older model no longer breaks the harvest.** The snapshot file carries
+  `snapshot_format` (2 = standard v0.2); one without it, or that does not validate (the v0.1
+  snapshot in the pipeline's cache), is ignored with a warning and every record is translated again.
 - **Filters, sorting and ids now ignore case, accents and symbols:**
   - `source=MOSAIC`, `geography=Perú`, `theme=Pressures / drivers`, `license=cc by 4.0`,
     `sort=Title` and `/v1/resources/MOSAIC/mfl-2026-079` all work;

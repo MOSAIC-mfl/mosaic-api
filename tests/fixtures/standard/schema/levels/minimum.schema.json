@@ -1,73 +1,58 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mosaic-mfl.github.io/catalog/schema/v0.1.0/levels/minimum.schema.json",
+  "$id": "https://mosaic-mfl.github.io/catalog/schema/v0.2.0/levels/minimum.schema.json",
   "title": "MOSAIC minimum (level 0)",
-  "description": "Enough metadata to find, understand, cite and access a resource without opening its files. A record that fails this level is INCOMPLETE: it is listed in review/minimum_gaps and published flagged as incomplete (or hidden, depending on the catalogue configuration).",
+  "description": "Enough metadata to find, understand, use legally and reach a resource. Aligned with the CDH required fields (keywords are recommended for now, decision of 2026-11-05). A record that fails this level is INCOMPLETE: listed in review/minimum_gaps and published flagged as incomplete.",
   "required": [
     "id",
     "title",
     "description",
     "resource_type",
     "themes",
-    "keywords",
-    "geography",
     "license",
-    "contacts",
+    "contact",
     "access",
     "data"
   ],
   "properties": {
-    "license": {
-      "anyOf": [
-        {
-          "required": [
-            "spdx"
-          ],
-          "properties": {
-            "spdx": {
-              "type": "string"
-            }
-          }
-        },
-        {
-          "required": [
-            "text"
-          ],
-          "properties": {
-            "text": {
-              "type": "string"
-            }
-          }
-        }
-      ],
-      "x-message": "licence unknown: give an SPDX id or at least the text of the terms"
+    "contact": {
+      "items": {
+        "required": [
+          "organization",
+          "roles"
+        ]
+      },
+      "x-message": "every contact needs an organization and its roles"
     },
     "data": {
       "items": {
         "required": [
-          "kind",
-          "method"
+          "name"
         ]
       },
-      "x-message": "every access point needs a kind (raster, vector, tabular, document, mixed, other) and a method (download, landing_page, service, request)"
+      "x-message": "every data entry needs a name"
     }
   },
   "allOf": [
     {
-      "anyOf": [
-        {
-          "required": [
-            "citation"
-          ]
-        },
-        {
-          "required": [
-            "doi"
-          ]
+      "properties": {
+        "contact": {
+          "contains": {
+            "properties": {
+              "roles": {
+                "contains": {
+                  "const": "licensor"
+                }
+              }
+            },
+            "required": [
+              "roles"
+            ]
+          }
         }
-      ],
-      "x-field": "citation",
-      "x-message": "no citation and no DOI"
+      },
+      "x-field": "contact",
+      "x-message": "no contact with the licensor role (who grants the licence)"
     },
     {
       "if": {
@@ -85,14 +70,14 @@
           "data": {
             "contains": {
               "required": [
-                "url"
+                "locations"
               ]
             }
           }
         }
       },
       "x-field": "data",
-      "x-message": "public resource with no access point URL"
+      "x-message": "public resource with no location (URL) in data"
     },
     {
       "if": {
@@ -103,7 +88,7 @@
           "access": {
             "enum": [
               "restricted",
-              "internal"
+              "non-public"
             ]
           }
         }
@@ -114,7 +99,50 @@
         ]
       },
       "x-field": "access_note",
-      "x-message": "restricted/internal resource without access_note (how to obtain it)"
+      "x-message": "restricted / non-public resource without access_note (how to obtain it)"
+    },
+    {
+      "if": {
+        "required": [
+          "license"
+        ],
+        "properties": {
+          "license": {
+            "pattern": "\\bLicenseRef-"
+          }
+        }
+      },
+      "then": {
+        "anyOf": [
+          {
+            "required": [
+              "license_text"
+            ]
+          },
+          {
+            "required": [
+              "additional_links"
+            ],
+            "properties": {
+              "additional_links": {
+                "contains": {
+                  "required": [
+                    "rel",
+                    "url"
+                  ],
+                  "properties": {
+                    "rel": {
+                      "const": "license"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "x-field": "license",
+      "x-message": "LicenseRef-… licence without its text (license_text) or link (additional_links rel: license)"
     }
   ]
 }

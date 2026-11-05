@@ -3,6 +3,13 @@
 ## [0.1.0] - unreleased (first publication)
 
 ### Changed
+- **Standard v0.2** (mosaic-catalog ADR-0009): the MOSAIC record follows the CGIAR Climate Data Hub
+  core. `Resource` and `ResourceDetail.record` use its names: `contact` (was `contacts`),
+  `license` as an SPDX string plus `license_text`, `spatial.geography` / `spatial.landscapes`,
+  `temporal.start_date` / `end_date`, `data[].locations[].url`, `data[].access_method`,
+  `data[].geometry_type`, `structures[]` (data dictionary), `access: non-public`. Source format
+  `mosaic-v0.2`. The CDH translator now copies the shared fields and only translates
+  `cdh.domain`, `cdh.usage` and the climate extension; values it cannot place are issues.
 - **Four endpoints** (ADR-0006): `GET /v1/sources`, `GET /v1/filters` (new: versions, totals,
   filter options with label and count, labels; replaces `manifest`, `facets` and `labels`),
   `GET /v1/resources` and `GET /v1/resources/{source}/{id}`, plus the landscape routes.

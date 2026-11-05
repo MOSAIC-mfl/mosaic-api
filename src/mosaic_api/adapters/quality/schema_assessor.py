@@ -31,7 +31,7 @@ class SchemaAssessor:
             failing = self._failing_fields(lv, schema, record)
             fields = set(schema.get("required", [])) | set(schema.get("properties", {}))
             fields |= {r["x-field"] for r in schema.get("allOf", []) if "x-field" in r}
-            if record.get("access") not in ("restricted", "internal"):
+            if record.get("access") not in ("restricted", "non-public"):
                 fields.discard("access_note")
             completeness[lv] = round(1 - len(failing & fields) / len(fields), 3) if fields else 1.0
             if lv == "minimum":

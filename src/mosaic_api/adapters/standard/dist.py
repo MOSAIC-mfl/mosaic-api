@@ -19,7 +19,7 @@ VOCABULARIES = (
     "data_kind",
     "access_method",
     "contact_role",
-    "relation",
+    "service_type",
     "update_frequency",
 )
 CROSSWALKS = ("cdh",)

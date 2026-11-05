@@ -23,7 +23,7 @@ from mosaic_api.ports.sources import SourceInfo
 FIX = Path(__file__).parent / "fixtures"
 NOW = datetime(2026, 10, 30, 12, 0, tzinfo=timezone.utc)
 FETCHER = SafeFetcher(frozenset({"example.org"}))
-MOSAIC = SourceInfo("mosaic", "MOSAIC", None, "mosaic-v0.1")
+MOSAIC = SourceInfo("mosaic", "MOSAIC", None, "mosaic-v0.2")
 CDH = SourceInfo("cdh", "CGIAR Climate Data Hub", None, "cdh-yaml-v0.5")
 
 

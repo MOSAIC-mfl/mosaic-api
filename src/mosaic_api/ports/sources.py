@@ -12,7 +12,7 @@ class SourceInfo:
     id: str  # short id used in global ids: mosaic, cdh, ...
     name: str
     homepage: str | None
-    format: str  # the record format, e.g. mosaic-v0.1, cdh-yaml
+    format: str  # the record format, e.g. mosaic-v0.2, cdh-yaml-v0.5
 
 
 @dataclass(frozen=True)

@@ -60,20 +60,16 @@ def normalize(text: str) -> str:
 def searchable_text(r: Resource, label: Callable[[str, str], str]) -> str:
     """Everything a word search should find, normalized. ``label(vocab, id)`` gives labels."""
     parts: list[str] = [r.id, r.title, r.description or "", r.note or ""]
-    parts += [k.term for k in r.keywords]
+    parts += r.keyword_terms
     parts += [label("themes", t) for t in r.themes]
     parts += [label("geography", g) for g in r.geography]
     parts += [label("landscapes", ls) for ls in r.landscapes]
-    parts += [c.organization or "" for c in r.contacts]
+    parts += [c.organization or "" for c in r.contact]
     return normalize(" ".join(parts))
 
 
 def _years(r: Resource) -> tuple[int | None, int | None]:
-    if not r.temporal:
-        return None, None
-    start = int(r.temporal.start[:4]) if r.temporal.start else None
-    end = int(r.temporal.end[:4]) if r.temporal.end else None
-    return start, end
+    return r.temporal.years() if r.temporal else (None, None)
 
 
 def _intersects(a: Bbox, b: Bbox) -> bool:
@@ -88,10 +84,8 @@ def matches(r: Resource, q: Query, text: str) -> bool:
     for facet, wanted in q.filters.items():
         if wanted and not {key(w) for w in wanted} & {key(v) for v in values.get(facet, [])}:
             return False
-    if q.bbox is not None:
-        boxes = r.spatial.bbox if r.spatial else ()
-        if not any(_intersects(b, q.bbox) for b in boxes):
-            return False
+    if q.bbox is not None and not any(_intersects(b, q.bbox) for b in r.bbox):
+        return False
     if q.year_from is not None or q.year_to is not None:
         start, end = _years(r)
         if start is None and end is None:
@@ -107,7 +101,7 @@ def matches(r: Resource, q: Query, text: str) -> bool:
 def score(r: Resource, q: Query) -> int:
     words = normalize(q.text).split()
     title = normalize(r.title)
-    keywords = normalize(" ".join(k.term for k in r.keywords))
+    keywords = normalize(" ".join(r.keyword_terms))
     return sum(3 * (w in title) + 2 * (w in keywords) + 1 for w in words)
 
 

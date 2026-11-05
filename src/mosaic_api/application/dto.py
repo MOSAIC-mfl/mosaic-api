@@ -35,7 +35,7 @@ class QualityOut(Out):
 
 
 def _producer(r: Resource) -> str | None:
-    for c in r.contacts:
+    for c in r.contact:
         if "producer" in c.roles:
             return c.organization or c.name
     return None
@@ -63,18 +63,17 @@ class ResourceSummary(Out):
     bbox: list[list[float]]
     period: list[int | None] | None = Field(None, description="[start year, end year]; null = open/unknown.")
     access: str | None
-    license: str | None = Field(None, description="SPDX id, or the licence text.")
+    license: str | None = Field(None, description="SPDX expression, or the licence text when there is no SPDX code.")
     status: str
     completeness: dict[str, float]
     same_as: list[str]
     updated: str | None
     producer: str | None = Field(None, description="First producer organization (or person).")
-    access_url: str | None = Field(None, description="First access point URL, public ones first.")
+    access_url: str | None = Field(None, description="First data location URL, public ones first.")
 
     @classmethod
     def of(cls, r: Resource) -> ResourceSummary:
-        t = r.temporal
-        period = [int(t.start[:4]) if t.start else None, int(t.end[:4]) if t.end else None] if t else None
+        period = list(r.temporal.years()) if r.temporal else None
         desc = r.description
         if desc and len(desc) > 300:
             desc = desc[:297].rsplit(" ", 1)[0] + "…"
@@ -90,10 +89,12 @@ class ResourceSummary(Out):
             landscapes=list(r.landscapes),
             landscapes_derived=r.landscapes_derived,
             facets=facet_values(r),
-            bbox=[list(b) for b in (r.spatial.bbox if r.spatial else ())],
+            bbox=[list(b) for b in r.bbox],
             period=period,
             access=r.access,
-            license=r.license.spdx or r.license.text,
+            license=r.license
+            if r.license and not r.license.startswith("LicenseRef-")
+            else (r.license_text or r.license),
             status=r.quality.status,
             completeness=r.quality.completeness,
             same_as=list(r.same_as),
@@ -109,7 +110,10 @@ class ResourceDetail(Out):
     id: str
     source: str
     local_id: str
-    record: dict[str, Any] = Field(description="The resource as a MOSAIC standard record (see the standard's schema).")
+    record: dict[str, Any] = Field(
+        description="The resource as a MOSAIC standard v0.2 record (the CGIAR Climate Data Hub core fields plus "
+        "MOSAIC's; see the standard's schema)."
+    )
     landscapes: list[str]
     landscapes_derived: bool
     facets: dict[str, list[str]]
@@ -121,7 +125,7 @@ class ResourceDetail(Out):
     def of(cls, r: Resource, expose_emails: bool) -> ResourceDetail:
         record = r.to_record()
         if not expose_emails:
-            for c in record.get("contacts", []):
+            for c in record.get("contact", []):
                 c.pop("email", None)
         return cls(
             id=r.id,

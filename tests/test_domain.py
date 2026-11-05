@@ -24,20 +24,25 @@ def point(**kw: Any) -> dict[str, Any]:
     return {"name": "p", **kw}
 
 
+XY = [{"name": "lon", "type": "x", "unit": "degree"}, {"name": "lat", "type": "y", "unit": "degree"}]
+
+
 def test_spatial_facet() -> None:
-    assert facets.facet_values(res("a", data=[point(kind="raster")]))["spatial"] == ["yes"]
-    assert facets.facet_values(res("b", data=[point(kind="tabular", tabular={"spatial": True})]))["spatial"] == ["yes"]
-    assert facets.facet_values(res("c", data=[point(kind="tabular", tabular={"spatial": False})]))["spatial"] == ["no"]
-    assert facets.facet_values(res("d", data=[point(kind="tabular")]))["spatial"] == ["not_specified"]
-    assert facets.facet_values(res("e", data=[point(kind="document")]))["spatial"] == ["no"]
+    def spatial(**kw: Any) -> list[str]:
+        return facets.facet_values(res("x", **kw))["spatial"]
+
+    assert spatial(data=[point(kind="raster")]) == ["yes"]
+    assert spatial(data=[point(kind="tabular")], structures=[{"name": "t", "dimensions": XY}]) == ["yes"]
+    assert spatial(data=[point(kind="tabular")], structures=[{"name": "t", "geometry_column": "wkt"}]) == ["yes"]
+    assert spatial(data=[point(kind="tabular")], structures=[{"name": "t", "variables": [{"name": "n"}]}]) == ["no"]
+    assert spatial(data=[point(kind="tabular")]) == ["not_specified"]  # nothing known about the table
+    assert spatial(data=[point(kind="document")]) == ["no"]
 
 
 def test_geometry_facet() -> None:
-    r = res("a", data=[point(kind="vector", vector={"geometry_type": "polygon"}), point(kind="vector")])
+    r = res("a", data=[point(kind="vector", geometry_type="polygon"), point(kind="vector")])
     assert facets.facet_values(r)["geometry"] == ["not_specified", "polygon"]
-    t = res(
-        "b", data=[point(kind="tabular", tabular={"spatial": True, "coordinate_columns": {"x": "lon", "y": "lat"}})]
-    )
+    t = res("b", data=[point(kind="tabular", structures=["t"])], structures=[{"name": "t", "dimensions": XY}])
     assert facets.facet_values(t)["geometry"] == ["point"]
 
 
@@ -71,8 +76,8 @@ def test_filters_or_inside_and_across() -> None:
 
 def test_bbox_and_years() -> None:
     items = [
-        res("peru", spatial={"bbox": [(-76, -10, -74, -8)]}, temporal={"start": "2001", "end": "2024"}),
-        res("kenya", spatial={"bbox": [(34, -1, 35, 1)]}, temporal={"start": "1990", "end": "1995"}),
+        res("peru", spatial={"bbox": [(-76, -10, -74, -8)]}, temporal={"start_date": "2001", "end_date": "2024"}),
+        res("kenya", spatial={"bbox": [(34, -1, 35, 1)]}, temporal={"start_date": "1990", "end_date": "1995"}),
     ]
     assert _run(items, bbox=(-80, -15, -70, 0)) == ["mosaic:peru"]
     assert _run(items, year_from=2000) == ["mosaic:peru"]

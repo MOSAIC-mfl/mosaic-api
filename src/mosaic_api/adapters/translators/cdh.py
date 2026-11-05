@@ -1,8 +1,10 @@
 """Translator for CGIAR Climate Data Hub records (CDH YAML, standard v0.5.0).
 
-Follows mosaic-catalog crosswalks/cdh.yaml (read from the published standard, so vocabulary
-mappings live in one place). Anything that cannot be mapped is returned as an issue; nothing is
-silently dropped or invented.
+Since the MOSAIC standard v0.2 the MOSAIC core is the CDH core, so most fields are copied as they
+are; mosaic-catalog crosswalks/cdh.yaml lists the differences (cdh.domain -> themes, cdh.usage ->
+usage, geography slugs -> ISO / M49 codes). What MOSAIC adds and CDH does not state (the kind of
+each data entry and how it is reached) is derived from media types and URLs and listed in
+`derived`. Anything that cannot be mapped is returned as an issue; nothing is silently dropped.
 """
 
 from __future__ import annotations
@@ -16,7 +18,13 @@ from urllib.parse import urlparse
 from ...domain.standard import Standard
 from ...ports.sources import RawRecord, SourceInfo
 from ...ports.translator import TranslationResult
-from .common import bbox_list, build
+from .common import CORE_FIELDS, bbox_list, build
+
+COPIED = ("title", "description", "note", "resource_type", "version", "keywords", "commodities", "license",
+          "access_note", "attribution", "citation", "doi", "funding", "related_publications", "additional_links",
+          "structures", "processing")  # fmt: skip
+MORE = ("series", "parent", "previous_version", "deprecated", "additional_assets")
+SERVICE_TYPES = {"earth-engine": "gee", "stac-api": "stac-api"}
 
 MEDIA_KIND = (
     (re.compile(r"geotiff|image/tiff|netcdf|zarr|x-hdf|grib|jp2", re.I), "raster"),
@@ -79,178 +87,92 @@ class CdhTranslator:
         d: dict[str, Any] = raw.data
         cw = standard.crosswalks["cdh"]["vocabularies"]
         issues: list[str] = []
-        f: dict[str, Any] = {k: d.get(k) for k in ("title", "description", "resource_type", "doi", "version")}
+        derived: list[str] = []
+        f: dict[str, Any] = {k: d.get(k) for k in COPIED}
         f["created"], f["updated"] = _date(d.get("created")), _date(d.get("updated"))
 
-        # Themes from CDH domains; the domain itself is kept as a linked keyword (nothing lost).
-        domains = (d.get("cdh") or {}).get("domain") or []
+        # Themes from CDH domains (closed vocabulary, all eight have a MOSAIC theme).
+        cdh_block = d.get("cdh") or {}
         themes = []
-        for dom in domains:
+        for dom in cdh_block.get("domain") or []:
             theme = cw["domain_to_theme"].get(dom)
             if theme:
                 themes.append(theme)
             else:
                 issues.append(f"cdh.domain {dom!r} has no MOSAIC theme")
         f["themes"] = list(dict.fromkeys(themes))
-        keywords = []
-        for k in d.get("keywords") or []:
-            if isinstance(k, dict):
-                keywords.append({x: k[x] for x in ("term", "scheme", "uri", "lang") if k.get(x)})
-            else:
-                keywords.append({"term": str(k)})
-        keywords += [{"term": dom, "scheme": "cdh-domain"} for dom in domains]
-        f["keywords"] = keywords
-
-        note = d.get("note") or ""
-        usage = (d.get("cdh") or {}).get("usage") or {}
-        if usage.get("intended_uses"):
-            note += "\nIntended uses (CDH): " + "; ".join(usage["intended_uses"])
-        for nr in usage.get("not_recommended_for") or []:
-            alt = f" Use instead: {nr['use_instead']}" if nr.get("use_instead") else ""
-            note += f"\nNot recommended for {nr['use']}: {nr['reason']}{alt}"
-        f["note"] = note.strip() or None
+        f["usage"] = cdh_block.get("usage")
 
         spatial = d.get("spatial") or {}
         geo = standard.geography_by_slug()
-        f["geography"] = []
+        geography = []
         for slug in spatial.get("geography") or []:
             if slug in geo:
-                f["geography"].append(geo[slug])
+                geography.append(geo[slug])
             else:
                 issues.append(f"geography {slug!r} not found in the MOSAIC geography vocabulary")
         structures = d.get("structures") or []
-        if spatial.get("bbox") or spatial.get("crs"):
-            f["spatial"] = {
-                "bbox": bbox_list(spatial.get("bbox")),
-                "crs": spatial.get("crs"),
-                "resolution": _resolution(structures),
-            }
+        sp: dict[str, Any] = {"bbox": bbox_list(spatial.get("bbox")), "crs": spatial.get("crs"), "geography": geography}
+        res = _resolution(structures)
+        if res:
+            sp["resolution"] = res
+            derived.append("spatial.resolution")
+        f["spatial"] = {k: v for k, v in sp.items() if v}
 
-        links = d.get("additional_links") or []
-        lic = d.get("license")
-        lic_url = next((lk.get("url") for lk in links if lk.get("rel") == "license"), None)
-        if lic and not str(lic).startswith("LicenseRef-") and " " not in str(lic):
-            f["license"] = {"spdx": lic, "url": lic_url or f"https://spdx.org/licenses/{lic}.html"}
-        elif lic:
-            f["license"] = {"spdx": lic if " " in str(lic) else None, "url": lic_url, "text": str(lic)}
+        temporal = dict(d.get("temporal") or {})
+        freq = temporal.get("update_frequency")
+        if freq and freq not in standard.vocab("update_frequency"):
+            issues.append(f"temporal.update_frequency {freq!r} not in the MOSAIC vocabulary")
+            temporal.pop("update_frequency")
+        for k in ("date", "start_date", "end_date"):
+            if temporal.get(k) is not None:
+                temporal[k] = str(temporal[k])
+        f["temporal"] = temporal or None
 
-        access_map = cw["access"]
-        f["access"] = access_map.get(d.get("access") or "public")  # CDH: absent means public
-        f["access_note"] = d.get("access_note")
-
+        f["access"] = cw["access"].get(d.get("access") or "public")  # CDH: absent means public
         roles = cw["contact_role"]
-        f["contacts"] = [
+        f["contact"] = [
             {
                 **{k: c[k] for k in ("name", "organization", "email", "url", "ror", "orcid") if c.get(k)},
                 "roles": [roles[r] for r in c.get("roles", []) if r in roles],
             }
             for c in d.get("contact") or []
         ]
-
-        cit = d.get("citation")
-        if isinstance(cit, dict):
-            f["citation"] = {
-                "title": cit.get("title"),
-                "date": _date(cit.get("date")),
-                "publisher": cit.get("publisher"),
-                "authors": [
-                    {k: a[k] for k in ("family", "given", "organization", "orcid") if a.get(k)}
-                    for a in cit.get("authors") or []
-                ],
-            }
-
-        temporal = d.get("temporal") or {}
-        if temporal.get("date"):
-            f["temporal"] = {"start": _date(temporal["date"]), "end": _date(temporal["date"])}
-        elif temporal.get("start_date") or temporal.get("end_date"):
-            f["temporal"] = {"start": _date(temporal.get("start_date")), "end": _date(temporal.get("end_date"))}
-        freq = temporal.get("update_frequency")
-        if freq:
-            if freq in standard.vocab("update_frequency"):
-                f["update_frequency"] = freq
-            else:
-                issues.append(f"update_frequency {freq!r} not in the MOSAIC vocabulary")
-
-        f["funding"] = [{k: x[k] for k in ("name", "url") if x.get(k)} for x in d.get("funding") or []]
-        f["related"] = self._related(d, links)
-        f["data"] = self._data(d, structures)
+        f["data"] = self._data(d, structures, derived)
+        extensions = []
+        for url in d.get("extensions") or []:
+            name = str(url).rstrip("/").split("/")[-2] if "/extensions/" in str(url) else str(url)
+            if name == "climate":
+                extensions.append("climate@0.2.0")
+            elif name not in ("cdh", "agriculture"):  # cdh -> themes / usage, agriculture -> commodities
+                issues.append(f"CDH extension {url} has no MOSAIC equivalent: its block is not kept")
+        f["extensions"] = extensions
+        more = {k: d[k] for k in MORE if d.get(k) not in (None, [], {})}
+        if "climate@0.2.0" in extensions and d.get("climate"):
+            more["climate"] = d["climate"]
+        f["more"] = more
+        f["derived"] = sorted(set(derived))
+        unknown = set(d) - set(CORE_FIELDS) - set(MORE) - {"id", "cdh_schema_version", "cdh", "climate"}
+        issues += [f"CDH field {k!r} has no MOSAIC place" for k in sorted(unknown)]
         return build(f, raw, source, fetched_at, issues)
 
     @staticmethod
-    def _related(d: dict[str, Any], links: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        out: list[dict[str, Any]] = []
-        for pub in d.get("related_publications") or []:
-            cit = pub.get("citation") or {}
-            if pub.get("doi"):
-                out.append(
-                    {"relation": "IsDocumentedBy", "scheme": "doi", "value": pub["doi"], "title": cit.get("title")}
-                )
-            elif cit.get("url"):
-                out.append(
-                    {"relation": "IsDocumentedBy", "scheme": "url", "value": cit["url"], "title": cit.get("title")}
-                )
-        for step in d.get("processing") or []:
-            for src in step.get("derived_from") or []:
-                if src.get("url"):
-                    out.append(
-                        {"relation": "IsDerivedFrom", "scheme": "url", "value": src["url"], "title": src.get("title")}
-                    )
-        rel_map = {"describedby": "IsDocumentedBy"}
-        for lk in links:
-            if lk.get("url") and lk.get("rel") != "license":
-                out.append(
-                    {
-                        "relation": rel_map.get(lk.get("rel", ""), "References"),
-                        "scheme": "url",
-                        "value": lk["url"],
-                        "title": lk.get("title"),
-                    }
-                )
-        series = d.get("series") or {}
-        if series.get("url"):
-            out.append({"relation": "IsPartOf", "scheme": "url", "value": series["url"], "title": series.get("name")})
-        for asset in d.get("additional_assets") or []:
-            loc: dict[str, Any] = next(iter(asset.get("locations") or []), {})
-            if loc.get("url", "").startswith(("http://", "https://")):
-                out.append(
-                    {"relation": "IsSupplementedBy", "scheme": "url", "value": loc["url"], "title": asset.get("name")}
-                )
-        return [{k: v for k, v in r.items() if v} for r in out]
-
-    @staticmethod
-    def _data(d: dict[str, Any], structures: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        points: list[dict[str, Any]] = []
+    def _data(d: dict[str, Any], structures: list[dict[str, Any]], derived: list[str]) -> list[dict[str, Any]]:
+        """CDH data entries as they are, plus what MOSAIC adds: kind and access_method (derived)."""
+        entries: list[dict[str, Any]] = []
         for asset in d.get("data") or []:
-            kind = _kind(asset.get("media_type"), structures)
-            locations = asset.get("locations") or [{}]
-            for loc in locations:
-                url = loc.get("url")
-                name = asset.get("name", "data")
-                if len(locations) > 1 and loc.get("title"):
-                    name = f"{name} ({loc['title']})"
-                p: dict[str, Any] = {
-                    "name": name,
-                    "kind": kind,
-                    "url": url,
-                    "description": asset.get("description"),
-                    "media_type": asset.get("media_type"),
-                    "size": asset.get("file_size"),
-                }
-                if asset.get("href_template"):
-                    extra = f"Files: {asset['href_template']} under this location."
-                    p["description"] = f"{p['description'] or ''} {extra}".strip()
-                if url:
-                    method, service_type = _method(url)
-                    p["method"] = method
-                    if service_type:
-                        p["service"] = {"service_type": service_type}
-                else:
-                    p["method"] = "request" if d.get("access") in ("restricted", "non-public") else None
-                if kind == "raster" and _resolution(structures):
-                    p["raster"] = {"resolution": _resolution(structures)}
-                if kind == "tabular" and structures:
-                    has_geo = any(s.get("geometry_column") for s in structures)
-                    p["tabular"] = {"spatial": has_geo}
-                    p["derived"] = ["tabular.spatial"]
-                points.append({k: v for k, v in p.items() if v not in (None, "")})
-        return points
+            e = dict(asset)
+            e["kind"] = _kind(asset.get("media_type"), structures)
+            derived.append("data[].kind")
+            url = next((loc.get("url") for loc in asset.get("locations") or [] if loc.get("url")), None)
+            if url:
+                method, service_type = _method(url)
+                e["access_method"] = method
+                if service_type:
+                    e["service"] = {"type": SERVICE_TYPES.get(service_type, "other")}
+            elif d.get("access") in ("restricted", "non-public"):
+                e["access_method"] = "request"
+            if e.get("access_method"):
+                derived.append("data[].access_method")
+            entries.append({k: v for k, v in e.items() if v not in (None, "")})
+        return entries

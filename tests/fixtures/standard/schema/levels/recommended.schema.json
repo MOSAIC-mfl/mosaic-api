@@ -1,134 +1,65 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mosaic-mfl.github.io/catalog/schema/v0.1.0/levels/recommended.schema.json",
+  "$id": "https://mosaic-mfl.github.io/catalog/schema/v0.2.0/levels/recommended.schema.json",
   "title": "MOSAIC recommended (level 1)",
-  "description": "Fields that make a record more useful and FAIR. Missing ones are warnings, never errors.",
+  "description": "What makes a record easy to find, cite and reuse. Failures are warnings only.",
   "required": [
-    "temporal",
+    "keywords",
     "spatial",
-    "update_frequency",
-    "created",
-    "updated"
+    "temporal"
   ],
   "properties": {
-    "temporal": {
-      "required": [
-        "start"
-      ],
-      "x-message": "period without a machine-readable start"
-    },
     "spatial": {
       "required": [
+        "geography",
         "bbox"
       ],
-      "x-message": "no bounding box"
+      "x-message": "spatial coverage: give geography and bbox"
     },
-    "contacts": {
-      "contains": {
-        "required": [
-          "roles"
-        ],
-        "properties": {
-          "roles": {
-            "contains": {
-              "const": "licensor"
-            }
-          }
-        }
-      },
-      "x-message": "no contact with the licensor role"
-    },
-    "license": {
-      "if": {
-        "not": {
+    "temporal": {
+      "anyOf": [
+        {
           "required": [
-            "spdx"
-          ],
-          "properties": {
-            "spdx": {
-              "type": "string"
-            }
-          }
+            "date"
+          ]
+        },
+        {
+          "required": [
+            "start_date"
+          ]
+        },
+        {
+          "required": [
+            "text"
+          ]
         }
-      },
-      "then": {
-        "required": [
-          "url"
-        ],
-        "properties": {
-          "url": {
-            "type": "string"
-          }
-        }
-      },
-      "x-message": "non-standard licence without the URL of its terms"
-    },
-    "keywords": {
-      "contains": {
-        "type": "object",
-        "required": [
-          "uri"
-        ]
-      },
-      "x-message": "no keyword linked to a vocabulary (e.g. AGROVOC)"
+      ],
+      "x-message": "temporal coverage: give date or start_date (or the source's text)"
     },
     "data": {
       "items": {
-        "allOf": [
-          {
-            "if": {
-              "required": [
-                "kind"
-              ],
-              "properties": {
-                "kind": {
-                  "const": "vector"
-                }
-              }
-            },
-            "then": {
-              "required": [
-                "vector"
-              ],
-              "properties": {
-                "vector": {
-                  "required": [
-                    "geometry_type"
-                  ]
-                }
-              }
-            },
-            "x-field": "data_classification",
-            "x-message": "vector data without geometry_type (point, line, polygon, mixed)"
-          },
-          {
-            "if": {
-              "required": [
-                "kind"
-              ],
-              "properties": {
-                "kind": {
-                  "const": "tabular"
-                }
-              }
-            },
-            "then": {
-              "required": [
-                "tabular"
-              ],
-              "properties": {
-                "tabular": {
-                  "required": [
-                    "spatial"
-                  ]
-                }
-              }
-            },
-            "x-field": "data_classification",
-            "x-message": "table without tabular.spatial (does it have coordinates or a geometry?)"
-          }
+        "required": [
+          "access_method",
+          "kind"
         ]
-      }
+      },
+      "x-message": "every data entry should say how it is reached (access_method) and what it holds (kind)"
+    },
+    "citation": {
+      "anyOf": [
+        {
+          "required": [
+            "authors",
+            "date"
+          ]
+        },
+        {
+          "required": [
+            "text"
+          ]
+        }
+      ],
+      "x-message": "citation: give authors and date (or at least the text)"
     }
   },
   "allOf": [
@@ -136,25 +67,64 @@
       "anyOf": [
         {
           "required": [
-            "doi"
+            "citation"
           ]
         },
         {
           "required": [
-            "citation"
-          ],
-          "properties": {
-            "citation": {
-              "type": "object",
+            "doi"
+          ]
+        }
+      ],
+      "x-field": "citation",
+      "x-message": "no citation and no DOI"
+    },
+    {
+      "properties": {
+        "temporal": {
+          "required": [
+            "update_frequency"
+          ]
+        }
+      },
+      "x-field": "temporal",
+      "x-message": "temporal.update_frequency missing (use unknown if the source does not say)"
+    },
+    {
+      "properties": {
+        "data": {
+          "items": {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "vector"
+                }
+              },
               "required": [
-                "authors"
+                "kind"
+              ]
+            },
+            "then": {
+              "required": [
+                "geometry_type"
               ]
             }
           }
         }
-      ],
-      "x-field": "citation",
-      "x-message": "citation without structured authors and no DOI"
+      },
+      "x-field": "data_classification",
+      "x-message": "vector data entry without geometry_type"
+    },
+    {
+      "properties": {
+        "license": {
+          "not": {
+            "pattern": "\\bLicenseRef-"
+          }
+        }
+      },
+      "x-field": "license",
+      "x-message": "licence without an SPDX code (confirm whether one exists)"
     }
   ]
 }

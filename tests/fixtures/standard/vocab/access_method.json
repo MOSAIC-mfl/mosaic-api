@@ -2,7 +2,7 @@
   "scheme": {
     "id": "mosaic-access-method",
     "title": "Access Method",
-    "description": "How an access point is used: download a file, visit a page, call a service, or ask for the data."
+    "description": "How a data entry is reached: download a file, call a service, visit a page, or ask for the data."
   },
   "concepts": [
     {

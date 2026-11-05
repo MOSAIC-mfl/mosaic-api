@@ -1,0 +1,59 @@
+{
+  "scheme": {
+    "id": "mosaic-service-type",
+    "title": "Service Type",
+    "description": "Protocol of a web service behind a data entry."
+  },
+  "concepts": [
+    {
+      "id": "wms",
+      "label": "WMS",
+      "description": "OGC Web Map Service."
+    },
+    {
+      "id": "wmts",
+      "label": "WMTS",
+      "description": "OGC Web Map Tile Service."
+    },
+    {
+      "id": "wfs",
+      "label": "WFS",
+      "description": "OGC Web Feature Service."
+    },
+    {
+      "id": "wcs",
+      "label": "WCS",
+      "description": "OGC Web Coverage Service."
+    },
+    {
+      "id": "ogc-api",
+      "label": "OGC API",
+      "description": "OGC API Features, Coverages, Tiles or Maps."
+    },
+    {
+      "id": "arcgis-rest",
+      "label": "ArcGIS REST",
+      "description": "Esri ArcGIS Server or Online REST service."
+    },
+    {
+      "id": "xyz",
+      "label": "XYZ tiles",
+      "description": "Map tiles by {z}/{x}/{y} URL template."
+    },
+    {
+      "id": "stac-api",
+      "label": "STAC API",
+      "description": "SpatioTemporal Asset Catalog API."
+    },
+    {
+      "id": "gee",
+      "label": "Google Earth Engine",
+      "description": "An Earth Engine asset or app."
+    },
+    {
+      "id": "other",
+      "label": "Other",
+      "description": "Another API; describe it in the data entry."
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mosaic-mfl.github.io/catalog/schema/v0.2.0/extensions/climate/0.2.0/schema.json",
+  "title": "MOSAIC climate extension",
+  "description": "Climate projection provenance (baseline, bias adjustment, downscaling, scenarios, models). Same fields as the CGIAR Climate Data Hub climate extension v0.5.0 (MIT). Declare it as climate@0.2.0.",
+  "type": "object",
+  "$defs": {
+    "nonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "numberOrString": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        }
+      ]
+    },
+    "date": {
+      "description": "Date or date-time. Use YYYY-MM-DD (e.g. 2026-06-23) or an RFC 3339 date-time (e.g. 2026-06-23T00:00:00Z).",
+      "examples": [
+        "2026-06-23",
+        "2026-06-23T00:00:00Z"
+      ],
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "format": "date-time",
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "properties": {
+    "climate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {
+          "description": "Reference/baseline period the projections are expressed against.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "start_date": {
+              "$ref": "#/$defs/date"
+            },
+            "end_date": {
+              "$ref": "#/$defs/date"
+            }
+          }
+        },
+        "bias_adjustment": {
+          "description": "Bias adjustment applied to the projections.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "method": {
+              "$ref": "#/$defs/nonEmptyString",
+              "description": "Bias-adjustment method."
+            },
+            "reference_dataset": {
+              "$ref": "#/$defs/nonEmptyString",
+              "description": "Reference dataset used for bias adjustment."
+            }
+          }
+        },
+        "downscaling": {
+          "description": "Downscaling applied to the projections.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "method": {
+              "$ref": "#/$defs/nonEmptyString",
+              "description": "Downscaling method."
+            },
+            "resolution": {
+              "$ref": "#/$defs/numberOrString",
+              "description": "Target resolution of the downscaling."
+            }
+          }
+        },
+        "mip_era": {
+          "description": "CMIP era of the source models.",
+          "enum": [
+            "CMIP5",
+            "CMIP6"
+          ]
+        },
+        "models": {
+          "description": "Climate model source ids from vocab/climate_model.json: CMIP spelling verbatim, or `ensemble` for a multi-model product.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "scenarios": {
+          "description": "Experiment ids from vocab/climate_scenario.json: CMIP spelling verbatim, e.g. ssp245, rcp85, historical.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mip_era": {
+                "const": "CMIP5"
+              }
+            },
+            "required": [
+              "mip_era"
+            ]
+          },
+          "then": {
+            "properties": {
+              "models": {
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "scenarios": {
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mip_era": {
+                "const": "CMIP6"
+              }
+            },
+            "required": [
+              "mip_era"
+            ]
+          },
+          "then": {
+            "properties": {
+              "models": {
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "scenarios": {
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      ],
+      "$comment": "With mip_era set, models and scenarios must come from that era's subset."
+    }
+  }
+}

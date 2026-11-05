@@ -2,7 +2,7 @@
   "scheme": {
     "id": "mosaic-data-kind",
     "title": "Data Kind",
-    "description": "What kind of data an access point leads to. Drives the 'data type' facet and which detail block applies."
+    "description": "What kind of data a data entry leads to. Drives the 'data type' facet and which detail block applies."
   },
   "concepts": [
     {

@@ -1,12 +1,12 @@
 {
  "catalogue": "mosaic",
- "standard_version": "0.1.0",
- "generated_at": "2026-10-30T20:27:34Z",
- "commit": "fb199ef8f1a0fa370e79b8840878b3ccfd0cee95",
+ "standard_version": "0.2.0",
+ "generated_at": "2026-11-05T22:44:57Z",
+ "commit": "db313c0786fbd29b182b49990290932a94800ff2",
  "counts": {
-  "published": 102,
+  "published": 108,
   "complete": 0,
-  "incomplete": 102,
+  "incomplete": 108,
   "skipped": {}
  },
  "include_incomplete": true,
@@ -14,7 +14,8 @@
   "catalog": "catalog.json",
   "schema": "schema/",
   "vocab": "vocab/",
-  "crosswalks": "crosswalks/"
+  "crosswalks": "crosswalks/",
+  "landscapes": "landscapes/index.json"
  },
  "records": []
 }

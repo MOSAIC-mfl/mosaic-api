@@ -4,7 +4,7 @@
 > Static API: https://mosaic-mfl.github.io/mosaic-api/ · documentation: https://mosaic-mfl.github.io/mosaic-api/docs/
 
 Read-only API of **MOSAIC**, a network of metadata. It reads several catalogues, translates their
-records into the **MOSAIC metadata model**, and serves them as JSON to the website and to anyone
+records into the **MOSAIC metadata model** (standard v0.2, built on the CGIAR Climate Data Hub core), and serves them as JSON to the website and to anyone
 else. The catalogues are the MOSAIC catalogue itself and the CGIAR Climate Data Hub, with others to
 follow. Every resource keeps its provenance: MOSAIC links to the data where it lives.
 
@@ -59,7 +59,7 @@ One workflow, [.github/workflows/pages.yml](.github/workflows/pages.yml):
 | `deploy` | after `build` | publishes the export on GitHub Pages |
 
 The catalogue is taken from `main` of MOSAIC-mfl/catalog when it holds the metadata standard
-(`mosaic.config.yaml`), otherwise from the branch `metadata-standard-v0.1`. The repository
+(`mosaic.config.yaml`), otherwise from the branch `metadata-standard-v0.1` (which holds the standard v0.2). The repository
 variable `CATALOG_REF` forces a branch or tag. Nothing has to change when that branch is merged.
 
 Once, in the repository settings: **Settings → Pages → Build and deployment → Source: GitHub

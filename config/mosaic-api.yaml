@@ -23,7 +23,7 @@ sources:
     name: MOSAIC
     type: mosaic_catalog
     translator: mosaic
-    format: mosaic-v0.1
+    format: mosaic-v0.2
     location: ../../mosaic-catalog/dist
     # location: https://mosaic-mfl.github.io/catalog
     homepage: https://mosaic-mfl.github.io/website/

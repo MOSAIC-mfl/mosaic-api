@@ -36,6 +36,11 @@
       "description": ""
     },
     {
+      "id": "semiannual",
+      "label": "Semiannual",
+      "description": "Twice a year."
+    },
+    {
       "id": "seasonal",
       "label": "Seasonal",
       "description": "Once per season."

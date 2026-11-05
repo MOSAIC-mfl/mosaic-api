@@ -43,8 +43,10 @@ derive_landscapes()                      # bbox ∩ landscape boxes → landscap
 store.save(snapshot)
 ```
 
-- **Our language.** The core only sees `Resource`. CDH's `cdh.domain`, `contact`, `locations`,
-  `access` (absent = public) and other conventions stop at its translator. The vocabulary
+- **Our language.** The core only sees `Resource`. Since standard v0.2 the MOSAIC record follows the
+  CDH core, so the CDH translator mostly copies: `cdh.domain` → `themes`, `cdh.usage` → `usage`,
+  absent `access` → `public`, and the data kind and access method it reads from each location
+  (marked in `derived`) are the conventions that stop at its translator. The vocabulary
   mappings come from the standard's crosswalks (`mosaic-catalog/crosswalks/cdh.yaml`), not from
   code.
 - **One set of rules.** Quality is computed with the same JSON Schemas that mosaic-catalog's
@@ -96,20 +98,20 @@ answers as files, so the static API **is** the live API, frozen at harvest time.
 - Field names are the MOSAIC standard's (`snake_case`), the same as in the records
   ([ADR-0003](adr/0003-standard-field-names.md)).
 - **A resource's id is `<source>:<local id>`.** Its URL path is `/v1/resources/<source>/<local id>`.
-- **`ResourceDetail.record`** is a valid MOSAIC standard record, plus provenance, quality, facets
+- **`ResourceDetail.record`** is a valid MOSAIC standard v0.2 record (CDH core field names), plus provenance, quality, facets
   and `same_as`.
 - **The contract is `openapi.json`.** The website generates its TypeScript types from it with
   `openapi-typescript`, so a breaking change fails the website build instead of production.
 
 ## 5. Facet rules
 
-These are in `domain/facets.py`; the catalogue's `docs/standard.md` §5.1 describes the same.
+These are in `domain/facets.py`; they read the standard v0.2 fields (`data[].kind`, `data[].geometry_type`, `structures[]`).
 
 | Facet | Value |
 |---|---|
-| `data_kind` | Kinds of all access points |
-| `geometry` | Vector `geometry_type`, `point` for tables with `coordinate_columns`, `not_specified` for vector data without a type |
-| `spatial` | `yes` for raster, vector, or a table with `spatial: true`; `no` for tables with `spatial: false` and/or documents; otherwise `not_specified` |
+| `data_kind` | `kind` of all data entries |
+| `geometry` | `data[].geometry_type` of vectors; `point` for a table whose structure has x / y dimensions; `not_specified` for a vector without a type |
+| `spatial` | `yes` for raster, vector, or a table whose structure has x / y dimensions or a `geometry_column`; `no` for documents and described tables without them; otherwise `not_specified` |
 | any other | The value in the record, or `not_specified` |
 
 ## 6. Landscape pages

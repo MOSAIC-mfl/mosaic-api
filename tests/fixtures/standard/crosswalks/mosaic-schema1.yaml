@@ -1,4 +1,5 @@
-# Crosswalk: MOSAIC schema-1 records (repo `catalog`, records/*.yaml on main) -> MOSAIC standard v0.1.
+# Crosswalk: MOSAIC schema-1 records (this repo @ 0dad25c, records/*.yaml) -> MOSAIC standard v0.1,
+# then -> v0.2 by src/mosaic_catalog/v02.py (geography -> spatial.geography, contacts -> contact, ...).
 #
 # Direction: one-off migration, applied by scripts/migrate_schema1.py. The old repo is only read
 # (git show <ref>:records/...); it is never modified. Nothing is invented: a value the old record

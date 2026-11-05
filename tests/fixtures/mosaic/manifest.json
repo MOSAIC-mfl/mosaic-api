@@ -1,12 +1,12 @@
 {
  "catalogue": "mosaic",
- "standard_version": "0.1.0",
- "generated_at": "2026-10-30T20:27:34Z",
- "commit": "fb199ef8f1a0fa370e79b8840878b3ccfd0cee95",
+ "standard_version": "0.2.0",
+ "generated_at": "2026-11-05T22:44:57Z",
+ "commit": "db313c0786fbd29b182b49990290932a94800ff2",
  "counts": {
-  "published": 102,
+  "published": 108,
   "complete": 0,
-  "incomplete": 102,
+  "incomplete": 108,
   "skipped": {}
  },
  "include_incomplete": true,
@@ -14,27 +14,28 @@
   "catalog": "catalog.json",
   "schema": "schema/",
   "vocab": "vocab/",
-  "crosswalks": "crosswalks/"
+  "crosswalks": "crosswalks/",
+  "landscapes": "landscapes/index.json"
  },
  "records": [
   {
    "id": "MFL-2026-064",
-   "sha256": "c7453132ae78b8f160e72f4aa46a849126b726cb6e03fd8404b958556662405e",
+   "sha256": "8427add1186c326d8720d7c5dd64abcf67f6fcc051885916bbb8564bf9097749",
    "status": "incomplete"
   },
   {
    "id": "MFL-2026-079",
-   "sha256": "0135fb750556c8564bdbf1404533ac70d53795c065cc9a7fa0cf741cb43dde57",
+   "sha256": "d9242c3858891ed2c57933298a2893f20212846df29c5854c4031c2b15c46c2f",
    "status": "incomplete"
   },
   {
    "id": "MFL-2026-090",
-   "sha256": "e4a0addffb45650d3355084c87d020d0e557992abc674d0a8ae01cb9f980cd38",
+   "sha256": "956457676e3b00c16c94880925126983447a92a9a1d2936c72e292f77895dffa",
    "status": "incomplete"
   },
   {
    "id": "MFL-2026-104",
-   "sha256": "d7ecd19f392ad8fbf11cb5c712d234addf0e57f7fada598d92c9b6325437afc1",
+   "sha256": "31a1e86857cc8c7394b3de15c6a57d03f99d4669bbb71a3add9afec022ad6716",
    "status": "incomplete"
   }
  ]

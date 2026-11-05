@@ -102,7 +102,7 @@ def test_emails_can_be_hidden(catalog: CatalogService) -> None:
 
     hidden = CatalogService(catalog._snap, catalog._std, CatalogOptions(expose_emails=False))  # type: ignore[attr-defined]
     detail = hidden.get("mosaic:MFL-2026-079")
-    assert detail is not None and all("email" not in c for c in detail.record["contacts"])
+    assert detail is not None and all("email" not in c for c in detail.record["contact"])
 
 
 def test_static_export_matches_live_api(tmp_path: Path, catalog: CatalogService, client: TestClient) -> None:

@@ -2,7 +2,7 @@
   "scheme": {
     "id": "mosaic-access",
     "title": "Access",
-    "description": "Access condition of a resource or of one of its access points. Always explicit: it is never assumed to be public."
+    "description": "Access condition of a resource or of one of its data entries. Always explicit in MOSAIC: it is never assumed to be public. Same values as the Climate Data Hub (DCAT / EU access rights)."
   },
   "concepts": [
     {
@@ -16,9 +16,9 @@
       "description": "The record is public, but the data needs a request, an account or an agreement."
     },
     {
-      "id": "internal",
-      "label": "Internal",
-      "description": "Catalogued for the network; the data is not available outside the team that holds it."
+      "id": "non-public",
+      "label": "Non-public",
+      "description": "Catalogued for the network; the data is not available outside the team that holds it (v0.1: internal)."
     }
   ]
 }

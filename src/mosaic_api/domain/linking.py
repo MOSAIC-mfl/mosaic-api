@@ -43,7 +43,7 @@ def derive_landscapes(resources: Sequence[Resource], landscape_boxes: Mapping[st
     """
     out = []
     for r in resources:
-        boxes = r.spatial.bbox if r.spatial else ()
+        boxes = r.bbox
         if r.landscapes or not boxes or not landscape_boxes:
             out.append(r)
             continue

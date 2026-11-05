@@ -1,56 +1,1736 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mosaic-mfl.github.io/catalog/schema/v0.1.0/record.schema.json",
-  "title": "MOSAIC metadata record (structure)",
-  "description": "Shape and types of every field a MOSAIC record can hold. Nothing is required here: a record that breaks this schema is INVALID (malformed); what a record must contain is checked by the level schemas (minimum, recommended) and the profiles, which only make it INCOMPLETE. Extension blocks are validated separately against the extension schema the record declares.",
-  "type": "object",
-  "additionalProperties": false,
-  "properties": {
-    "id": {
-      "description": "Permanent identifier, unique in its catalogue. Never reused or changed. MOSAIC uses MFL-YYYY-NNN.",
-      "$ref": "#/$defs/identifier"
+  "$id": "https://mosaic-mfl.github.io/catalog/schema/v0.2.0/record.schema.json",
+  "$defs": {
+    "additionalAsset": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file_size": {
+          "$ref": "#/$defs/fileSize"
+        },
+        "locations": {
+          "description": "Access paths to the same content; the first is canonical. An absolute URL, or a path relative to the record file for a small metadata file committed beside it (README, agent guide, code list, thumbnail).",
+          "items": {
+            "$ref": "#/$defs/location"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "media_type": {
+          "$ref": "#/$defs/mediaType"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Asset name; must be unique across data[] and additional_assets[]."
+        },
+        "roles": {
+          "description": "Asset roles. Suggested values, not a closed set: `metadata`, `validation`, `describedby` (human documentation such as a README), `agents` (a Markdown guide for AI agents: keys and join columns, quirks, CRS consequences, tested queries), `thumbnail`, `overview`, `visual`, `example` (a code file: a runnable usage example, e.g. a notebook or SQL file).",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "examples": [
+              "metadata",
+              "validation",
+              "describedby",
+              "agents",
+              "thumbnail",
+              "overview",
+              "visual",
+              "example"
+            ]
+          },
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "name",
+        "locations"
+      ],
+      "type": "object"
     },
-    "slug": {
-      "description": "Optional readable alias for URLs. May change; the id may not.",
+    "contact": {
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "format": "email",
+          "type": "string",
+          "examples": [
+            "ada.placeholder@example.org"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "orcid": {
+          "$ref": "#/$defs/orcid",
+          "description": "ORCID iD of the named person."
+        },
+        "organization": {
+          "type": "string",
+          "minLength": 1,
+          "examples": [
+            "Africa Rice Center (AfricaRice)",
+            "Alliance of Bioversity International and CIAT",
+            "CIFOR-ICRAF",
+            "International Center for Agricultural Research in the Dry Areas (ICARDA)",
+            "International Crops Research Institute for the Semi-Arid Tropics (ICRISAT)",
+            "International Food Policy Research Institute (IFPRI)",
+            "International Institute of Tropical Agriculture (IITA)",
+            "International Livestock Research Institute (ILRI)",
+            "International Maize and Wheat Improvement Center (CIMMYT)",
+            "International Potato Center (CIP)",
+            "International Rice Research Institute (IRRI)",
+            "International Water Management Institute (IWMI)",
+            "WorldFish"
+          ]
+        },
+        "ror": {
+          "$ref": "#/$defs/ror",
+          "description": "ROR id of the organization."
+        },
+        "roles": {
+          "description": "Roles this contact holds (vocab/contact_role.json). At least one contact of a record should be the licensor.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "vocab.schema.json#/$defs/contactRole"
+          }
+        },
+        "url": {
+          "$ref": "#/$defs/nonEmptyString",
+          "format": "uri"
+        }
+      },
+      "type": "object"
+    },
+    "dataAsset": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "description": "What this entry holds and how it differs from the record's other entries: which part of the dataset it covers (one table, region, or period), or which layout of the same data it is (e.g. time- vs space-optimized chunks) and when to use it.",
+          "type": "string",
+          "minLength": 1
+        },
+        "checksum": {
+          "description": "Digest of the single file this entry names, as <algorithm>:<hex>. Not for templated or indexed entries; a cdh-inventory carries per-file checksums.",
+          "type": "string",
+          "pattern": "^(md5:[0-9a-f]{32}|sha1:[0-9a-f]{40}|sha256:[0-9a-f]{64}|sha512:[0-9a-f]{128})$",
+          "examples": [
+            "sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
+          ]
+        },
+        "file_size": {
+          "$ref": "#/$defs/fileSize"
+        },
+        "locations": {
+          "$ref": "#/$defs/locations"
+        },
+        "media_type": {
+          "$ref": "#/$defs/mediaType"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Asset name; must be unique across data[] and additional_assets[]."
+        },
+        "structures": {
+          "description": "Names of the structures[] this asset holds. Required when the record has more than one structure; omitted, the asset holds the record's only structure. Structure membership must be verified before publication.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "href_template": {
+          "$ref": "#/$defs/hrefTemplate",
+          "description": "Optional relative file-name pattern appended to each locations[].url. Each {token} must match a dimensions[].name or be the reserved {variable} token, which expands over variables[].name; the entry expands to one item per combination of the tokens' values. A token on a type: temporal dimension may carry a strftime format ({date:%Y.%m.%d}, directives %Y %m %d only) when the file name spells the date differently from the ISO value. When absent, locations[].url are full file URLs and the entry is a single asset."
+        },
+        "file_index": {
+          "description": "Indexes that list or open this entry's files as one dataset, per the File indexes section of standard.md. Each entry is one index file, or with href_template one per rendered path; its locations[] are the same file at several addresses. format names the specification the file follows. CDH does not open index files. Mutually exclusive with href_template on the entry.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "format",
+              "locations"
+            ],
+            "properties": {
+              "format": {
+                "description": "Specification the index file follows: stac-geoparquet (STAC Items as GeoParquet), gti (GDAL Tile Index), vrt (GDAL Virtual Raster), kerchunk (kerchunk reference file), icechunk (Icechunk repository with virtual chunks), or cdh-inventory (CDH CSV file list of absolute URLs).",
+                "enum": [
+                  "stac-geoparquet",
+                  "gti",
+                  "vrt",
+                  "kerchunk",
+                  "icechunk",
+                  "cdh-inventory"
+                ]
+              },
+              "locations": {
+                "description": "Copies of the index file; the first is canonical. Absolute URLs; a cdh-inventory may instead use a path relative to the record file when committed beside it.",
+                "items": {
+                  "$ref": "#/$defs/location"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "title": {
+                "description": "Optional label, e.g. which scheme the index's internal paths use.",
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "media_type": {
+                "description": "IANA media type of the index file itself, when it has one. Optional; useful for gti (GeoPackage, FlatGeobuf, or Parquet).",
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "href_template": {
+                "$ref": "#/$defs/hrefTemplate",
+                "description": "Optional pattern appended to each locations[].url when there is one index file per slice, e.g. one VRT per map. Same tokens and rules as the entry-level href_template; together the rendered files are one complete index."
+              }
+            },
+            "if": {
+              "properties": {
+                "format": {
+                  "const": "cdh-inventory"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "locations": {
+                  "items": {
+                    "properties": {
+                      "url": {
+                        "format": "uri"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "spatial": {
+          "description": "Coverage of this asset alone, for selecting files by area. Same shapes as the top-level spatial. Omit when unknown; the top-level bbox is not copied down.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "bbox": {
+              "description": "Spatial extent. A single bounding box, or a list of boxes for disjoint coverage - each box is a real area covered, in any order; do not include an overall/union box. 2D = [west, south, east, north] = [xmin, ymin, xmax, ymax]; 3D = [west, south, min_z, east, north, max_z]. WGS84 (EPSG:4326); elevation in metres.",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/bboxCoords"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/bboxCoords"
+                  },
+                  "minItems": 1
+                }
+              ],
+              "examples": [
+                [
+                  -180,
+                  -90,
+                  180,
+                  90
+                ],
+                [
+                  [
+                    -180,
+                    -90,
+                    180,
+                    90
+                  ]
+                ]
+              ]
+            },
+            "crs": {
+              "$ref": "#/$defs/nonEmptyString",
+              "description": "Coordinate reference system of the data: an authority code such as EPSG:4326 or ESRI:54052, or an OGC CRS URI. A PROJ or WKT string only when no code exists.",
+              "examples": [
+                "EPSG:4326"
+              ]
+            },
+            "geography": {
+              "description": "Countries and regions: ISO 3166-1 alpha-3 (PER), UN M49 regions (m49:419) or global (vocab/geography.json).",
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "$ref": "vocab.schema.json#/$defs/geography"
+              }
+            }
+          }
+        },
+        "processing_steps": {
+          "description": "ids of processing[] steps that produced this asset.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "access_method": {
+          "$ref": "vocab.schema.json#/$defs/accessMethod",
+          "description": "How the data is reached through this entry: download, service, landing_page or request."
+        },
+        "kind": {
+          "$ref": "vocab.schema.json#/$defs/dataKind",
+          "description": "Kind of data in this entry (raster, vector, tabular, document, mixed, other)."
+        },
+        "access": {
+          "$ref": "vocab.schema.json#/$defs/access",
+          "description": "Access of this entry, when it differs from the record's."
+        },
+        "geometry_type": {
+          "description": "Geometry of a vector entry.",
+          "enum": [
+            "point",
+            "line",
+            "polygon",
+            "mixed"
+          ]
+        },
+        "feature_count": {
+          "description": "Number of features (vector) or rows (table).",
+          "type": "integer",
+          "minimum": 0
+        },
+        "service": {
+          "description": "Web service behind this entry.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "$ref": "vocab.schema.json#/$defs/serviceType"
+            },
+            "layers": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "$comment": "A public resource needs a location (minimum level); data on request may have none.",
+      "not": {
+        "required": [
+          "href_template",
+          "file_index"
+        ]
+      },
+      "dependentSchemas": {
+        "checksum": {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "href_template"
+                ]
+              },
+              {
+                "required": [
+                  "file_index"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "type": "object"
+    },
+    "bboxCoords": {
+      "description": "A single bounding box: 2D [west, south, east, north], or 3D [west, south, min_z, east, north, max_z]. WGS84 (EPSG:4326); elevation in metres.",
+      "oneOf": [
+        {
+          "title": "2D box",
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "prefixItems": [
+            {
+              "title": "West",
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            {
+              "title": "South",
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            {
+              "title": "East",
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            {
+              "title": "North",
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            }
+          ],
+          "items": false
+        },
+        {
+          "title": "3D box",
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "prefixItems": [
+            {
+              "title": "West",
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            {
+              "title": "South",
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            {
+              "title": "Min elevation",
+              "type": "number"
+            },
+            {
+              "title": "East",
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            {
+              "title": "North",
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            {
+              "title": "Max elevation",
+              "type": "number"
+            }
+          ],
+          "items": false
+        }
+      ]
+    },
+    "date": {
+      "description": "Date or date-time. Use YYYY-MM-DD (e.g. 2026-06-23) or an RFC 3339 date-time (e.g. 2026-06-23T00:00:00Z).",
+      "examples": [
+        "2026-06-23",
+        "2026-06-23T00:00:00Z"
+      ],
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "format": "date-time",
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d(\\.\\d+)?)?(Z|[+-]([01]\\d|2[0-3]):[0-5]\\d)$"
+        }
+      ]
+    },
+    "coverageDate": {
+      "description": "ISO 8601 date/time; the precision states the granularity - year (2020), month (2020-06), day (2020-06-23), or an instant (2020-06-23T00:00:00Z). As an end, it is inclusive through the end of that period (end: 2010 means through 2010-12-31).",
+      "examples": [
+        "2020",
+        "2020-06",
+        "2020-06-23",
+        "2020-06-23T00:00:00Z"
+      ],
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d{4}$"
+        },
+        {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d(\\.\\d+)?)?(Z|[+-]([01]\\d|2[0-3]):[0-5]\\d)$"
+        }
+      ]
+    },
+    "doi": {
+      "description": "Bare DOI (not a URL).",
       "type": "string",
-      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-      "maxLength": 80
+      "pattern": "^10\\.\\d{2,}(\\.\\d+)*/\\S+$",
+      "examples": [
+        "10.7910/DVN/SWPENT"
+      ]
     },
-    "title": {
-      "$ref": "#/$defs/text",
-      "maxLength": 300,
-      "description": "Name of the resource, as the source names it when it has a name."
+    "id": {
+      "description": "Permanent identifier, unique in its catalogue; never reused or changed. MOSAIC uses MFL-YYYY-NNN; CDH-style lowercase ids are also valid.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "examples": [
+        "MFL-2026-079",
+        "esa-worldcover-2021"
+      ]
     },
-    "description": {
-      "description": "What the resource is: content, coverage, method in brief.",
-      "$ref": "#/$defs/text"
+    "link": {
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "id"
+          ]
+        },
+        {
+          "required": [
+            "url"
+          ]
+        }
+      ],
+      "not": {
+        "required": [
+          "id",
+          "url"
+        ]
+      },
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "id": {
+          "$ref": "#/$defs/id",
+          "description": "id of the Hub record linked. Must resolve to exactly one catalog record."
+        },
+        "rel": {
+          "type": "string",
+          "description": "Link relation type, e.g. cite-as or describedby.",
+          "minLength": 1
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Human-readable label for the link."
+        },
+        "url": {
+          "$ref": "#/$defs/nonEmptyString",
+          "format": "uri",
+          "description": "URL of a resource outside the Hub."
+        }
+      },
+      "required": [
+        "rel"
+      ],
+      "type": "object"
     },
-    "note": {
-      "description": "Caveats and interpretation-critical remarks. Not a place for leftovers.",
-      "$ref": "#/$defs/text"
-    },
-    "resource_type": {
-      "description": "Kind of resource: dataset, service, document, software or model.",
-      "$ref": "vocab.schema.json#/$defs/resourceType"
-    },
-    "themes": {
-      "description": "MOSAIC themes; the first one is the primary theme.",
-      "type": "array",
+    "locations": {
+      "description": "Where the data is: a file, a store or directory, a service endpoint, or (marked with access_method) a landing page or the page where it is requested. The first is canonical.",
       "items": {
-        "$ref": "vocab.schema.json#/$defs/theme"
+        "allOf": [
+          {
+            "$ref": "#/$defs/location"
+          },
+          {
+            "properties": {
+              "url": {
+                "format": "uri"
+              }
+            }
+          }
+        ]
       },
       "minItems": 1,
-      "uniqueItems": true
+      "type": "array"
     },
-    "keywords": {
-      "description": "Search terms. A plain string, or a term linked to a vocabulary such as AGROVOC.",
+    "location": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Optional access label, e.g. HTTPS or S3.",
+          "minLength": 1
+        },
+        "url": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Absolute URL. In additional_assets[] and a cdh-inventory file_index[] it may instead be a path relative to the record file."
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "type": "object"
+    },
+    "fileSize": {
+      "description": "File size: whole bytes (31100000) or a number and unit (31.1 MB). Units are B, KB, MB, GB, TB, PB, in powers of 1000 (1 KB = 1000 bytes), rounded up to whole bytes.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "string",
+          "pattern": "^\\d+(\\.\\d+)?\\s?(B|KB|MB|GB|TB|PB)$"
+        }
+      ]
+    },
+    "versionLabel": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "mediaType": {
+      "description": "Media type (IANA), optionally with format parameters such as profile or version.",
+      "pattern": "^[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(\\s*;\\s*[^;=]+=[^;]+)*$",
+      "type": "string",
+      "examples": [
+        "image/tiff; application=geotiff; profile=cloud-optimized",
+        "image/tiff; application=geotiff",
+        "application/vnd.zarr; version=3",
+        "application/x-netcdf",
+        "application/vnd.apache.parquet",
+        "application/geopackage+sqlite3",
+        "application/json",
+        "text/csv"
+      ]
+    },
+    "nameUrl": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "$ref": "#/$defs/nonEmptyString",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "nonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "dataType": {
+      "description": "Storage type of a column, band, or array. Numeric names follow STAC raster:data_type; text-column names follow Frictionless Table Schema; decimal and binary are CDH additions for binary stores. integer and number are for text formats (CSV, fixed-width, JSON) where width and signedness are not stored. array is a column whose cells hold a list of values; say the element type in description. other is for maps, structs, and nested lists.",
+      "enum": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float16",
+        "float32",
+        "float64",
+        "cint16",
+        "cint32",
+        "cfloat32",
+        "cfloat64",
+        "integer",
+        "number",
+        "decimal",
+        "boolean",
+        "string",
+        "binary",
+        "date",
+        "time",
+        "datetime",
+        "array",
+        "other"
+      ]
+    },
+    "categories": {
+      "description": "Coded values, each with a label and optional description.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "value",
+          "label"
+        ],
+        "properties": {
+          "value": {
+            "description": "The coded value as stored in the data.",
+            "anyOf": [
+              {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "label": {
+            "$ref": "#/$defs/nonEmptyString",
+            "description": "Short human-readable name of the category."
+          },
+          "description": {
+            "$ref": "#/$defs/nonEmptyString",
+            "description": "What this category means."
+          }
+        }
+      }
+    },
+    "scalar": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "processingStep": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "additionalProperties": false,
+          "description": "Software or code that produced this step's output. Omit when none is published.",
+          "properties": {
+            "url": {
+              "$ref": "#/$defs/nonEmptyString",
+              "format": "uri",
+              "description": "Link to the production code or repository."
+            },
+            "version": {
+              "$ref": "#/$defs/nonEmptyString",
+              "description": "Version, tag, or commit of the code."
+            }
+          },
+          "type": "object"
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "derived_from": {
+          "description": "Upstream sources this step derived from - the data (e.g. a Zenodo/Dataverse landing page), not code. Each entry has an id (a Hub record) or a url (anything else), not both.",
+          "items": {
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "required": [
+                  "id"
+                ]
+              },
+              {
+                "required": [
+                  "url"
+                ]
+              }
+            ],
+            "not": {
+              "required": [
+                "id",
+                "url"
+              ]
+            },
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id",
+                "description": "id of the Hub record used. Must resolve to exactly one catalog record."
+              },
+              "title": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "url": {
+                "$ref": "#/$defs/nonEmptyString",
+                "format": "uri",
+                "description": "URL of a source outside the Hub."
+              },
+              "version": {
+                "$ref": "#/$defs/nonEmptyString",
+                "description": "Version label of the source release that was used, as the source publishes it."
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "description": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "What this step did."
+        },
+        "id": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Step identifier; one step must use id: source for the original generation."
+        }
+      },
+      "required": [
+        "id",
+        "description"
+      ],
+      "type": "object"
+    },
+    "orcid": {
+      "description": "ORCID iD of the person, as its https://orcid.org/ URL.",
+      "type": "string",
+      "pattern": "^https://orcid\\.org/\\d{4}-\\d{4}-\\d{4}-\\d{3}[\\dX]$",
+      "examples": [
+        "https://orcid.org/0000-0002-1825-0097"
+      ]
+    },
+    "ror": {
+      "description": "ROR id of the organization, as its https://ror.org/ URL.",
+      "type": "string",
+      "pattern": "^https://ror\\.org/0[0-9a-hjkmnp-tv-z]{6}[0-9]{2}$",
+      "examples": [
+        "https://ror.org/04xsxqp89"
+      ]
+    },
+    "author": {
+      "description": "A citation author: either a person or an organization.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "required": [
+            "family"
+          ],
+          "properties": {
+            "family": {
+              "$ref": "#/$defs/nonEmptyString",
+              "description": "Family name(s). A person with a single name uses this field alone.",
+              "examples": [
+                "Smith",
+                "Carreño Quiñones",
+                "Suharto"
+              ]
+            },
+            "given": {
+              "$ref": "#/$defs/nonEmptyString",
+              "description": "Given name(s) or initials.",
+              "examples": [
+                "Jane",
+                "J.",
+                "María José"
+              ]
+            },
+            "orcid": {
+              "$ref": "#/$defs/orcid"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "required": [
+            "organization"
+          ],
+          "properties": {
+            "organization": {
+              "$ref": "#/$defs/nonEmptyString",
+              "description": "Full name of an organization credited as an author.",
+              "examples": [
+                "Food and Agriculture Organization of the United Nations"
+              ]
+            },
+            "ror": {
+              "$ref": "#/$defs/ror"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "citation": {
+      "additionalProperties": false,
+      "description": "Structured citation for the resource.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Cite-as title; may differ from the record's top-level title.",
+          "minLength": 1
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/author"
+          },
+          "description": "Authors in citation order. A person gives family (and usually given); an organization gives organization.",
+          "minItems": 1
+        },
+        "date": {
+          "$ref": "#/$defs/coverageDate",
+          "description": "Publication date or year, e.g. 2024 or 2024-07-15.",
+          "examples": [
+            "2024",
+            "2024-07-15"
+          ]
+        },
+        "publisher": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Publisher or venue: the data publisher/repository for datasets, or the journal for articles."
+        },
+        "url": {
+          "$ref": "#/$defs/nonEmptyString",
+          "format": "uri"
+        },
+        "text": {
+          "description": "Citation as the source gives it, when it is not structured.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "type": "object"
+    },
+    "publication": {
+      "additionalProperties": false,
+      "properties": {
+        "citation": {
+          "$ref": "#/$defs/citation"
+        },
+        "doi": {
+          "$ref": "#/$defs/doi"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "doi"
+          ]
+        },
+        {
+          "required": [
+            "citation"
+          ]
+        }
+      ],
+      "type": "object"
+    },
+    "spatial": {
+      "additionalProperties": false,
+      "properties": {
+        "bbox": {
+          "description": "Spatial extent. A single bounding box, or a list of boxes for disjoint coverage - each box is a real area covered, in any order; do not include an overall/union box. 2D = [west, south, east, north] = [xmin, ymin, xmax, ymax]; 3D = [west, south, min_z, east, north, max_z]. WGS84 (EPSG:4326); elevation in metres.",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/bboxCoords"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/bboxCoords"
+              },
+              "minItems": 1
+            }
+          ],
+          "examples": [
+            [
+              -180,
+              -90,
+              180,
+              90
+            ],
+            [
+              [
+                -180,
+                -90,
+                180,
+                90
+              ]
+            ]
+          ]
+        },
+        "crs": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Coordinate reference system of the data: an authority code such as EPSG:4326 or ESRI:54052, or an OGC CRS URI. A PROJ or WKT string only when no code exists.",
+          "examples": [
+            "EPSG:4326"
+          ]
+        },
+        "geography": {
+          "description": "Countries and regions: ISO 3166-1 alpha-3 (PER), UN M49 regions (m49:419) or global (vocab/geography.json).",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "vocab.schema.json#/$defs/geography"
+          }
+        },
+        "landscapes": {
+          "description": "MFL living landscapes the resource covers (vocab/landscapes.json). Required by the MOSAIC profile.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "vocab.schema.json#/$defs/landscape"
+          }
+        },
+        "resolution": {
+          "description": "Spatial resolution, for discovery. Grids also describe it in structures (x/y dimensions).",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "unit": {
+              "enum": [
+                "m",
+                "km",
+                "degree",
+                "arcsec",
+                "arcmin"
+              ]
+            },
+            "text": {
+              "description": "As the source states it (e.g. district level, 1:50 000).",
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "anyOf": [
+            {
+              "required": [
+                "value",
+                "unit"
+              ]
+            },
+            {
+              "required": [
+                "text"
+              ]
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "temporal": {
+      "description": "Coverage extent, precision-aware. Use `date` for a single instant or period (date: 2020 = the year 2020), or `start_date` + `end_date` for a span (end_date: null = open-ended). `date` and `start_date`/`end_date` are mutually exclusive. ",
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "$ref": "#/$defs/coverageDate",
+          "description": "A single instant or period; its precision sets the granularity (year, month, day, or datetime)."
+        },
+        "start_date": {
+          "$ref": "#/$defs/coverageDate",
+          "description": "Start of a span."
+        },
+        "end_date": {
+          "description": "End of a span; null for an open-ended series.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/coverageDate"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "update_frequency": {
+          "$ref": "vocab.schema.json#/$defs/updateFrequency",
+          "description": "How often the resource gains new data (vocab/update_frequency.json)."
+        },
+        "text": {
+          "description": "Period as the source states it, when it has no precise dates.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "dependentSchemas": {
+        "date": {
+          "properties": {
+            "start_date": false,
+            "end_date": false
+          }
+        }
+      },
+      "type": "object"
+    },
+    "temporalValues": {
+      "description": "ISO 8601 strings, all at one precision: year, month, day, or an RFC 3339 date-time with seconds and offset.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "anyOf": [
+        {
+          "items": {
+            "pattern": "^\\d{4}$"
+          }
+        },
+        {
+          "items": {
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+          }
+        },
+        {
+          "items": {
+            "format": "date"
+          }
+        },
+        {
+          "items": {
+            "format": "date-time",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d(\\.\\d+)?)?(Z|[+-]([01]\\d|2[0-3]):[0-5]\\d)$"
+          }
+        }
+      ]
+    },
+    "dimensions": {
+      "description": "Cube axes: domain axes (e.g. crop, scenario), a vertical axis (type: z), place-key columns (type: location), and temporal axes (each type: temporal, with a step for regular spacing). The horizontal lat/lon grid is derived from the top-level spatial field and is not declared here.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "not": {
+              "const": "variable"
+            },
+            "description": "Axis name. Must not be \"variable\": measures are not axes and belong in variables[]; href_template refers to them via the reserved {variable} token."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the dimension is; define coded values here, or via reference_system or a sidecar.",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "description": "Dimension type. Reserved values change how the dimension is read: `temporal` (an axis of ISO 8601 dates or instants; a structure may declare several), `z` (a vertical axis - depth, height, or pressure level - at most one per structure), `x`, `y`, and `xy` (the horizontal axes in spatial.crs, as STAC datacube spatial x/y and CF axis X/Y: with a numeric step and unit they are a regular grid, xy when both axes share one spacing, else x and y as a pair with their own; without step they are a table's coordinate columns), and `location` (a column identifying a place, such as an admin, basin, station, or H3 cell code - a key, not an axis of space). Any other value names a domain axis after what it varies (crop, scenario, season). `spatial` and `geometry` are rejected, as are lat/lon spellings, so a coordinate axis cannot silently become a domain axis. Lowercase; aliases of `temporal` are rejected too.",
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_-]*$",
+            "not": {
+              "enum": [
+                "time",
+                "times",
+                "date",
+                "dates",
+                "datetime",
+                "timestamp",
+                "spatial",
+                "geometry",
+                "lat",
+                "latitude",
+                "lon",
+                "lng",
+                "longitude"
+              ]
+            },
+            "examples": [
+              "temporal",
+              "z",
+              "xy",
+              "x",
+              "y",
+              "location",
+              "crop",
+              "scenario"
+            ]
+          },
+          "reference_system": {
+            "$ref": "#/$defs/nonEmptyString",
+            "description": "Vocabulary or spatial index the values are coded against; prefer a resolvable URI when one exists (an AGROVOC concept scheme, a boundary set such as https://gadm.org/, https://h3geo.org/)."
+          },
+          "values": {
+            "description": "Allowed values along the dimension.",
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/$defs/scalar"
+            }
+          },
+          "step": {
+            "description": "Spacing between consecutive values, as in STAC datacube: an ISO 8601 duration (P1Y, P3M, PT6H) on a type: temporal dimension, a number in unit on x, y, or xy. Not the length of the period a value represents. On a temporal axis, required with extent and omitted when irregular. On a horizontal axis, present for a regular grid and absent for a table's coordinate columns.",
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^P(?=.*[1-9])(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(?!$)(\\d+H)?(\\d+M)?(\\d+S)?)?$"
+              },
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            ],
+            "examples": [
+              "P3M",
+              "P20Y",
+              0.05,
+              1000
+            ]
+          },
+          "extent": {
+            "description": "First and last value of a regular axis, in place of listing every value, as in STAC datacube. On a type: temporal dimension, two ISO 8601 strings at one precision (YYYY, YYYY-MM, YYYY-MM-DD, or an RFC 3339 date-time), no coarser than the step, start before end; requires step and excludes values. On x, y, or xy, the native [min, max] of the axis in unit and spatial.crs, optional, for a grid whose edges spatial.bbox does not give exactly, such as a projected CRS.",
+            "anyOf": [
+              {
+                "$ref": "#/$defs/temporalValues",
+                "minItems": 2,
+                "maxItems": 2
+              },
+              {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "number"
+                }
+              }
+            ],
+            "examples": [
+              [
+                "1981",
+                "2025"
+              ],
+              [
+                166000,
+                1053000
+              ]
+            ]
+          },
+          "unit": {
+            "$ref": "#/$defs/nonEmptyString",
+            "description": "Unit of measurement for the values, in UDUNITS-2 (UCUM only for what UDUNITS-2 cannot express). Required on x, y, and xy (degree, m, km) and on z (cm, m, hPa); useful on any numeric domain axis. Not a substitute for reference_system.",
+            "examples": [
+              "cm",
+              "m",
+              "hPa"
+            ]
+          },
+          "data_type": {
+            "description": "Storage type of the dimension's column or coordinate in the data, distinct from type, which is its role. A temporal dimension's values stay ISO 8601 strings here even when the source stores years as integers.",
+            "$ref": "#/$defs/dataType"
+          },
+          "categories": {
+            "description": "The axis values with labels, in place of values. Not allowed on a type: temporal dimension.",
+            "$ref": "#/$defs/categories"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "dependentSchemas": {
+          "categories": {
+            "properties": {
+              "type": {
+                "not": {
+                  "const": "temporal"
+                }
+              }
+            },
+            "not": {
+              "required": [
+                "values"
+              ]
+            }
+          },
+          "step": {
+            "anyOf": [
+              {
+                "properties": {
+                  "type": {
+                    "const": "temporal"
+                  },
+                  "step": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "x",
+                      "y",
+                      "xy"
+                    ]
+                  },
+                  "step": {
+                    "type": "number"
+                  }
+                }
+              }
+            ]
+          },
+          "extent": {
+            "anyOf": [
+              {
+                "properties": {
+                  "type": {
+                    "const": "temporal"
+                  },
+                  "extent": {
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "step"
+                ],
+                "not": {
+                  "required": [
+                    "values"
+                  ]
+                }
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "x",
+                      "y",
+                      "xy"
+                    ]
+                  },
+                  "extent": {
+                    "items": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "if": {
+          "properties": {
+            "type": {
+              "const": "temporal"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        "then": {
+          "properties": {
+            "values": {
+              "description": "On a temporal dimension, every value is an ISO 8601 date or an RFC 3339 date-time with seconds and offset, as a string. A value that labels a window is one date, such as its start; the dimension description gives the window length. A cyclic label axis (DJF/MAM/JJA/SON) is not temporal - name it after what it varies and describe the labels. All values share one precision.",
+              "$ref": "#/$defs/temporalValues"
+            }
+          }
+        },
+        "allOf": [
+          {
+            "$comment": "Horizontal axes carry their unit and never enumerate coordinates.",
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "x",
+                    "y",
+                    "xy"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "required": [
+                "unit"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "values"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "categories"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "contains": {
+        "properties": {
+          "type": {
+            "const": "z"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "minContains": 0,
+      "maxContains": 1,
+      "allOf": [
+        {
+          "$comment": "x and y come as a pair, and never beside xy.",
+          "if": {
+            "contains": {
+              "properties": {
+                "type": {
+                  "const": "x"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "then": {
+            "contains": {
+              "properties": {
+                "type": {
+                  "const": "y"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "contains": {
+              "properties": {
+                "type": {
+                  "const": "y"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "then": {
+            "contains": {
+              "properties": {
+                "type": {
+                  "const": "x"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "contains": {
+              "properties": {
+                "type": {
+                  "const": "xy"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "contains": {
+                    "properties": {
+                      "type": {
+                        "const": "x"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  }
+                },
+                {
+                  "contains": {
+                    "properties": {
+                      "type": {
+                        "const": "y"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "variables": {
+      "description": "Measurement variables, bands, or columns.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "description": "Stable definition and reading guidance for the variable.",
+            "minLength": 1
+          },
+          "data_type": {
+            "description": "Data type of the stored values. Numeric names follow STAC raster:data_type; the rest cover table columns. other is for nested types (list, map, struct).",
+            "$ref": "#/$defs/dataType"
+          },
+          "unit": {
+            "$ref": "#/$defs/nonEmptyString",
+            "description": "Unit of measurement in UDUNITS-2, as CF requires (mm d-1, degC, kg ha-1). UCUM only for what UDUNITS-2 cannot express, such as {head}/km2 or [pH]; never a UCUM spelling of a UDUNITS-2 unit. Required for measurements; omit for text or code columns.",
+            "examples": [
+              "t ha-1",
+              "{head}/km2"
+            ]
+          },
+          "nodata": {
+            "description": "Fill value for missing data, as stored in this variable. A representation that stores the variable with another fill value or type is another structure.",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "$ref": "#/$defs/nonEmptyString"
+              }
+            ]
+          },
+          "note": {
+            "$ref": "#/$defs/nonEmptyString",
+            "description": "Variable-specific caveats, limitations, or warnings."
+          },
+          "categories": {
+            "description": "Codes the variable can contain and what each means. For long lists, link a sidecar with rel=describedby instead.",
+            "$ref": "#/$defs/categories"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "foreignKeys": {
+      "description": "Keys from this table to other catalogued datasets, after Frictionless Table Schema foreignKeys. Each entry pairs this record's key columns with the referenced dataset's columns, positionally.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fields",
+          "reference"
+        ],
+        "properties": {
+          "fields": {
+            "description": "Key columns in this record; each must be a dimensions[]/variables[] name of the same structure.",
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "reference": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "resource",
+              "fields"
+            ],
+            "properties": {
+              "resource": {
+                "description": "The dataset referenced (e.g. a boundary/station record): its catalog record id, which must resolve to exactly one catalog record, or an absolute URI for a dataset outside the catalog.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]*$"
+                  },
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                ],
+                "examples": [
+                  "gaul-2015-admin2",
+                  "https://example.org/boundaries/gaul-2015-admin2"
+                ]
+              },
+              "asset": {
+                "description": "The data[].name of the referenced dataset's file that holds reference.fields. Required when that dataset has more than one data[] entry.",
+                "type": "string",
+                "minLength": 1
+              },
+              "fields": {
+                "description": "Matching columns in the referenced dataset, paired positionally with fields (same length).",
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "hrefTemplate": {
+      "type": "string",
+      "examples": [
+        "mapspam_{crop}_{technology}_{variable}.tif",
+        "chirps-v2.0.{date:%Y.%m.%d}.tif"
+      ],
+      "$comment": "Braces balance; a token is {name} or {name:format}, and a format holds at least one directive and no other %.",
+      "pattern": "^(?:[^{}]|\\{[^{}:]+(?::(?=[^}]*%)(?:%[Ymd]|[^%{}])+)?\\})+$"
+    },
+    "funder": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "ror": {
+          "$ref": "#/$defs/ror"
+        },
+        "award": {
+          "description": "Grant or award number.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "description": "Structure of a MOSAIC metadata record. Built on the CGIAR Climate Data Hub core schema v0.5.0 (MIT): the same field names and shapes, plus what MOSAIC needs (themes, landscapes, access method, kinds of data, resolution, licence text, inferred fields). A record that breaks this schema is INVALID. Completeness is checked separately by levels/minimum.schema.json and levels/recommended.schema.json; the MOSAIC profile adds what MOSAIC's own records carry. Only properties defined here or in a declared extension are allowed.",
+  "properties": {
+    "schema_version": {
+      "description": "Version of the MOSAIC standard this record follows (e.g. 0.2.0). Written by the build.",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "examples": [
+        "0.2.0"
+      ]
+    },
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable title of the resource.",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "description": "Canonical human- and AI-readable summary of the resource.",
+      "minLength": 1
+    },
+    "note": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Caveats, warnings, or interpretation-critical remarks not captured in description."
+    },
+    "resource_type": {
+      "$ref": "vocab.schema.json#/$defs/resourceType",
+      "description": "Kind of resource the record describes (vocab/resource_type.json)."
+    },
+    "version": {
+      "$ref": "#/$defs/versionLabel",
+      "description": "Version label of this release of the resource. The source's own label when it has one; otherwise a counter from 1. Letters, digits, dots, underscores, and hyphens only, since it becomes part of a superseded release's id. Not compared or sorted - order comes from previous_version.",
+      "examples": [
+        "1",
+        "v2r2",
+        "2.1"
+      ]
+    },
+    "previous_version": {
+      "$ref": "#/$defs/versionLabel",
+      "description": "version of the predecessor record (same id), when this supersedes an earlier release."
+    },
+    "deprecated": {
+      "type": "boolean",
+      "description": "true when a newer release (same id) supersedes this record."
+    },
+    "parent": {
+      "$ref": "#/$defs/id",
+      "description": "id of the parent record, when this record is a child representation of it. Omit on top-level records. Must resolve to exactly one catalog record, must not equal this record's id, and must not create a parent cycle."
+    },
+    "series": {
+      "description": "Program, initiative, or product brand the resource was published under (e.g. Africa Agriculture Adaptation Atlas, MapSPAM, ACASA). Members may span domains, resolutions, and resource types. Not for grouping representations or releases of a single resource. `name` is the grouping key - use the same spelling on every record in the series; `url` is the series landing page.",
+      "$ref": "#/$defs/nameUrl"
+    },
+    "language": {
+      "description": "Languages of the content, ISO 639-1 codes (en, es, fr).",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$"
+      }
+    },
+    "themes": {
+      "description": "MOSAIC themes (vocab/themes.json); the first one is the primary theme. CDH domains map to these.",
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
       "items": {
+        "$ref": "vocab.schema.json#/$defs/theme"
+      }
+    },
+    "keywords": {
+      "description": "Free-text search terms. Each item is either a plain string, or an object linking the term to an external vocabulary/ontology (e.g., AGROVOC, GEMET).",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
         "oneOf": [
           {
-            "$ref": "#/$defs/text"
+            "type": "string",
+            "minLength": 1
           },
           {
             "type": "object",
@@ -60,104 +1740,170 @@
             ],
             "properties": {
               "term": {
-                "$ref": "#/$defs/text"
+                "type": "string",
+                "minLength": 1
               },
               "scheme": {
-                "description": "Vocabulary id, e.g. agrovoc, gemet, sdg.",
+                "description": "Resolvable URI of the controlled vocabulary or ontology this term comes from. CDH vocab schemes (.../cdh-metadata-standard/vocab/) belong to cdh.domain / commodities - link an external vocabulary instead.",
                 "type": "string",
-                "pattern": "^[a-z0-9-]+$"
+                "format": "uri"
               },
               "uri": {
-                "$ref": "#/$defs/url"
+                "description": "Resolvable URI of the specific concept within `scheme`.",
+                "type": "string",
+                "format": "uri"
               },
-              "lang": {
-                "$ref": "#/$defs/language"
+              "description": {
+                "type": "string",
+                "minLength": 1
               }
             }
           }
         ]
-      }
+      },
+      "minItems": 1
     },
-    "geography": {
-      "description": "Where the resource applies: ISO 3166-1 alpha-3 countries, m49:<code> regions, or global.",
+    "commodities": {
+      "description": "Agricultural commodities the resource describes (crops, livestock), as ids of the CDH commodity vocabulary (e.g. maize, cattle).",
       "type": "array",
-      "minItems": 1,
       "uniqueItems": true,
       "items": {
-        "$ref": "vocab.schema.json#/$defs/geography"
+        "type": "string",
+        "minLength": 1
       }
     },
-    "license": {
-      "$ref": "#/$defs/license"
-    },
-    "contacts": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/contact"
-      },
-      "description": "People and organizations responsible for the resource, each with one or more roles. A contact with the licensor role is recommended."
-    },
-    "citation": {
-      "description": "How to cite the resource: a formatted string, or a structured citation.",
-      "oneOf": [
-        {
-          "$ref": "#/$defs/text"
+    "usage": {
+      "description": "Use guidance: what the resource was produced for, and what to avoid. Omit when there is nothing to say.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "intended_uses": {
+          "description": "Uses the resource was produced for (illustrative, never exhaustive).",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
-        {
-          "$ref": "#/$defs/citation"
+        "not_recommended_for": {
+          "description": "Uses to avoid, each with a reason and an optional alternative.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "use",
+              "reason"
+            ],
+            "properties": {
+              "use": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "use_instead": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
         }
-      ]
-    },
-    "doi": {
-      "$ref": "#/$defs/doi"
-    },
-    "access": {
-      "description": "Access condition of the data: public, restricted or internal. Always explicit.",
-      "$ref": "vocab.schema.json#/$defs/access"
-    },
-    "access_note": {
-      "description": "How to obtain the data when it is not public: who to ask and how.",
-      "$ref": "#/$defs/text"
-    },
-    "data": {
-      "description": "Ways to reach the resource. Each entry is one access point.",
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/accessPoint"
       }
+    },
+    "spatial": {
+      "$ref": "#/$defs/spatial"
     },
     "temporal": {
       "$ref": "#/$defs/temporal"
     },
-    "spatial": {
-      "description": "Where the data is, as coordinates: bounding box(es) and CRS.",
-      "$ref": "#/$defs/spatial"
-    },
-    "version": {
-      "description": "Version label of this release, as the source names it.",
+    "license": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9._-]+$"
+      "minLength": 1,
+      "description": "Licence of the data as an SPDX expression (CC-BY-4.0, CC0-1.0, CC-BY-4.0 OR CC0-1.0). Without an SPDX code: LicenseRef-<name>, with its text in license_text and, when it exists, a link in additional_links (rel: license).",
+      "examples": [
+        "CC-BY-4.0",
+        "LicenseRef-source-terms"
+      ]
     },
-    "update_frequency": {
-      "description": "How often the source updates the data.",
-      "$ref": "vocab.schema.json#/$defs/updateFrequency"
+    "license_text": {
+      "description": "Text of the licence or terms when there is no SPDX code.",
+      "type": "string",
+      "minLength": 1
     },
-    "source_updated": {
-      "description": "Date the source last updated the data (not the record). YYYY, YYYY-MM or YYYY-MM-DD.",
-      "$ref": "#/$defs/date"
+    "access": {
+      "$ref": "vocab.schema.json#/$defs/access",
+      "description": "Access to the data: public, restricted (on request or with an account) or non-public (catalogued, not available outside the holders). DCAT / EU access-rights aligned."
     },
-    "language": {
-      "description": "Languages of the content (BCP 47), when language matters (documents, labels).",
-      "type": "array",
+    "access_note": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Human-readable access conditions or instructions. Required when access is restricted or non-public; maps to schema.org conditionsOfAccess."
+    },
+    "attribution": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Credit line reusers should reproduce: wording a license or upstream source requires, or the credit the producer asks for. One short statement; do not restate citation. Maps to schema.org creditText.",
+      "examples": [
+        "Contains modified Copernicus Emergency Management Service information [year]"
+      ]
+    },
+    "contact": {
+      "description": "People or organizations responsible for the resource. At least one should hold the licensor role.",
       "items": {
-        "$ref": "#/$defs/language"
+        "$ref": "#/$defs/contact"
       },
-      "uniqueItems": true
+      "minItems": 1,
+      "type": "array"
+    },
+    "citation": {
+      "$ref": "#/$defs/citation"
+    },
+    "doi": {
+      "$ref": "#/$defs/doi"
     },
     "funding": {
+      "description": "Funding sources for the resource.",
+      "items": {
+        "$ref": "#/$defs/funder"
+      },
+      "type": "array"
+    },
+    "related_publications": {
+      "description": "Related works such as papers or reports.",
+      "items": {
+        "$ref": "#/$defs/publication"
+      },
+      "type": "array"
+    },
+    "additional_links": {
+      "description": "Related links: citation targets, services, or related resources. Each entry has an id (a Hub record) or a url (anything else), not both.",
+      "items": {
+        "$ref": "#/$defs/link"
+      },
+      "type": "array"
+    },
+    "data": {
+      "description": "Data assets for the resource; at least one entry.",
+      "items": {
+        "$ref": "#/$defs/dataAsset"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "additional_assets": {
+      "description": "Sidecar or auxiliary assets, e.g. metadata files or thumbnails.",
+      "items": {
+        "$ref": "#/$defs/additionalAsset"
+      },
+      "type": "array"
+    },
+    "structures": {
+      "description": "The data dictionary, one structure per layout, after Frictionless Data Package resources: each structure is a self-contained set of dimensions, variables, and foreign keys. A record with one layout has one structure. Names are unique within a structure and may repeat across structures, so two tables can each have a column named value. Every data[] entry names the structures it holds.",
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -166,802 +1912,132 @@
         ],
         "properties": {
           "name": {
-            "$ref": "#/$defs/text"
+            "$ref": "#/$defs/nonEmptyString",
+            "description": "Structure name, unique within structures[]; data[].structures refers to it."
           },
-          "url": {
-            "$ref": "#/$defs/url"
+          "dimensions": {
+            "$ref": "#/$defs/dimensions",
+            "description": "The dimensions every variable in this structure has. Omit it when the variables vary only over the horizontal grid."
           },
-          "ror": {
-            "$ref": "#/$defs/ror"
+          "variables": {
+            "$ref": "#/$defs/variables",
+            "description": "The variables in this structure."
           },
-          "award": {
-            "$ref": "#/$defs/text"
+          "foreign_keys": {
+            "$ref": "#/$defs/foreignKeys",
+            "description": "Keys from this structure's columns to other catalogued datasets."
+          },
+          "geometry_column": {
+            "$ref": "#/$defs/nonEmptyString",
+            "description": "Name of the geometry column, for a table with embedded geometries. A geometry column is not a variable."
           }
         }
-      },
-      "description": "Who paid for producing the data."
+      }
     },
-    "related": {
-      "description": "Other resources this one connects to (connect, don't duplicate).",
-      "type": "array",
+    "processing": {
+      "description": "Ordered processing/provenance steps; at least one must have id: source.",
+      "contains": {
+        "properties": {
+          "id": {
+            "const": "source"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
       "items": {
-        "$ref": "#/$defs/related"
+        "$ref": "#/$defs/processingStep"
+      },
+      "minContains": 1,
+      "type": "array"
+    },
+    "derived": {
+      "description": "Record fields filled by a tool that read the data (e.g. spatial.bbox), not by a person.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z_]+(\\[\\])?(\\.[a-z_]+(\\[\\])?)*$"
       }
     },
     "created": {
-      "description": "Date the record was created (filled from git history; not authored).",
-      "$ref": "#/$defs/date"
+      "$ref": "#/$defs/date",
+      "description": "Date the record was created (not the data). Written by the build from git when missing."
     },
     "updated": {
-      "description": "Date the record was last changed (filled from git history; not authored).",
-      "$ref": "#/$defs/date"
+      "$ref": "#/$defs/date",
+      "description": "Date the record was last updated (not the data). Written by the build from git when missing."
     },
-    "derived": {
-      "$ref": "#/$defs/fieldPaths",
-      "description": "Record fields filled by a tool that read the data (e.g. spatial.bbox). A person may overwrite them; then remove the path."
-    },
-    "mosaic": {
-      "$ref": "#/$defs/mosaicBlock"
+    "source_updated": {
+      "$ref": "#/$defs/coverageDate",
+      "description": "When the source last updated the data (not the record)."
     },
     "extensions": {
-      "description": "Extension blocks this record uses, as name@version (e.g. biodiversity@0.1.0). Each name is also a top-level key.",
+      "description": "Extensions this record uses, as name@version (e.g. climate@0.2.0). Only for very particular cases; the core covers everything else.",
       "type": "array",
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "pattern": "^[a-z][a-z0-9_]*@[0-9]+\\.[0-9]+\\.[0-9]+$"
+        "pattern": "^[a-z][a-z0-9_-]*@\\d+\\.\\d+\\.\\d+$"
       }
     }
   },
-  "$defs": {
-    "text": {
-      "type": "string",
-      "minLength": 1,
-      "pattern": "\\S",
-      "x-message": "empty text"
-    },
-    "identifier": {
-      "type": "string",
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,99}$",
-      "x-message": "id may only use letters, digits, '.', '_' and '-'"
-    },
-    "url": {
-      "type": "string",
-      "pattern": "^(https?|ftp|s3|gs|ee)://\\S+$",
-      "x-message": "not an absolute URL (http, https, ftp, s3, gs or ee)"
-    },
-    "date": {
-      "description": "ISO 8601 date: YYYY, YYYY-MM or YYYY-MM-DD.",
-      "type": "string",
-      "pattern": "^[0-9]{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12][0-9]|3[01]))?)?$",
-      "x-message": "not an ISO 8601 date (YYYY, YYYY-MM or YYYY-MM-DD)"
-    },
-    "language": {
-      "type": "string",
-      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
-      "x-message": "language must be a BCP 47 code such as en or es-PE"
-    },
-    "doi": {
-      "description": "DOI without the resolver, e.g. 10.5061/dryad.6djh9w18f.",
-      "type": "string",
-      "pattern": "^10\\.[0-9]{4,9}/\\S+$",
-      "x-message": "DOI must look like 10.xxxx/suffix, without https://doi.org/"
-    },
-    "ror": {
-      "type": "string",
-      "pattern": "^https://ror\\.org/0[a-z0-9]{8}$",
-      "x-message": "ROR must be https://ror.org/0xxxxxxxx"
-    },
-    "orcid": {
-      "type": "string",
-      "pattern": "^https://orcid\\.org/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$",
-      "x-message": "ORCID must be https://orcid.org/0000-0000-0000-0000"
-    },
-    "license": {
-      "description": "Licence of the data. spdx when it is a standard licence (SPDX expression); otherwise text with the url of its terms when there is one. Unknown parts are null.",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "spdx": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "pattern": "^[A-Za-z0-9.+-]+( (AND|OR|WITH) [A-Za-z0-9.+-]+)*$"
-        },
-        "url": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/url"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "text": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/text"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "contact": {
-      "type": "object",
-      "additionalProperties": false,
-      "anyOf": [
-        {
-          "required": [
-            "name"
-          ]
-        },
-        {
-          "required": [
-            "organization"
-          ]
-        },
-        {
-          "required": [
-            "email"
-          ]
-        }
-      ],
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/text"
-        },
-        "organization": {
-          "$ref": "#/$defs/text"
-        },
-        "email": {
-          "type": "string",
-          "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
-        },
-        "url": {
-          "$ref": "#/$defs/url"
-        },
-        "ror": {
-          "$ref": "#/$defs/ror"
-        },
-        "orcid": {
-          "$ref": "#/$defs/orcid"
-        },
-        "roles": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "$ref": "vocab.schema.json#/$defs/contactRole"
+  "allOf": [
+    {
+      "$comment": "With two or more structures, every data[] entry names the structures it holds. With one, an asset without the field holds it.",
+      "if": {
+        "required": [
+          "structures"
+        ],
+        "properties": {
+          "structures": {
+            "minItems": 2
           }
         }
       },
-      "x-message": "a contact needs at least a name, an organization or an email"
-    },
-    "citation": {
-      "type": "object",
-      "additionalProperties": false,
-      "anyOf": [
-        {
-          "required": [
-            "text"
-          ]
-        },
-        {
-          "required": [
-            "title",
-            "authors"
-          ]
-        }
-      ],
-      "properties": {
-        "text": {
-          "description": "The citation as the source formats it.",
-          "$ref": "#/$defs/text"
-        },
-        "title": {
-          "$ref": "#/$defs/text"
-        },
-        "authors": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "anyOf": [
-              {
-                "required": [
-                  "family"
-                ]
-              },
-              {
-                "required": [
-                  "organization"
-                ]
-              }
-            ],
-            "properties": {
-              "family": {
-                "$ref": "#/$defs/text"
-              },
-              "given": {
-                "$ref": "#/$defs/text"
-              },
-              "organization": {
-                "$ref": "#/$defs/text"
-              },
-              "orcid": {
-                "$ref": "#/$defs/orcid"
-              }
-            }
-          }
-        },
-        "date": {
-          "$ref": "#/$defs/date"
-        },
-        "publisher": {
-          "$ref": "#/$defs/text"
-        },
-        "version": {
-          "type": "string"
-        }
-      }
-    },
-    "temporal": {
-      "description": "Period the data covers. end null = still running. text keeps the source wording.",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "start": {
-          "$ref": "#/$defs/date"
-        },
-        "end": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/date"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "text": {
-          "$ref": "#/$defs/text"
-        }
-      }
-    },
-    "spatial": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "bbox": {
-          "description": "[west, south, east, north] in WGS84 degrees, or a list of such boxes for disjoint areas (no union box).",
-          "oneOf": [
-            {
-              "$ref": "#/$defs/bboxCoords"
-            },
-            {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "$ref": "#/$defs/bboxCoords"
-              }
-            }
-          ]
-        },
-        "crs": {
-          "$ref": "#/$defs/crs"
-        },
-        "resolution": {
-          "description": "Spatial detail of the data as a whole: a grid size ({value, unit}) or the unit of aggregation in words ({text}, e.g. district level). Raster pixel size can also go in data[].raster.resolution.",
-          "$ref": "#/$defs/resolution"
-        }
-      }
-    },
-    "crs": {
-      "type": "string",
-      "pattern": "^(EPSG|ESRI|OGC):[A-Za-z0-9.]+$",
-      "x-message": "CRS must look like EPSG:4326"
-    },
-    "resolution": {
-      "type": "object",
-      "additionalProperties": false,
-      "anyOf": [
-        {
-          "required": [
-            "value",
-            "unit"
-          ]
-        },
-        {
-          "required": [
-            "text"
-          ]
-        }
-      ],
-      "properties": {
-        "value": {
-          "type": "number",
-          "exclusiveMinimum": 0
-        },
-        "unit": {
-          "enum": [
-            "m",
-            "km",
-            "degree",
-            "arcsec",
-            "arcmin"
-          ]
-        },
-        "text": {
-          "$ref": "#/$defs/text"
-        }
-      }
-    },
-    "field": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name"
-      ],
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/text"
-        },
-        "type": {
-          "enum": [
-            "string",
-            "integer",
-            "number",
-            "boolean",
-            "date",
-            "datetime",
-            "geometry",
-            "other"
-          ]
-        },
-        "unit": {
-          "$ref": "#/$defs/text"
-        },
-        "description": {
-          "$ref": "#/$defs/text"
-        }
-      }
-    },
-    "rasterBlock": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "resolution": {
-          "$ref": "#/$defs/resolution"
-        },
-        "crs": {
-          "$ref": "#/$defs/crs"
-        },
-        "bands": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "name"
-            ],
-            "properties": {
-              "name": {
-                "$ref": "#/$defs/text"
-              },
-              "description": {
-                "$ref": "#/$defs/text"
-              },
-              "unit": {
-                "$ref": "#/$defs/text"
-              },
-              "data_type": {
-                "enum": [
-                  "uint8",
-                  "int8",
-                  "uint16",
-                  "int16",
-                  "uint32",
-                  "int32",
-                  "float32",
-                  "float64",
-                  "other"
-                ]
-              },
-              "nodata": {
-                "type": [
-                  "number",
-                  "string"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    "vectorBlock": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "geometry_type": {
-          "enum": [
-            "point",
-            "line",
-            "polygon",
-            "mixed"
-          ],
-          "description": "point, line, polygon or mixed. Point data = vector with geometry_type point (or a spatial table with coordinate_columns)."
-        },
-        "feature_count": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "crs": {
-          "$ref": "#/$defs/crs"
-        },
-        "attributes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/field"
-          }
-        }
-      }
-    },
-    "tabularBlock": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "spatial": {
-          "description": "Whether the table locates its rows on the map (coordinates or a geometry column). false = a plain table, e.g. statistics by district name.",
-          "type": "boolean"
-        },
-        "coordinate_columns": {
-          "description": "Columns that hold point coordinates, e.g. {x: lon, y: lat}.",
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "x",
-            "y"
-          ],
-          "properties": {
-            "x": {
-              "$ref": "#/$defs/text"
-            },
-            "y": {
-              "$ref": "#/$defs/text"
-            },
-            "crs": {
-              "$ref": "#/$defs/crs"
-            }
-          }
-        },
-        "row_count": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "columns": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/field"
-          }
-        },
-        "geometry_column": {
-          "description": "Column that holds a geometry (WKT, WKB, GeoJSON).",
-          "$ref": "#/$defs/text"
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "required": [
-                  "coordinate_columns"
-                ]
-              },
-              {
-                "required": [
-                  "geometry_column"
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "spatial": {
-                "const": true
-              }
-            }
-          },
-          "x-message": "a table with coordinate_columns or geometry_column is spatial: spatial must be true"
-        }
-      ]
-    },
-    "documentBlock": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "pages": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "language": {
-          "$ref": "#/$defs/language"
-        }
-      }
-    },
-    "serviceBlock": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "service_type": {
-          "enum": [
-            "wms",
-            "wmts",
-            "wfs",
-            "ogc-api-features",
-            "ogc-api-records",
-            "stac-api",
-            "earth-engine",
-            "arcgis-rest",
-            "rest",
-            "other"
-          ]
-        },
-        "layers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/text"
-          }
-        },
-        "auth_required": {
-          "type": "boolean"
-        }
-      }
-    },
-    "accessPoint": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name"
-      ],
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/text"
-        },
-        "kind": {
-          "description": "Kind of data behind the point: raster, vector, tabular, document, mixed or other.",
-          "$ref": "vocab.schema.json#/$defs/dataKind"
-        },
-        "method": {
-          "description": "How the point is used: download, landing_page, service or request.",
-          "$ref": "vocab.schema.json#/$defs/accessMethod"
-        },
-        "url": {
-          "$ref": "#/$defs/url"
-        },
-        "description": {
-          "$ref": "#/$defs/text"
-        },
-        "media_type": {
-          "description": "IANA media type, e.g. image/tiff; application=geotiff.",
-          "type": "string",
-          "pattern": "^[a-z]+/[a-zA-Z0-9.+-]+(;.*)?$"
-        },
-        "access": {
-          "description": "Access of this point when it differs from the record (e.g. an internal copy of public data).",
-          "$ref": "vocab.schema.json#/$defs/access"
-        },
-        "size": {
-          "description": "Human-readable size, e.g. 175.2 MB.",
-          "$ref": "#/$defs/text"
-        },
-        "files": {
-          "description": "File names or a short description of the file set.",
-          "$ref": "#/$defs/text"
-        },
-        "raster": {
-          "$ref": "#/$defs/rasterBlock"
-        },
-        "vector": {
-          "$ref": "#/$defs/vectorBlock"
-        },
-        "tabular": {
-          "$ref": "#/$defs/tabularBlock"
-        },
-        "document": {
-          "$ref": "#/$defs/documentBlock"
-        },
-        "service": {
-          "$ref": "#/$defs/serviceBlock"
-        },
-        "derived": {
-          "$ref": "#/$defs/fieldPaths"
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "required": [
-              "raster"
-            ]
-          },
-          "then": {
-            "properties": {
-              "kind": {
-                "const": "raster"
-              }
-            }
-          },
-          "x-message": "a 'raster' block needs kind: raster"
-        },
-        {
-          "if": {
-            "required": [
-              "vector"
-            ]
-          },
-          "then": {
-            "properties": {
-              "kind": {
-                "const": "vector"
-              }
-            }
-          },
-          "x-message": "a 'vector' block needs kind: vector"
-        },
-        {
-          "if": {
-            "required": [
-              "tabular"
-            ]
-          },
-          "then": {
-            "properties": {
-              "kind": {
-                "const": "tabular"
-              }
-            }
-          },
-          "x-message": "a 'tabular' block needs kind: tabular"
-        },
-        {
-          "if": {
-            "required": [
-              "document"
-            ]
-          },
-          "then": {
-            "properties": {
-              "kind": {
-                "const": "document"
-              }
-            }
-          },
-          "x-message": "a 'document' block needs kind: document"
-        },
-        {
-          "if": {
-            "required": [
-              "service"
-            ]
-          },
-          "then": {
-            "properties": {
-              "method": {
-                "const": "service"
-              }
-            }
-          },
-          "x-message": "a 'service' block needs method: service"
-        }
-      ]
-    },
-    "related": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "relation",
-        "scheme",
-        "value"
-      ],
-      "properties": {
-        "relation": {
-          "$ref": "vocab.schema.json#/$defs/relation"
-        },
-        "scheme": {
-          "enum": [
-            "doi",
-            "handle",
-            "url",
-            "ark",
-            "mosaic",
-            "other"
-          ]
-        },
-        "value": {
-          "$ref": "#/$defs/text"
-        },
-        "title": {
-          "$ref": "#/$defs/text"
-        }
-      }
-    },
-    "mosaicBlock": {
-      "description": "MOSAIC profile fields. Optional today; required when the mosaic profile is enforced.",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "landscapes": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "$ref": "vocab.schema.json#/$defs/landscape"
-          }
-        },
-        "intake": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "status": {
-              "enum": [
-                "draft",
-                "in-review",
-                "published",
-                "withdrawn"
+      "then": {
+        "properties": {
+          "data": {
+            "items": {
+              "required": [
+                "structures"
               ]
-            },
-            "submitted_by": {
-              "$ref": "#/$defs/text"
-            },
-            "submitted_on": {
-              "$ref": "#/$defs/date"
             }
           }
         }
       }
     },
-    "bboxCoords": {
-      "type": "array",
-      "prefixItems": [
-        {
-          "type": "number",
-          "minimum": -180,
-          "maximum": 180
-        },
-        {
-          "type": "number",
-          "minimum": -90,
-          "maximum": 90
-        },
-        {
-          "type": "number",
-          "minimum": -180,
-          "maximum": 180
-        },
-        {
-          "type": "number",
-          "minimum": -90,
-          "maximum": 90
+    {
+      "$comment": "{variable} expands over variable names. data[].structures already guarantees them when structures exist; this only rejects a template in a record with no structures at all.",
+      "if": {
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "contains": {
+              "required": [
+                "href_template"
+              ],
+              "properties": {
+                "href_template": {
+                  "pattern": "\\{variable\\}"
+                }
+              }
+            }
+          }
         }
-      ],
-      "minItems": 4,
-      "maxItems": 4
-    },
-    "fieldPaths": {
-      "description": "Fields filled by a tool that read the data, not by a person (dot paths, e.g. vector.geometry_type). A person may overwrite such a value; then remove its path from the list.",
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "pattern": "^[a-z_]+(\\.[a-z_]+)*$"
+      },
+      "then": {
+        "required": [
+          "structures"
+        ]
       }
     }
-  }
+  ],
+  "title": "MOSAIC record (v0.2.0)",
+  "type": "object",
+  "x-derived-from": "CGIAR Climate Data Hub metadata standard v0.5.0, spec/schemas/core.schema.json (MIT licence)"
 }

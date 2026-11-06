@@ -21,17 +21,17 @@ def client(catalog: CatalogService) -> TestClient:
 
 
 def test_search_and_filters(client: TestClient) -> None:
-    page = client.get("/v1/resources", params={"q": "forest", "include_facets": True}).json()
+    page = client.get("/v1/records", params={"q": "forest", "include_facets": True}).json()
     assert [i["id"] for i in page["items"]] == ["mosaic:MFL-2026-079"]
     assert page["facets"]["source"] == {"mosaic": 1}
     assert set(page["facets"]) == {"source", "theme", "landscape", "geography"}
-    cdh = client.get("/v1/resources", params={"source": "cdh"}).json()
+    cdh = client.get("/v1/records", params={"source": "cdh"}).json()
     assert cdh["total"] == 3 and {i["source"] for i in cdh["items"]} == {"cdh"}
 
 
 def test_only_the_simple_filters_exist(client: TestClient) -> None:
     spec = client.get("/openapi.json").json()
-    params = {p["name"] for p in spec["paths"]["/v1/resources"]["get"]["parameters"]}
+    params = {p["name"] for p in spec["paths"]["/v1/records"]["get"]["parameters"]}
     assert params == {
         "q",
         "source",
@@ -46,28 +46,25 @@ def test_only_the_simple_filters_exist(client: TestClient) -> None:
     }
     assert set(spec["paths"]) == {
         "/v1/sources",
-        "/v1/filters",
-        "/v1/resources",
-        "/v1/resources/{source_id}/{local_id}",
+        "/v1/records",
+        "/v1/records/{source_id}/{local_id}",
         "/v1/landscapes",
         "/v1/landscapes/{code}",
     } - ({"/v1/landscapes", "/v1/landscapes/{code}"} - set(spec["paths"]))
 
 
-def test_filters_endpoint(client: TestClient) -> None:
-    f = client.get("/v1/filters").json()
-    assert f["totals"]["resources"] == 7 and f["api_version"]
-    assert set(f["filters"]) == {"source", "theme", "landscape", "geography"}
-    sources = {o["value"]: o for o in f["filters"]["source"]}
-    assert sources["mosaic"]["count"] == 4 and sources["cdh"]["label"] == "CGIAR Climate Data Hub"
-    peru = next(o for o in f["filters"]["geography"] if o["value"] == "PER")
-    assert peru["label"] == "Peru" and peru["count"] == 1
-    assert f["labels"]["access"]["restricted"] == "Restricted"
-    assert "theme" not in f["labels"]
+def test_five_endpoints_and_no_filters_endpoint(client: TestClient) -> None:
+    # the filter options and their labels live in the website; the API answers 404 for /v1/filters
+    assert client.get("/v1/filters").status_code == 404
+    assert client.get("/v1/resources").status_code == 404
+    paths = set(client.app.openapi()["paths"])  # type: ignore[attr-defined]
+    assert paths == {"/v1/sources", "/v1/records", "/v1/records/{source_id}/{local_id}"}  # + 2 landscape routes
+    page = client.get("/v1/records", params={"include_facets": True}).json()
+    assert page["facets"]["source"] == {"mosaic": 4, "cdh": 3}  # counts per value, for the client
 
 
-def test_resource_detail(client: TestClient) -> None:
-    d = client.get("/v1/resources/cdh/esa-worldcover-2021").json()
+def test_record_detail(client: TestClient) -> None:
+    d = client.get("/v1/records/cdh/esa-worldcover-2021").json()
     assert d["record"]["id"] == "esa-worldcover-2021"
     assert d["provenance"]["source_name"] == "CGIAR Climate Data Hub"
     assert d["quality"]["status"] == "complete"
@@ -76,24 +73,24 @@ def test_resource_detail(client: TestClient) -> None:
         "/v1/facets",
         "/v1/labels",
         "/v1/summaries",
-        "/v1/resources/cdh/esa-worldcover-2021/jsonld",
+        "/v1/records/cdh/esa-worldcover-2021/jsonld",
     ):
         assert client.get(gone).status_code == 404, gone
 
 
 def test_errors_are_problem_json(client: TestClient) -> None:
-    r = client.get("/v1/resources/mosaic/NOPE")
+    r = client.get("/v1/records/mosaic/NOPE")
     assert r.status_code == 404 and r.headers["content-type"] == "application/problem+json"
-    assert client.get("/v1/resources", params={"page_size": 51}).status_code == 422
-    assert client.get("/v1/resources", params={"q": "x" * 201}).status_code == 422
+    assert client.get("/v1/records", params={"page_size": 51}).status_code == 422
+    assert client.get("/v1/records", params={"q": "x" * 201}).status_code == 422
 
 
 def test_read_only_and_headers(client: TestClient) -> None:
-    assert client.post("/v1/resources").status_code == 405
-    r = client.get("/v1/filters", headers={"Origin": "http://localhost:4321"})
+    assert client.post("/v1/records").status_code == 405
+    r = client.get("/v1/sources", headers={"Origin": "http://localhost:4321"})
     assert r.headers["x-content-type-options"] == "nosniff"
     assert r.headers["access-control-allow-origin"] == "http://localhost:4321"
-    other = client.get("/v1/filters", headers={"Origin": "https://evil.example"})
+    other = client.get("/v1/sources", headers={"Origin": "https://evil.example"})
     assert "access-control-allow-origin" not in other.headers
 
 
@@ -108,17 +105,17 @@ def test_emails_can_be_hidden(catalog: CatalogService) -> None:
 def test_static_export_matches_live_api(tmp_path: Path, catalog: CatalogService, client: TestClient) -> None:
     out = tmp_path / "site"
     summary = export(client.app, catalog, out)  # type: ignore[arg-type]
-    assert summary["totals"]["resources"] == 7
+    assert summary["records"] == 7 and summary["standard_version"]
     index = json.loads((out / "v1/_index/index.json").read_text(encoding="utf-8"))
     for ref in [*index["summaries"], index["search"]]:
         data = (out / ref["path"]).read_bytes()
         assert hashlib.sha256(data).hexdigest() == ref["sha256"]
-    on_disk = json.loads((out / "v1/resources/mosaic/MFL-2026-104.json").read_text(encoding="utf-8"))
-    assert on_disk == client.get("/v1/resources/mosaic/MFL-2026-104").json()
-    for name in ("sources", "filters"):
+    on_disk = json.loads((out / "v1/records/mosaic/MFL-2026-104.json").read_text(encoding="utf-8"))
+    assert on_disk == client.get("/v1/records/mosaic/MFL-2026-104").json()
+    for name in ("sources",):
         assert json.loads((out / f"v1/{name}.json").read_text(encoding="utf-8")) == client.get(f"/v1/{name}").json()
     assert not list(out.rglob("*.jsonld")) and not (out / "v1/manifest.json").exists()
-    everything = json.loads((out / "v1/resources.json").read_text(encoding="utf-8"))
+    everything = json.loads((out / "v1/records.json").read_text(encoding="utf-8"))
     assert everything["total"] == 7 and len(everything["items"]) == 7
     assert set(everything["facets"]) == {"source", "theme", "landscape", "geography"}
     assert 'http-equiv="refresh" content="0; url=docs/"' in (out / "index.html").read_text(encoding="utf-8")
@@ -155,7 +152,7 @@ def test_openapi_lists_only_get_routes(client: TestClient) -> None:
     spec = client.get("/openapi.json").json()
     methods = {m for path in spec["paths"].values() for m in path}
     assert methods == {"get"}
-    assert "/v1/resources/{source_id}/{local_id}" in spec["paths"]
+    assert "/v1/records/{source_id}/{local_id}" in spec["paths"]
 
 
 def test_root_redirects_browsers_only(client: TestClient) -> None:
@@ -170,14 +167,14 @@ def test_root_redirects_browsers_only(client: TestClient) -> None:
     assert fetch.status_code == 200 and fetch.json()["docs"] == "/docs"
     assert client.get("/", headers={"Accept": "application/json"}).json()["name"] == "MOSAIC API"
     # API routes are never redirected, whatever the client asks for
-    assert client.get("/v1/filters", headers={"Accept": "text/html"}, follow_redirects=False).status_code == 200
+    assert client.get("/v1/sources", headers={"Accept": "text/html"}, follow_redirects=False).status_code == 200
 
 
 def test_docs_page_may_load_swagger_ui(client: TestClient) -> None:
     docs = client.get("/docs")
     assert docs.status_code == 200
     assert "https://cdn.jsdelivr.net" in docs.headers["content-security-policy"]
-    assert client.get("/v1/filters").headers["content-security-policy"] == "default-src 'none'; frame-ancestors 'none'"
+    assert client.get("/v1/sources").headers["content-security-policy"] == "default-src 'none'; frame-ancestors 'none'"
 
 
 @pytest.mark.parametrize(
@@ -200,27 +197,27 @@ def test_docs_page_may_load_swagger_ui(client: TestClient) -> None:
 def test_filters_and_search_ignore_case_accents_and_symbols(
     client: TestClient, params: dict[str, str], expected: int
 ) -> None:
-    page = client.get("/v1/resources", params=params).json()
+    page = client.get("/v1/records", params=params).json()
     assert page["total"] == expected, page
     assert page["warnings"] == []
 
 
 def test_unknown_filter_value_is_reported(client: TestClient) -> None:
-    page = client.get("/v1/resources", params={"theme": "astrology"}).json()
+    page = client.get("/v1/records", params={"theme": "astrology"}).json()
     assert page["total"] == 0 and page["warnings"] == ["theme='astrology' matches no value of this filter"]
 
 
 def test_sort_and_ids_ignore_case(client: TestClient) -> None:
-    assert client.get("/v1/resources", params={"sort": "Title"}).status_code == 200
-    assert client.get("/v1/resources", params={"sort": "nonsense"}).status_code == 422
-    detail = client.get("/v1/resources/MOSAIC/mfl-2026-079")
+    assert client.get("/v1/records", params={"sort": "Title"}).status_code == 200
+    assert client.get("/v1/records", params={"sort": "nonsense"}).status_code == 422
+    detail = client.get("/v1/records/MOSAIC/mfl-2026-079")
     assert detail.status_code == 200 and detail.json()["id"] == "mosaic:MFL-2026-079"
 
 
 def test_sort_order_and_summary_fields(client: TestClient) -> None:
-    az = [i["title"] for i in client.get("/v1/resources", params={"sort": "title"}).json()["items"]]
-    za = [i["title"] for i in client.get("/v1/resources", params={"sort": "title", "order": "DESC"}).json()["items"]]
+    az = [i["title"] for i in client.get("/v1/records", params={"sort": "title"}).json()["items"]]
+    za = [i["title"] for i in client.get("/v1/records", params={"sort": "title", "order": "DESC"}).json()["items"]]
     assert za == list(reversed(az))
-    item = client.get("/v1/resources", params={"q": "worldcover"}).json()["items"][0]
+    item = client.get("/v1/records", params={"q": "worldcover"}).json()["items"][0]
     assert item["producer"] == "European Space Agency (ESA)"
     assert item["access_url"].startswith("https://")

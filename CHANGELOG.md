@@ -3,6 +3,14 @@
 ## [0.1.0] - unreleased (first publication)
 
 ### Changed
+- **Five endpoints, named like the catalogue** (ADR-0007, review of 2026-11-06): `/v1/sources`,
+  `/v1/records`, `/v1/records/{source}/{id}`, `/v1/landscapes`, `/v1/landscapes/{code}` (static:
+  `v1/records.json`, `v1/records/<source>/<id>.json`). `/v1/resources` is now `/v1/records`
+  (`RecordSummary`, `RecordDetail`, `RecordPage`); `/v1/filters` is removed (the website keeps the
+  filter options and labels).
+- The catalogue keeps only records and landscape profiles; the standard and its tool are in
+  MOSAIC-mfl/mosaic-standard. The pipeline clones both and builds with
+  `python -m mosaic_catalog --catalog _catalog build`.
 - **Standard v0.2** (mosaic-catalog ADR-0009): the MOSAIC record follows the CGIAR Climate Data Hub
   core. `Resource` and `ResourceDetail.record` use its names: `contact` (was `contacts`),
   `license` as an SPDX string plus `license_text`, `spatial.geography` / `spatial.landscapes`,

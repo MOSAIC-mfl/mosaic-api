@@ -1,6 +1,6 @@
 # ADR-0006: Four endpoints: sources, filters, resources, landscapes
 
-- Status: accepted (2026-11-05, team review with Steven Sotelo and Andrés Aguilar)
+- Status: accepted (2026-11-05, team review with Steven Sotelo and Andrés Aguilar) Superseded in part by ADR-0007 (five endpoints, records).
 
 ## Context
 

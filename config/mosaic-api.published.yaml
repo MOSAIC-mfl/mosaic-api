@@ -2,7 +2,7 @@
 #
 # Published configuration (GitHub Actions): everything is read over https.
 
-# The MOSAIC standard (vocabularies, crosswalks, schemas) as published by mosaic-catalog.
+# The MOSAIC standard (vocabularies, crosswalks, schemas) as published with the catalogue build.
 standard: https://mosaic-mfl.github.io/catalog
 
 state: ../state/snapshot.json

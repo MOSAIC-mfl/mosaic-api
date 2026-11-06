@@ -37,7 +37,7 @@ For example a STAC API, Dataverse, CKAN or OAI-PMH. These steps never touch `dom
    - `info` and `records()`, which yields `RawRecord(local_id, data, sha256, record_url)`;
    - read through `SafeFetcher`, never with raw HTTP calls;
    - set `sha256` from the record's bytes or canonical JSON, so unchanged records are skipped.
-2. **Crosswalk** in mosaic-catalog (`crosswalks/<source>.yaml`): field mapping and vocabulary
+2. **Crosswalk** in mosaic-standard (`crosswalks/<source>.yaml`): field mapping and vocabulary
    mappings (their themes to MOSAIC themes, their access values to ours, roles). Add its name to
    `CROSSWALKS` in `adapters/standard/dist.py`.
 3. **Translator** (`adapters/translators/<source>.py`), implementing `ports.Translator`:

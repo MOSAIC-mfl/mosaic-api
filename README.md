@@ -11,7 +11,7 @@ follow. Every resource keeps its provenance: MOSAIC links to the data where it l
 ```
  catalogues (repos / APIs)        mosaic-api                                         consumers
  ┌─────────────────────┐   harvest ┌──────────────────────────────────────────────┐   ┌──────────┐
- │ mosaic-catalog dist │──────────▶│ source adapters → translators → CORE          │──▶│ website  │
+ │ MOSAIC catalog dist │──────────▶│ source adapters → translators → CORE          │──▶│ website  │
  │ cdh-catalog (YAML)  │──────────▶│ (MOSAIC model, quality, filters, search,      │   │ others   │
  │ … (STAC, Dataverse) │──────────▶│  cross-catalogue links)  → FastAPI / exporter │   └──────────┘
  └─────────────────────┘           └──────────────────────────────────────────────┘
@@ -44,9 +44,15 @@ Local layout expected by the default config (repos side by side):
 ```
 <workspace>/
   mosaic-api/            this repo
-  mosaic-catalog/dist/   python -m mosaic_catalog build   (standard + MOSAIC records)
+  catalog/               MOSAIC-mfl/catalog (records, landscape profiles)
+  catalog/dist/          built with MOSAIC-mfl/mosaic-standard:
+                         python -m mosaic_catalog --catalog ../catalog build --out ../catalog/dist
+  mosaic-standard/       MOSAIC-mfl/mosaic-standard (the standard and its tool; pip install -e .)
   cdh/cdh-catalog/       CDH records (git clone)
 ```
+
+Another layout: copy `config/mosaic-api.yaml`, change its paths, and point `MOSAIC_API_CONFIG` to
+the copy.
 
 ## Publishing (GitHub Actions → Pages)
 
@@ -55,12 +61,13 @@ One workflow, [.github/workflows/pages.yml](.github/workflows/pages.yml):
 | Job | When | What |
 |---|---|---|
 | `check` | every pull request and every run | `ruff check`, `ruff format --check`, `mypy`, `lint-imports`, `pytest` |
-| `build` | push to `main`, daily (05:17 UTC), manual, `repository_dispatch: catalog-updated`; only if `check` passes | clones MOSAIC-mfl/catalog, builds its `dist/`, harvests every source with [config/mosaic-api.ci.yaml](config/mosaic-api.ci.yaml), exports the static API |
+| `build` | push to `main`, daily (05:17 UTC), manual, `repository_dispatch: catalog-updated`; only if `check` passes | clones MOSAIC-mfl/catalog and MOSAIC-mfl/mosaic-standard, builds the catalogue's `dist/` with the standard's tool, harvests every source with [config/mosaic-api.ci.yaml](config/mosaic-api.ci.yaml), exports the static API |
 | `deploy` | after `build` | publishes the export on GitHub Pages |
 
-The catalogue is taken from `main` of MOSAIC-mfl/catalog when it holds the metadata standard
-(`mosaic.config.yaml`), otherwise from the branch `metadata-standard-v0.1` (which holds the standard v0.2). The repository
-variable `CATALOG_REF` forces a branch or tag. Nothing has to change when that branch is merged.
+The catalogue is taken from `main` of MOSAIC-mfl/catalog when it has the catalogue-only layout
+(`records/`, no `mosaic.config.yaml`), otherwise from the branch `metadata-standard-v0.1`. The
+standard is `main` of MOSAIC-mfl/mosaic-standard. The repository variables `CATALOG_REF` and
+`STANDARD_REF` force a branch or tag. Nothing has to change when the catalogue branch is merged.
 
 Once, in the repository settings: **Settings → Pages → Build and deployment → Source: GitHub
 Actions**. Then run the workflow by hand (Actions → Check and publish → Run workflow) or push to
@@ -72,36 +79,38 @@ instead of cloning it.
 
 ## Endpoints (v1)
 
-Four things, nothing else ([ADR-0006](docs/adr/0006-four-endpoints.md)):
+Five, nothing else ([ADR-0007](docs/adr/0007-five-endpoints-records.md)):
 
 | Live | File on Pages | What |
 |---|---|---|
 | `GET /v1/sources` | `v1/sources.json` | The catalogues MOSAIC reads (MOSAIC, CGIAR Climate Data Hub, …): records, last harvest, errors |
-| `GET /v1/filters` | `v1/filters.json` | Read once before searching: versions and totals, the filters of `/v1/resources` with every option (`value`, `label`, `count`), and labels for the other coded values |
-| `GET /v1/resources?q=&source=&theme=&landscape=&geography=` | `v1/resources.json` (the whole catalogue, no filters) | The catalogue: search and filters, sorted and paged; `include_facets=true` adds the count of each filter value over all the results |
-| `GET /v1/resources/{source}/{id}` | `v1/resources/{source}/{id}.json` | One resource: MOSAIC record, provenance, quality |
+| `GET /v1/records?q=&source=&theme=&landscape=&geography=` | `v1/records.json` (the whole catalogue, no filters) | The records: search and filters, sorted and paged; `include_facets=true` adds the count of each filter value over all the results |
+| `GET /v1/records/{source}/{id}` | `v1/records/{source}/{id}.json` | One record: the MOSAIC record, provenance, quality |
 | `GET /v1/landscapes` | `v1/landscapes.json` | Every living landscape: its page sections, dataset counts, the records its profile names |
 | `GET /v1/landscapes/{code}` | `v1/landscapes/{CODE}.json` | One landscape page: its profile and its data status |
+
+The names follow the catalogue (`records/`, `landscapes/`). There is no filters endpoint: the
+website keeps the filter options and their labels, and counts them over the records it receives.
 
 Documentation: `/docs` on the live API; on Pages, [`docs/`](https://mosaic-mfl.github.io/mosaic-api/docs/)
 describes the files (Swagger UI, "Try it out" works). The full contract of the live API is
 `/openapi.json` (on Pages: `v1/openapi.json`).
 
-**Filters** of `/v1/resources`: `source`, `theme`, `landscape`, `geography`. Values are
+**Filters** of `/v1/records`: `source`, `theme`, `landscape`, `geography`. Values are
 comma-separated, combined with OR inside a filter and AND across filters; a value can be given by
 its id or by its label, ignoring case, accents and symbols (`geography=Perú` = `PER`). Also `q`
 (every word must appear), `sort` (`relevance`, `title`, `updated`, `year`), `order`, `page`,
 `page_size` (at most 100).
 
 **On Pages there is no `?q=` and no filters:** GitHub Pages only serves files and ignores the
-query string. `v1/resources.json` is the whole catalogue (every card carries its filter values in
+query string. `v1/records.json` is the whole catalogue (every card carries its filter values in
 `facets`, so a client can filter it); filtered queries need the live API (`serve`) on a server.
 The website searches in the browser with the same rules, over files kept outside the contract
 (`v1/_index/`). The site root redirects to `docs/`.
 
 Landscape profiles are written in the catalogue (`landscapes/<CODE>/`, published in its
 `dist/landscapes/`) and read from the same place as the standard. The API serves them as published
-and adds what only the catalogue knows: which resources cover the landscape and how complete their
+and adds what only the catalogue knows: which records cover the landscape and how complete their
 metadata is (`data_status`). The code is case-insensitive in the live API (`KEN-LVB` or `ken-lvb`);
 the files on Pages use capitals.
 

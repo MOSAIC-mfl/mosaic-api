@@ -5,7 +5,7 @@ from __future__ import annotations
 from ..domain.landscape import LandscapeProfile, data_status
 from ..ports.landscapes import LandscapeProfiles
 from .catalog import CatalogService
-from .dto import DataStatusOut, LandscapeOut, LandscapeSummaryOut, ResourceSummary, SectionOut
+from .dto import DataStatusOut, LandscapeOut, LandscapeSummaryOut, RecordSummary, SectionOut
 
 
 class LandscapeService:
@@ -60,5 +60,5 @@ class LandscapeService:
                 for s in p.sections()
             ],
             data_status=DataStatusOut(**vars(status)),
-            linked=[ResourceSummary.of(r) for r in self._catalog.resources if r.id in referenced],
+            linked=[RecordSummary.of(r) for r in self._catalog.resources if r.id in referenced],
         )

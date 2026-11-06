@@ -52,56 +52,14 @@
     }
    }
   },
-  "/v1/filters": {
+  "/v1/records": {
    "get": {
     "tags": [
-     "catalogue"
+     "records"
     ],
-    "summary": "Filters",
-    "description": "Read once before searching: versions and totals, the filters of GET /v1/resources with\nevery option (value, label, count), and display labels for the other coded values.",
-    "operationId": "filters_v1_filters_get",
-    "responses": {
-     "200": {
-      "description": "Successful Response",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/FiltersOut"
-        }
-       }
-      }
-     },
-     "422": {
-      "description": "Unprocessable Content",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Problem"
-        }
-       }
-      }
-     },
-     "404": {
-      "description": "Not Found",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Problem"
-        }
-       }
-      }
-     }
-    }
-   }
-  },
-  "/v1/resources": {
-   "get": {
-    "tags": [
-     "resources"
-    ],
-    "summary": "List Resources",
-    "description": "The catalogue: search and filter. OR inside one filter (comma-separated), AND across\nfilters. Values are case-, accent- and symbol-insensitive, and a label works as well as its id.",
-    "operationId": "list_resources_v1_resources_get",
+    "summary": "List Records",
+    "description": "The records of every catalogue: search and filter. OR inside one filter (comma-separated), AND across\nfilters. Values are case-, accent- and symbol-insensitive, and a label works as well as its id.",
+    "operationId": "list_records_v1_records_get",
     "parameters": [
      {
       "name": "q",
@@ -130,10 +88,10 @@
          "type": "null"
         }
        ],
-       "description": "Catalogue, e.g. mosaic, cdh. Comma-separated values (OR). Values and labels: GET /v1/filters.",
+       "description": "Catalogue, e.g. mosaic, cdh. Comma-separated values (OR); an id or its label.",
        "title": "Source"
       },
-      "description": "Catalogue, e.g. mosaic, cdh. Comma-separated values (OR). Values and labels: GET /v1/filters."
+      "description": "Catalogue, e.g. mosaic, cdh. Comma-separated values (OR); an id or its label."
      },
      {
       "name": "theme",
@@ -149,10 +107,10 @@
          "type": "null"
         }
        ],
-       "description": "Theme, e.g. water. Comma-separated values (OR). Values and labels: GET /v1/filters.",
+       "description": "Theme, e.g. water. Comma-separated values (OR); an id or its label.",
        "title": "Theme"
       },
-      "description": "Theme, e.g. water. Comma-separated values (OR). Values and labels: GET /v1/filters."
+      "description": "Theme, e.g. water. Comma-separated values (OR); an id or its label."
      },
      {
       "name": "landscape",
@@ -168,10 +126,10 @@
          "type": "null"
         }
        ],
-       "description": "Living landscape, e.g. KEN-LVB. Comma-separated values (OR). Values and labels: GET /v1/filters.",
+       "description": "Living landscape, e.g. KEN-LVB. Comma-separated values (OR); an id or its label.",
        "title": "Landscape"
       },
-      "description": "Living landscape, e.g. KEN-LVB. Comma-separated values (OR). Values and labels: GET /v1/filters."
+      "description": "Living landscape, e.g. KEN-LVB. Comma-separated values (OR); an id or its label."
      },
      {
       "name": "geography",
@@ -187,10 +145,10 @@
          "type": "null"
         }
        ],
-       "description": "Country or region, e.g. KEN. Comma-separated values (OR). Values and labels: GET /v1/filters.",
+       "description": "Country or region, e.g. KEN. Comma-separated values (OR); an id or its label.",
        "title": "Geography"
       },
-      "description": "Country or region, e.g. KEN. Comma-separated values (OR). Values and labels: GET /v1/filters."
+      "description": "Country or region, e.g. KEN. Comma-separated values (OR); an id or its label."
      },
      {
       "name": "sort",
@@ -261,7 +219,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/ResourcePage"
+         "$ref": "#/components/schemas/RecordPage"
         }
        }
       }
@@ -289,14 +247,14 @@
     }
    }
   },
-  "/v1/resources/{source_id}/{local_id}": {
+  "/v1/records/{source_id}/{local_id}": {
    "get": {
     "tags": [
-     "resources"
+     "records"
     ],
-    "summary": "Get Resource",
-    "description": "One resource, by catalogue and id: the full record in the MOSAIC model, where it comes from\n(provenance) and how complete it is (quality).",
-    "operationId": "get_resource_v1_resources__source_id___local_id__get",
+    "summary": "Get Record",
+    "description": "One record, by catalogue and id: the full record in the MOSAIC model, where it comes from\n(provenance) and how complete it is (quality).",
+    "operationId": "get_record_v1_records__source_id___local_id__get",
     "parameters": [
      {
       "name": "source_id",
@@ -323,7 +281,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/ResourceDetail"
+         "$ref": "#/components/schemas/RecordDetail"
         }
        }
       }
@@ -357,7 +315,7 @@
      "landscapes"
     ],
     "summary": "List Landscapes",
-    "description": "Every living landscape with its page sections and how many resources cover it.",
+    "description": "Every living landscape with its page sections and how many records cover it.",
     "operationId": "list_landscapes_v1_landscapes_get",
     "responses": {
      "200": {
@@ -516,97 +474,6 @@
     "title": "DataStatusOut",
     "description": "What the catalogue holds for the landscape and how complete it is."
    },
-   "FilterOption": {
-    "properties": {
-     "value": {
-      "type": "string",
-      "title": "Value",
-      "description": "What goes in the query, e.g. theme=water."
-     },
-     "label": {
-      "type": "string",
-      "title": "Label",
-      "description": "What people read, from the MOSAIC vocabularies."
-     },
-     "count": {
-      "type": "integer",
-      "title": "Count",
-      "description": "Resources with this value in the whole catalogue."
-     }
-    },
-    "type": "object",
-    "required": [
-     "value",
-     "label",
-     "count"
-    ],
-    "title": "FilterOption"
-   },
-   "FiltersOut": {
-    "properties": {
-     "api_version": {
-      "type": "string",
-      "title": "Api Version"
-     },
-     "standard_version": {
-      "type": "string",
-      "title": "Standard Version"
-     },
-     "harvested_at": {
-      "anyOf": [
-       {
-        "type": "string",
-        "format": "date-time"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Harvested At"
-     },
-     "totals": {
-      "additionalProperties": {
-       "type": "integer"
-      },
-      "type": "object",
-      "title": "Totals",
-      "description": "resources, complete, incomplete."
-     },
-     "filters": {
-      "additionalProperties": {
-       "items": {
-        "$ref": "#/components/schemas/FilterOption"
-       },
-       "type": "array"
-      },
-      "type": "object",
-      "title": "Filters",
-      "description": "One entry per filter of GET /v1/resources (source, theme, landscape, geography): the values present in the catalogue, most frequent first."
-     },
-     "labels": {
-      "additionalProperties": {
-       "additionalProperties": {
-        "type": "string"
-       },
-       "type": "object"
-      },
-      "type": "object",
-      "title": "Labels",
-      "description": "Display labels of the other coded values a resource shows (resource_type, data_kind, access, method, geometry, spatial, license, status)."
-     }
-    },
-    "type": "object",
-    "required": [
-     "api_version",
-     "standard_version",
-     "harvested_at",
-     "totals",
-     "filters",
-     "labels"
-    ],
-    "title": "FiltersOut",
-    "description": "Everything a client needs before searching: versions, totals, the filters of\nGET /v1/resources with their options, and display labels for the other coded values."
-   },
    "LandscapeOut": {
     "properties": {
      "code": {
@@ -716,7 +583,7 @@
      },
      "linked": {
       "items": {
-       "$ref": "#/components/schemas/ResourceSummary"
+       "$ref": "#/components/schemas/RecordSummary"
       },
       "type": "array",
       "title": "Linked",
@@ -961,7 +828,7 @@
     ],
     "title": "QualityOut"
    },
-   "ResourceDetail": {
+   "RecordDetail": {
     "properties": {
      "id": {
       "type": "string",
@@ -1029,14 +896,14 @@
      "quality",
      "same_as"
     ],
-    "title": "ResourceDetail",
+    "title": "RecordDetail",
     "description": "The full resource in the MOSAIC model, plus where it came from and how complete it is."
    },
-   "ResourcePage": {
+   "RecordPage": {
     "properties": {
      "items": {
       "items": {
-       "$ref": "#/components/schemas/ResourceSummary"
+       "$ref": "#/components/schemas/RecordSummary"
       },
       "type": "array",
       "title": "Items"
@@ -1087,9 +954,9 @@
      "page",
      "page_size"
     ],
-    "title": "ResourcePage"
+    "title": "RecordPage"
    },
-   "ResourceSummary": {
+   "RecordSummary": {
     "properties": {
      "id": {
       "type": "string",
@@ -1295,7 +1162,7 @@
      "same_as",
      "updated"
     ],
-    "title": "ResourceSummary",
+    "title": "RecordSummary",
     "description": "A light card for lists and maps."
    },
    "SectionOut": {

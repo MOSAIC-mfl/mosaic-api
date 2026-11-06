@@ -4,23 +4,22 @@ It calls the FastAPI app route by route (TestClient), so every file is exactly w
 would return. Layout under the export folder:
 
     v1/sources.json                      = GET /v1/sources
-    v1/filters.json                      = GET /v1/filters (versions, totals, filter options, labels)
-    v1/resources.json                    = GET /v1/resources with no filters: the whole catalogue
-                                           (every resource as a card, with the counts per filter)
-    v1/resources/<source>/<id>.json      = GET /v1/resources/<source>/<id>
+    v1/records.json                      = GET /v1/records with no filters: the whole catalogue
+                                           (every record as a card, with the counts per filter)
+    v1/records/<source>/<id>.json        = GET /v1/records/<source>/<id>
     v1/landscapes.json                   = GET /v1/landscapes
     v1/landscapes/<CODE>.json            = GET /v1/landscapes/<CODE>
     v1/openapi.json                      contract of the live API (the website's types come from it)
     docs/                                documentation of these files (Swagger UI, docs/openapi.json)
 
 GitHub Pages only serves files: it ignores ?q= and the filters. Filtering on Pages is done by the
-client over v1/resources.json (each card carries its filter values in `facets`), or with the live
+client over v1/records.json (each card carries its filter values in `facets`), or with the live
 API. The website searches in the browser, with the same rules, over files kept out of the contract:
 
     v1/_index/index.json                 the files below, with their hashes
-    v1/_index/summaries/<sha12>.json     resource cards, in shards of SHARD_SIZE (content-hashed:
+    v1/_index/summaries/<sha12>.json     record cards, in shards of SHARD_SIZE (content-hashed:
                                          they never change, so browsers and the CDN cache them)
-    v1/_index/search/<sha12>.json        normalized searchable text per resource
+    v1/_index/search/<sha12>.json        normalized searchable text per record
 """
 
 from __future__ import annotations
@@ -45,12 +44,11 @@ SWAGGER_UI = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14"
 # Public files of the static API: live route -> file, and the summary shown in docs/.
 STATIC_ROUTES: list[tuple[str, str, str]] = [
     ("/v1/sources", "/v1/sources.json", "Catalogues MOSAIC reads, with their records and last harvest"),
-    ("/v1/filters", "/v1/filters.json", "Versions, totals, filter options (value, label, count) and labels"),
-    ("/v1/resources", "/v1/resources.json", "The whole catalogue: every resource as a card, with counts per filter"),
+    ("/v1/records", "/v1/records.json", "The whole catalogue: every record as a card, with counts per filter"),
     (
-        "/v1/resources/{source_id}/{local_id}",
-        "/v1/resources/{source_id}/{local_id}.json",
-        "One resource: record, provenance and quality",
+        "/v1/records/{source_id}/{local_id}",
+        "/v1/records/{source_id}/{local_id}.json",
+        "One record: the record, its provenance and quality",
     ),
     ("/v1/landscapes", "/v1/landscapes.json", "Every living landscape and its page sections"),
     ("/v1/landscapes/{code}", "/v1/landscapes/{code}.json", "One landscape page: profile and data status"),
@@ -75,7 +73,7 @@ def _hashed(root: Path, folder: str, data: bytes) -> dict[str, Any]:
 
 
 def export(app: FastAPI, catalog: CatalogService, out: Path) -> dict[str, Any]:
-    """Write the static API to `out` and return what /v1/filters says (versions and totals)."""
+    """Write the static API to `out` and return a summary (versions and totals)."""
     client = TestClient(app)
 
     def get(url: str) -> Any:
@@ -89,16 +87,16 @@ def export(app: FastAPI, catalog: CatalogService, out: Path) -> dict[str, Any]:
     (out / ".nojekyll").write_bytes(b"")
     routes = {r.path for r in app.routes if hasattr(r, "path")}
 
-    filters = get("/v1/filters")
-    _write(out, "v1/filters.json", _dump(filters))
-    _write(out, "v1/sources.json", _dump(get("/v1/sources")))
+    sources = get("/v1/sources")
+    _write(out, "v1/sources.json", _dump(sources))
     everything = catalog.search(
         search_rules.Query(sort=search_rules.Sort.TITLE, page_size=max(len(catalog.resources), 1)), with_facets=True
     )
-    _write(out, "v1/resources.json", _dump(everything.model_dump(mode="json")))
+    _write(out, "v1/records.json", _dump(everything.model_dump(mode="json")))
     for r in catalog.resources:
         source, local = r.gid.source, r.gid.local_id
-        _write(out, f"v1/resources/{source}/{local}.json", _dump(get(f"/v1/resources/{source}/{local}")))
+        _write(out, f"v1/records/{source}/{local}.json", _dump(get(f"/v1/records/{source}/{local}")))
+    summary = catalog.summary()
     if "/v1/landscapes" in routes:
         index = get("/v1/landscapes")
         _write(out, "v1/landscapes.json", _dump(index))
@@ -115,7 +113,7 @@ def export(app: FastAPI, catalog: CatalogService, out: Path) -> dict[str, Any]:
         for i in range(0, max(len(summaries), 1), SHARD_SIZE)
     ]
     search = {**_hashed(out, "search", _dump(catalog.search_texts())), "records": len(summaries)}
-    index_file = {"harvested_at": filters["harvested_at"], "summaries": shards, "search": search}
+    index_file = {"harvested_at": summary["harvested_at"], "summaries": shards, "search": search}
     _write(out, "v1/_index/index.json", json.dumps(index_file, ensure_ascii=False, indent=1).encode("utf-8"))
 
     live = app.openapi()
@@ -123,8 +121,8 @@ def export(app: FastAPI, catalog: CatalogService, out: Path) -> dict[str, Any]:
     _write(out, "docs/openapi.json", json.dumps(static_openapi(live, routes), ensure_ascii=False, indent=1).encode())
     _write(out, "docs/index.html", _docs_html().encode("utf-8"))
     example = summaries[0]["id"].replace(":", "/", 1) if summaries else "mosaic/MFL-2026-079"
-    _write(out, "index.html", _index_html(filters, example).encode("utf-8"))
-    return dict(filters)
+    _write(out, "index.html", _index_html(summary, sources, example).encode("utf-8"))
+    return summary
 
 
 def static_openapi(live: dict[str, Any], routes: set[str]) -> dict[str, Any]:
@@ -139,10 +137,10 @@ def static_openapi(live: dict[str, Any], routes: set[str]) -> dict[str, Any]:
         op["operationId"] = "static_" + op.get("operationId", file)
         op["responses"] = {k: v for k, v in op["responses"].items() if k == "200"}
         op["responses"]["404"] = {"description": "No such file (unknown id or code)."}
-        if route == "/v1/resources":
+        if route == "/v1/records":
             op["parameters"] = []
             op["description"] = (
-                "Every resource as a card (sorted by title), the total, and the count of each filter value. "
+                "Every record as a card (sorted by title), the total, and the count of each filter value. "
                 "GitHub Pages serves files, so ?q= and the filters are not available here: filter on the client "
                 "with each card's `facets` (source, theme, landscape, geography), or use the live API."
             )
@@ -184,10 +182,9 @@ def _docs_html() -> str:
 """
 
 
-def _index_html(filters: dict[str, Any], example: str) -> str:
+def _index_html(summary: dict[str, Any], sources: list[dict[str, Any]], example: str) -> str:
     """The site root opens the documentation; the links stay for clients without redirects."""
-    t = filters["totals"]
-    sources = ", ".join(o["label"] for o in filters["filters"]["source"])
+    names = ", ".join(s["name"] for s in sources)
     return f"""<!doctype html><html lang="en"><meta charset="utf-8"><title>MOSAIC API</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="0; url=docs/">
@@ -195,10 +192,9 @@ def _index_html(filters: dict[str, Any], example: str) -> str:
 <body style="font-family:system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem;line-height:1.5">
 <h1>MOSAIC API</h1>
 <p>Opening the <a href="docs/">documentation</a>…</p>
-<p>{t["resources"]} resources from {sources}; standard v{filters["standard_version"]};
-harvested {filters["harvested_at"]}.
-Files: <a href="v1/sources.json">sources</a> · <a href="v1/filters.json">filters</a> ·
-<a href="v1/resources.json">resources</a> · <a href="v1/resources/{example}.json">a resource</a> ·
-<a href="v1/landscapes.json">landscapes</a></p>
+<p>{summary["records"]} records from {names}; standard v{summary["standard_version"]};
+harvested {summary["harvested_at"]}.
+Files: <a href="v1/sources.json">sources</a> · <a href="v1/records.json">records</a> ·
+<a href="v1/records/{example}.json">a record</a> · <a href="v1/landscapes.json">landscapes</a></p>
 </body></html>
 """

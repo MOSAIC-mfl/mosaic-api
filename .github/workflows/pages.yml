@@ -1,13 +1,15 @@
 # Check, test and publish the static API on GitHub Pages.
 #
 #   check   on every pull request and every run: ruff, format, mypy, import layers, pytest.
-#   build   only from main, after check passes: clone and build the MOSAIC catalogue, harvest
-#           every source (incremental, from the cached snapshot), export the static API.
+#   build   only from main, after check passes: clone the MOSAIC catalogue (records, landscape
+#           profiles) and the MOSAIC standard (its tool builds the catalogue), harvest every source
+#           (incremental, from the cached snapshot), export the static API.
 #   deploy  publish the export on GitHub Pages (Settings > Pages > Source: GitHub Actions).
 #
-# The catalogue comes from MOSAIC-mfl/catalog: main when it already holds the metadata standard
-# (mosaic.config.yaml), otherwise the branch metadata-standard-v0.1, until that branch is merged.
-# Set the repository variable CATALOG_REF to force a branch or tag.
+# The catalogue comes from MOSAIC-mfl/catalog: main when it already has the catalogue-only layout
+# (records/, no mosaic.config.yaml), otherwise the branch metadata-standard-v0.1, until that branch
+# is merged. The standard comes from MOSAIC-mfl/mosaic-standard, main. The repository variables
+# CATALOG_REF and STANDARD_REF force a branch or tag.
 name: Check and publish
 
 on:
@@ -65,7 +67,7 @@ jobs:
           set -euo pipefail
           if [ -z "${CATALOG_REF}" ]; then
             git clone --quiet "$CATALOG_REPO" _catalog
-            if [ ! -f _catalog/mosaic.config.yaml ]; then
+            if [ -f _catalog/mosaic.config.yaml ] || [ ! -d _catalog/records ]; then
               git -C _catalog checkout --quiet metadata-standard-v0.1
             fi
           else
@@ -73,10 +75,16 @@ jobs:
           fi
           echo "Catalogue: $(git -C _catalog rev-parse --abbrev-ref HEAD) @ $(git -C _catalog rev-parse --short HEAD)"
       # Full history on purpose: the build takes created / updated from git log.
-      - name: Build the catalogue (standard, records, landscape profiles)
+      - name: Clone the MOSAIC standard
+        env:
+          STANDARD_REF: ${{ vars.STANDARD_REF || 'main' }}
         run: |
-          pip install -e ./_catalog
-          python -m mosaic_catalog build --out _catalog/dist
+          git clone --quiet --depth 1 --branch "$STANDARD_REF" https://github.com/MOSAIC-mfl/mosaic-standard.git _standard
+          echo "Standard: $(git -C _standard rev-parse --short HEAD)"
+      - name: Build the catalogue (records and landscape profiles, with the standard)
+        run: |
+          pip install -e ./_standard
+          python -m mosaic_catalog --catalog _catalog build --out _catalog/dist
       - run: pip install -e .
       # The previous snapshot makes the harvest incremental.
       - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0

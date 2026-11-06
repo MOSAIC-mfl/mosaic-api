@@ -1,4 +1,4 @@
-"""Use cases for reading: the filters (versions, totals, options), sources, search, one resource.
+"""Use cases for reading: sources, search over the records, one record.
 
 Built once from a snapshot (in memory; ~1-2 KB per resource, so tens of thousands fit in a free
 server and in the static export). The same object serves the live API and the static exporter.
@@ -14,7 +14,7 @@ from ..domain.model import Resource
 from ..domain.standard import Standard
 from ..domain.text import key
 from ..ports import Snapshot
-from .dto import FilterOption, FiltersOut, ResourceDetail, ResourcePage, ResourceSummary, SourceOut
+from .dto import RecordDetail, RecordPage, RecordSummary, SourceOut
 
 API_VERSION = "0.1.0"
 
@@ -91,7 +91,7 @@ class CatalogService:
     def resources(self) -> list[Resource]:
         return self._snap.resources
 
-    def search(self, q: search.Query, with_facets: bool = False) -> ResourcePage:
+    def search(self, q: search.Query, with_facets: bool = False) -> RecordPage:
         filters, warnings = self.resolve_filters(q.filters)
         q = search.Query(q.text, filters, q.bbox, q.year_from, q.year_to, q.sort, q.descending, q.page, q.page_size)
         page = search.run(self._snap.resources, q, self._texts)
@@ -100,8 +100,8 @@ class CatalogService:
             everything = search.Query(q.text, q.filters, q.bbox, q.year_from, q.year_to, page=1, page_size=10**9)
             hits = search.run(self._snap.resources, everything, self._texts).items
             counts = facet_rules.count(hits, facet_rules.FILTERS)
-        return ResourcePage(
-            items=[ResourceSummary.of(r) for r in page.items],
+        return RecordPage(
+            items=[RecordSummary.of(r) for r in page.items],
             total=page.total,
             page=page.page,
             page_size=page.page_size,
@@ -109,14 +109,14 @@ class CatalogService:
             warnings=warnings,
         )
 
-    def summaries(self) -> list[ResourceSummary]:
+    def summaries(self) -> list[RecordSummary]:
         """Every resource as a light card (the static export ships them for in-browser search)."""
-        return [ResourceSummary.of(r) for r in self._snap.resources]
+        return [RecordSummary.of(r) for r in self._snap.resources]
 
-    def get(self, gid: str) -> ResourceDetail | None:
+    def get(self, gid: str) -> RecordDetail | None:
         """Exact id first; otherwise case-, accent- and separator-insensitive (mosaic:mfl-2026-079)."""
         r = self._by_id.get(gid) or self._by_key.get(key(gid))
-        return ResourceDetail.of(r, self._opts.expose_emails) if r else None
+        return RecordDetail.of(r, self._opts.expose_emails) if r else None
 
     def search_texts(self) -> dict[str, str]:
         """Normalized searchable text per resource (exported for in-browser search)."""
@@ -138,7 +138,8 @@ class CatalogService:
         ]
 
     def _labels(self) -> dict[str, dict[str, str]]:
-        """Display label of every coded value, per facet (vocabularies + fixed labels)."""
+        """Label of every coded value, per facet (vocabularies + fixed labels): a filter value may be
+        written as its label (geography=Perú). The website keeps its own display labels."""
         out: dict[str, dict[str, str]] = {f: dict(v) for f, v in FIXED_LABELS.items()}
         for facet, vocab in FACET_VOCAB.items():
             v = self._std.vocabularies.get(vocab)
@@ -149,25 +150,14 @@ class CatalogService:
             out.setdefault(facet, {})[facet_rules.NOT_SPECIFIED] = "Not specified"
         return out
 
-    def filters(self) -> FiltersOut:
-        statuses: list[str] = [str(getattr(r.quality.status, "value", r.quality.status)) for r in self._snap.resources]
-        labels = self._labels()
-        counts = facet_rules.count(self._snap.resources, facet_rules.FILTERS)
-        return FiltersOut(
-            api_version=API_VERSION,
-            standard_version=self._snap.standard_version,
-            harvested_at=self._snap.harvested_at,
-            totals={
-                "resources": len(statuses),
-                "complete": statuses.count("complete"),
-                "incomplete": statuses.count("incomplete"),
-            },
-            filters={
-                facet: [
-                    FilterOption(value=v, label=labels.get(facet, {}).get(v, v), count=n)
-                    for v, n in counts[facet].items()
-                ]
-                for facet in facet_rules.FILTERS
-            },
-            labels={f: labels.get(f, {}) for f in facet_rules.FACETS if f not in facet_rules.FILTERS},
-        )
+    def summary(self) -> dict[str, object]:
+        """Versions and totals of the snapshot (the export's front page and log line)."""
+        statuses = [str(getattr(r.quality.status, "value", r.quality.status)) for r in self._snap.resources]
+        return {
+            "api_version": API_VERSION,
+            "standard_version": self._snap.standard_version,
+            "harvested_at": self._snap.harvested_at.isoformat() if self._snap.harvested_at else None,
+            "records": len(statuses),
+            "complete": statuses.count("complete"),
+            "incomplete": statuses.count("incomplete"),
+        }

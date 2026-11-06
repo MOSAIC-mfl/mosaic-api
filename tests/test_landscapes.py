@@ -49,6 +49,14 @@ def test_export_writes_landscape_files(tmp_path: Path, catalog: CatalogService, 
     export(create_app(catalog, landscapes=landscapes), catalog, out)
     docs = json.loads((out / "docs/openapi.json").read_text(encoding="utf-8"))
     assert "/v1/landscapes/{code}.json" in docs["paths"]
+    live = create_app(catalog, landscapes=landscapes).openapi()
+    assert set(live["paths"]) == {  # the five endpoints
+        "/v1/sources",
+        "/v1/records",
+        "/v1/records/{source_id}/{local_id}",
+        "/v1/landscapes",
+        "/v1/landscapes/{code}",
+    }
     page = json.loads((out / "v1/landscapes/KEN-LVB.json").read_text(encoding="utf-8"))
     assert page["title"] == "Lake Victoria Basin"
     assert len(json.loads((out / "v1/landscapes.json").read_text(encoding="utf-8"))) == 2

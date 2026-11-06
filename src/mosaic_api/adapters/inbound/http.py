@@ -17,12 +17,11 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 
 from ...application.catalog import API_VERSION, CatalogService
 from ...application.dto import (
-    FiltersOut,
     LandscapeOut,
     LandscapeSummaryOut,
     Problem,
-    ResourceDetail,
-    ResourcePage,
+    RecordDetail,
+    RecordPage,
     SourceOut,
 )
 from ...application.landscapes import LandscapeService
@@ -39,9 +38,7 @@ class Order(str, Enum):
 
 
 def _csv(what: str) -> Any:
-    return Query(
-        max_length=500, description=f"{what}. Comma-separated values (OR). Values and labels: GET /v1/filters."
-    )
+    return Query(max_length=500, description=f"{what}. Comma-separated values (OR); an id or its label.")
 
 
 DOCS_PATHS = ("/docs", "/redoc")
@@ -123,7 +120,7 @@ def create_app(
             "description": "Read-only API of MOSAIC, a network of metadata.",
             "docs": "/docs",
             "openapi": "/openapi.json",
-            "endpoints": "/v1/sources, /v1/filters, /v1/resources, /v1/resources/{source}/{id}, /v1/landscapes",
+            "endpoints": "/v1/sources, /v1/records, /v1/records/{source}/{id}, /v1/landscapes, /v1/landscapes/{code}",
         }
 
     @app.get("/health", include_in_schema=False)
@@ -136,14 +133,8 @@ def create_app(
         one has, and the date and outcome of the last harvest."""
         return catalog.sources()
 
-    @app.get("/v1/filters", response_model=FiltersOut, tags=["catalogue"])
-    def filters() -> FiltersOut:
-        """Read once before searching: versions and totals, the filters of GET /v1/resources with
-        every option (value, label, count), and display labels for the other coded values."""
-        return catalog.filters()
-
-    @app.get("/v1/resources", response_model=ResourcePage, tags=["resources"])
-    def list_resources(
+    @app.get("/v1/records", response_model=RecordPage, tags=["records"])
+    def list_records(
         q: Annotated[str, Query(max_length=200, description="Words to search (all must match).")] = "",
         source: Annotated[str | None, _csv("Catalogue, e.g. mosaic, cdh")] = None,
         theme: Annotated[str | None, _csv("Theme, e.g. water")] = None,
@@ -156,8 +147,8 @@ def create_app(
         include_facets: Annotated[
             bool, Query(description="Also return the count of each filter value over all the results.")
         ] = False,
-    ) -> ResourcePage:
-        """The catalogue: search and filter. OR inside one filter (comma-separated), AND across
+    ) -> RecordPage:
+        """The records of every catalogue: search and filter. OR inside one filter (comma-separated), AND across
         filters. Values are case-, accent- and symbol-insensitive, and a label works as well as its id."""
         if page_size > max_page_size:
             raise HTTPException(422, f"page_size must be at most {max_page_size}")
@@ -172,20 +163,20 @@ def create_app(
         )
         return catalog.search(query, with_facets=include_facets)
 
-    @app.get("/v1/resources/{source_id}/{local_id}", response_model=ResourceDetail, tags=["resources"])
-    def get_resource(source_id: str, local_id: str) -> ResourceDetail:
-        """One resource, by catalogue and id: the full record in the MOSAIC model, where it comes from
+    @app.get("/v1/records/{source_id}/{local_id}", response_model=RecordDetail, tags=["records"])
+    def get_record(source_id: str, local_id: str) -> RecordDetail:
+        """One record, by catalogue and id: the full record in the MOSAIC model, where it comes from
         (provenance) and how complete it is (quality)."""
         found = catalog.get(f"{source_id}:{local_id}")
         if found is None:
-            raise HTTPException(404, "resource not found")
+            raise HTTPException(404, "record not found")
         return found
 
     if landscapes is not None:
 
         @app.get("/v1/landscapes", response_model=list[LandscapeSummaryOut], tags=["landscapes"])
         def list_landscapes() -> list[LandscapeSummaryOut]:
-            """Every living landscape with its page sections and how many resources cover it."""
+            """Every living landscape with its page sections and how many records cover it."""
             return landscapes.list()
 
         @app.get("/v1/landscapes/{code}", response_model=LandscapeOut, tags=["landscapes"])

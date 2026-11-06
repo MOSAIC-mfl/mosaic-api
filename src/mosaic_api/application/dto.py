@@ -46,7 +46,7 @@ def _access_url(r: Resource) -> str | None:
     return points[0].url if points else None
 
 
-class ResourceSummary(Out):
+class RecordSummary(Out):
     """A light card for lists and maps."""
 
     id: str = Field(description="Global id <source>:<local id>, e.g. mosaic:MFL-2026-079.")
@@ -72,7 +72,7 @@ class ResourceSummary(Out):
     access_url: str | None = Field(None, description="First data location URL, public ones first.")
 
     @classmethod
-    def of(cls, r: Resource) -> ResourceSummary:
+    def of(cls, r: Resource) -> RecordSummary:
         period = list(r.temporal.years()) if r.temporal else None
         desc = r.description
         if desc and len(desc) > 300:
@@ -104,7 +104,7 @@ class ResourceSummary(Out):
         )
 
 
-class ResourceDetail(Out):
+class RecordDetail(Out):
     """The full resource in the MOSAIC model, plus where it came from and how complete it is."""
 
     id: str
@@ -122,7 +122,7 @@ class ResourceDetail(Out):
     same_as: list[str]
 
     @classmethod
-    def of(cls, r: Resource, expose_emails: bool) -> ResourceDetail:
+    def of(cls, r: Resource, expose_emails: bool) -> RecordDetail:
         record = r.to_record()
         if not expose_emails:
             for c in record.get("contact", []):
@@ -141,8 +141,8 @@ class ResourceDetail(Out):
         )
 
 
-class ResourcePage(Out):
-    items: list[ResourceSummary]
+class RecordPage(Out):
+    items: list[RecordSummary]
     total: int
     page: int
     page_size: int
@@ -161,30 +161,6 @@ class SourceOut(Out):
     records: int
     records_with_issues: int
     error: str | None
-
-
-class FilterOption(Out):
-    value: str = Field(description="What goes in the query, e.g. theme=water.")
-    label: str = Field(description="What people read, from the MOSAIC vocabularies.")
-    count: int = Field(description="Resources with this value in the whole catalogue.")
-
-
-class FiltersOut(Out):
-    """Everything a client needs before searching: versions, totals, the filters of
-    GET /v1/resources with their options, and display labels for the other coded values."""
-
-    api_version: str
-    standard_version: str
-    harvested_at: datetime | None
-    totals: dict[str, int] = Field(description="resources, complete, incomplete.")
-    filters: dict[str, list[FilterOption]] = Field(
-        description="One entry per filter of GET /v1/resources (source, theme, landscape, geography): "
-        "the values present in the catalogue, most frequent first."
-    )
-    labels: dict[str, dict[str, str]] = Field(
-        description="Display labels of the other coded values a resource shows (resource_type, data_kind, "
-        "access, method, geometry, spatial, license, status)."
-    )
 
 
 class Problem(Out):
@@ -241,4 +217,4 @@ class LandscapeOut(LandscapeSummaryOut):
     credits: list[dict[str, Any]]
     origin: dict[str, Any] | None
     data_status: DataStatusOut
-    linked: list[ResourceSummary] = Field(description="Named records that cover the landscape.")
+    linked: list[RecordSummary] = Field(description="Named records that cover the landscape.")

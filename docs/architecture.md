@@ -14,7 +14,7 @@ src/mosaic_api/
     sources/       mosaic_catalog (dist JSON), git_yaml (local checkout or GitHub tarball)
     translators/   mosaic, cdh  (source format -> MOSAIC model)
     quality/       schema_assessor (runs the MOSAIC level schemas)
-    standard/      dist (loads vocabularies, crosswalks, schemas published by mosaic-catalog)
+    standard/      dist (loads vocabularies, crosswalks, schemas published with the catalogue build)
     store/         fs_json (one snapshot file; no database)
     inbound/       http (FastAPI), exporter (static API)
     fetch.py       safe file/HTTPS reading (allow-list, limits)
@@ -47,23 +47,23 @@ store.save(snapshot)
   CDH core, so the CDH translator mostly copies: `cdh.domain` → `themes`, `cdh.usage` → `usage`,
   absent `access` → `public`, and the data kind and access method it reads from each location
   (marked in `derived`) are the conventions that stop at its translator. The vocabulary
-  mappings come from the standard's crosswalks (`mosaic-catalog/crosswalks/cdh.yaml`), not from
+  mappings come from the standard's crosswalks (`mosaic-standard/crosswalks/cdh.yaml`), not from
   code.
-- **One set of rules.** Quality is computed with the same JSON Schemas that mosaic-catalog's
+- **One set of rules.** Quality is computed with the same JSON Schemas that mosaic-standard's
   validator uses, for every source.
 - **Nothing silent.** Values a translator cannot map are recorded as issues per record, in
   `/v1/sources`, with `records_with_issues`.
 
 ## 3. Read side: queries and the static API
 
-`CatalogService` holds the snapshot in memory and answers sources, filters, search and get.
+`CatalogService` holds the snapshot in memory and answers sources, search over the records and get.
 `create_app()` exposes these as GET routes. The exporter calls the same routes and writes the
 answers as files, so the static API **is** the live API, frozen at harvest time.
 
 **What the website does with the static API:**
 
-1. Fetch `v1/filters.json` (versions, totals, filter options and labels), `v1/sources.json` and
-   `v1/_index/index.json`. The index is internal (not in the contract): it lists the hashed files
+1. Fetch `v1/sources.json` and `v1/_index/index.json`. The filter options and their labels are
+   the website's own (no filters endpoint, ADR-0007); it counts them over the records. The index is internal (not in the contract): it lists the hashed files
    for in-browser search.
 2. Fetch the files the index lists that are not cached yet: `_index/summaries/<hash>.json` and
    `_index/search/<hash>.json`. Hashed names never change, so they can be cached for good, in the
@@ -78,11 +78,10 @@ answers as files, so the static API **is** the live API, frozen at harvest time.
      (`search/<hash>.json` is already folded);
    - **filters:** compare `key(value)`, which is `fold` with `-` as the separator, on both sides.
      `CC BY 4.0`, `cc-by-4.0` and `CC-BY-4.0` are therefore the same, and so are `PER` and `per`.
-     A value may also be given by its label (`Perú` → `PER`), resolved with the labels in
-     `v1/filters.json`;
+     A value may also be given by its label (`Perú` → `PER`), resolved with the website's labels;
    - OR inside a filter, AND across filters, over the four filters (`source`, `theme`,
      `landscape`, `geography`; `summary.facets` already carries each resource's values).
-4. Fetch `v1/resources/<source>/<id>.json` when a card is opened.
+4. Fetch `v1/records/<source>/<id>.json` when a card is opened.
 
 **Scale:**
 
@@ -97,7 +96,7 @@ answers as files, so the static API **is** the live API, frozen at harvest time.
 
 - Field names are the MOSAIC standard's (`snake_case`), the same as in the records
   ([ADR-0003](adr/0003-standard-field-names.md)).
-- **A resource's id is `<source>:<local id>`.** Its URL path is `/v1/resources/<source>/<local id>`.
+- **A record's id is `<source>:<local id>`.** Its URL path is `/v1/records/<source>/<local id>`.
 - **`ResourceDetail.record`** is a valid MOSAIC standard v0.2 record (CDH core field names), plus provenance, quality, facets
   and `same_as`.
 - **The contract is `openapi.json`.** The website generates its TypeScript types from it with
@@ -117,7 +116,7 @@ These are in `domain/facets.py`; they read the standard v0.2 fields (`data[].kin
 ## 6. Landscape pages
 
 ```
-mosaic-catalog dist/landscapes/ ──▶ adapters/landscapes/dist.py (DistLandscapes)
+catalogue dist/landscapes/ ──▶ adapters/landscapes/dist.py (DistLandscapes)
                                          │ port LandscapeProfiles
                                          ▼
                               application/landscapes.py (LandscapeService) ◀── CatalogService (resources)

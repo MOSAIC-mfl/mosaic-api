@@ -1,10 +1,11 @@
 # mosaic-api configuration. Paths are relative to this file.
 #
-# Local development: the repos sit side by side (<workspace>/mosaic-catalog, <workspace>/cdh/cdh-catalog).
+# Local development: the repos sit side by side (<workspace>/catalog with its dist/ built by mosaic-standard,
+# <workspace>/cdh/cdh-catalog).
 # Published (GitHub Actions): use the https locations in comments.
 
-# The MOSAIC standard (vocabularies, crosswalks, schemas) as published by mosaic-catalog.
-standard: ../../mosaic-catalog/dist
+# The MOSAIC standard (vocabularies, crosswalks, schemas) as published with the catalogue build.
+standard: ../../catalog/dist
 # standard: https://mosaic-mfl.github.io/catalog
 
 state: ../state/snapshot.json   # harvested resources (one JSON file, no database)
@@ -24,7 +25,7 @@ sources:
     type: mosaic_catalog
     translator: mosaic
     format: mosaic-v0.2
-    location: ../../mosaic-catalog/dist
+    location: ../../catalog/dist
     # location: https://mosaic-mfl.github.io/catalog
     homepage: https://mosaic-mfl.github.io/website/
     record_url_template: https://mosaic-mfl.github.io/website/catalogue/{id}/

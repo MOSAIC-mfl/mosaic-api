@@ -65,7 +65,7 @@ One workflow, [.github/workflows/pages.yml](.github/workflows/pages.yml):
 | `deploy` | after `build` | publishes the export on GitHub Pages |
 
 The catalogue is taken from `main` of MOSAIC-mfl/catalog when it has the catalogue-only layout
-(`records/`, no `mosaic.config.yaml`), otherwise from the branch `metadata-standard-v0.1`. The
+(`landscapes/`, no `mosaic.config.yaml`), otherwise from the branch `metadata-standard-v0.1`. The
 standard is `main` of MOSAIC-mfl/mosaic-standard. The repository variables `CATALOG_REF` and
 `STANDARD_REF` force a branch or tag. Nothing has to change when the catalogue branch is merged.
 

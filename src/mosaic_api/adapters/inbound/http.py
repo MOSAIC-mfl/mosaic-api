@@ -140,6 +140,12 @@ def create_app(
         theme: Annotated[str | None, _csv("Theme, e.g. water")] = None,
         landscape: Annotated[str | None, _csv("Living landscape, e.g. KEN-LVB")] = None,
         geography: Annotated[str | None, _csv("Country or region, e.g. KEN")] = None,
+        data_kind: Annotated[str | None, _csv("Kind of data, e.g. raster, vector")] = None,
+        access: Annotated[str | None, _csv("Access, e.g. public, restricted")] = None,
+        license: Annotated[str | None, _csv("Licence (SPDX), e.g. CC-BY-4.0; other = any other licence")] = None,
+        processing_status: Annotated[
+            str | None, _csv("Declared processing status: raw, processed, validated; not_specified = not stated")
+        ] = None,
         sort: search.Sort = search.Sort.RELEVANCE,
         order: Annotated[Order | None, Query(description="asc | desc; default: the sort's natural order.")] = None,
         page: Annotated[int, Query(ge=1, le=100_000)] = 1,
@@ -152,7 +158,16 @@ def create_app(
         filters. Values are case-, accent- and symbol-insensitive, and a label works as well as its id."""
         if page_size > max_page_size:
             raise HTTPException(422, f"page_size must be at most {max_page_size}")
-        values = {"source": source, "theme": theme, "landscape": landscape, "geography": geography}
+        values = {
+            "source": source,
+            "theme": theme,
+            "landscape": landscape,
+            "geography": geography,
+            "data_kind": data_kind,
+            "access": access,
+            "license": license,
+            "processing_status": processing_status,
+        }
         query = search.Query(
             text=q,
             filters={k: _split(v) for k, v in values.items() if v},

@@ -1,7 +1,7 @@
 """Facets: the values each resource exposes to the website filters, and their counts.
 
-Only source, theme, landscape and geography are filters (FILTERS); the others are shown on each
-resource. Rules:
+The filters (FILTERS) are source, theme, landscape, geography, data_kind, access, license and
+processing_status; the others are shown on each resource. Rules:
 
 * data_kind  - kinds of all data entries;
 * geometry   - vector geometry types, plus ``point`` for tables with coordinate columns (x / y
@@ -34,12 +34,13 @@ FACETS = (
     "method",
     "access",
     "license",
+    "processing_status",
     "status",
 )
 
 # The facets people can filter by (GET /v1/resources and the website). The others stay as values
 # on each resource (``facets`` of a summary) for display.
-FILTERS = ("source", "theme", "landscape", "geography")
+FILTERS = ("source", "theme", "landscape", "geography", "data_kind", "access", "license", "processing_status")
 
 
 def _license(r: Resource) -> str:
@@ -103,6 +104,7 @@ def facet_values(r: Resource) -> dict[str, list[str]]:
         "method": or_ns(p.access_method for p in r.data),
         "access": or_ns([r.access]),
         "license": [_license(r)],
+        "processing_status": or_ns([r.processing_status]),  # not_specified = not stated
         "status": [r.quality.status],
     }
 

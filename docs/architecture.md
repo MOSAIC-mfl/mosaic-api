@@ -79,8 +79,9 @@ answers as files, so the static API **is** the live API, frozen at harvest time.
    - **filters:** compare `key(value)`, which is `fold` with `-` as the separator, on both sides.
      `CC BY 4.0`, `cc-by-4.0` and `CC-BY-4.0` are therefore the same, and so are `PER` and `per`.
      A value may also be given by its label (`Perú` → `PER`), resolved with the website's labels;
-   - OR inside a filter, AND across filters, over the four filters (`source`, `theme`,
-     `landscape`, `geography`; `summary.facets` already carries each resource's values).
+   - OR inside a filter, AND across filters, over the filters of `domain/facets.py` FILTERS
+     (`source`, `theme`, `landscape`, `geography`, `data_kind`, `access`, `license`,
+     `processing_status`; `summary.facets` already carries each resource's values).
 4. Fetch `v1/records/<source>/<id>.json` when a card is opened.
 
 **Scale:**

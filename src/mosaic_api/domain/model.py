@@ -47,6 +47,14 @@ class DataKind(str, Enum):
     OTHER = "other"
 
 
+class ProcessingStatus(str, Enum):
+    """How far the data has been processed, as declared by whoever registers it (not verified)."""
+
+    RAW = "raw"
+    PROCESSED = "processed"
+    VALIDATED = "validated"
+
+
 class AccessMethod(str, Enum):
     DOWNLOAD = "download"
     LANDING_PAGE = "landing_page"
@@ -216,6 +224,7 @@ class Resource(Model):
     license_text: str | None = None
     access: Access | None = None
     access_note: str | None = None
+    processing_status: ProcessingStatus | None = None  # declared, never inferred
     attribution: str | None = None
     contact: tuple[Contact, ...] = ()
     citation: Citation | None = None

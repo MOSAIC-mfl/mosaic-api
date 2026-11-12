@@ -13,6 +13,7 @@ from mosaic_api.adapters.fetch import FetchError, Location, SafeFetcher
 from mosaic_api.adapters.inbound.exporter import export
 from mosaic_api.adapters.inbound.http import create_app
 from mosaic_api.application.catalog import CatalogService
+from mosaic_api.domain.facets import FILTERS
 
 
 @pytest.fixture
@@ -24,20 +25,17 @@ def test_search_and_filters(client: TestClient) -> None:
     page = client.get("/v1/records", params={"q": "forest", "include_facets": True}).json()
     assert [i["id"] for i in page["items"]] == ["mosaic:MFL-2026-079"]
     assert page["facets"]["source"] == {"mosaic": 1}
-    assert set(page["facets"]) == {"source", "theme", "landscape", "geography"}
+    assert set(page["facets"]) == set(FILTERS)
     cdh = client.get("/v1/records", params={"source": "cdh"}).json()
     assert cdh["total"] == 3 and {i["source"] for i in cdh["items"]} == {"cdh"}
 
 
-def test_only_the_simple_filters_exist(client: TestClient) -> None:
+def test_only_the_listed_filters_exist(client: TestClient) -> None:
     spec = client.get("/openapi.json").json()
     params = {p["name"] for p in spec["paths"]["/v1/records"]["get"]["parameters"]}
     assert params == {
         "q",
-        "source",
-        "theme",
-        "landscape",
-        "geography",
+        *FILTERS,
         "sort",
         "order",
         "page",
@@ -117,7 +115,7 @@ def test_static_export_matches_live_api(tmp_path: Path, catalog: CatalogService,
     assert not list(out.rglob("*.jsonld")) and not (out / "v1/manifest.json").exists()
     everything = json.loads((out / "v1/records.json").read_text(encoding="utf-8"))
     assert everything["total"] == 7 and len(everything["items"]) == 7
-    assert set(everything["facets"]) == {"source", "theme", "landscape", "geography"}
+    assert set(everything["facets"]) == set(FILTERS)
     assert 'http-equiv="refresh" content="0; url=docs/"' in (out / "index.html").read_text(encoding="utf-8")
     assert (out / "v1/openapi.json").exists() and (out / ".nojekyll").exists()
 
@@ -221,3 +219,22 @@ def test_sort_order_and_summary_fields(client: TestClient) -> None:
     item = client.get("/v1/records", params={"q": "worldcover"}).json()["items"][0]
     assert item["producer"] == "European Space Agency (ESA)"
     assert item["access_url"].startswith("https://")
+
+
+def test_processing_status_is_declared_never_inferred(client: TestClient) -> None:
+    page = client.get("/v1/records", params={"processing_status": "validated", "include_facets": True}).json()
+    assert [i["id"] for i in page["items"]] == ["mosaic:MFL-2026-079"]
+    assert page["items"][0]["processing_status"] == "validated"
+    stated = client.get("/v1/records", params={"include_facets": True, "page_size": 50}).json()
+    assert stated["facets"]["processing_status"]["validated"] == 1
+    assert stated["facets"]["processing_status"]["not_specified"] == stated["total"] - 1
+    cdh = [i for i in stated["items"] if i["source"] == "cdh"]
+    assert cdh and all(i["processing_status"] is None for i in cdh)
+
+
+def test_more_filters_by_kind_access_and_licence(client: TestClient) -> None:
+    every = client.get("/v1/records", params={"include_facets": True}).json()
+    for facet in ("data_kind", "access", "license"):
+        value, n = next(iter(every["facets"][facet].items()))
+        page = client.get("/v1/records", params={facet: value}).json()
+        assert page["total"] == n, facet

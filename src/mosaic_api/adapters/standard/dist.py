@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 
 from ...domain.standard import Standard, Vocabulary
-from ..fetch import Location
+from ..fetch import FetchError, Location
 
 VOCABULARIES = (
     "themes",
@@ -22,6 +22,9 @@ VOCABULARIES = (
     "service_type",
     "update_frequency",
 )
+# Vocabularies added after 0.2.0 was first published: read when the standard has them, so the API also
+# runs on an older build of the standard.
+OPTIONAL_VOCABULARIES = ("processing_status",)
 CROSSWALKS = ("cdh",)
 SCHEMAS = ("record.schema.json", "vocab.schema.json", "levels/minimum.schema.json", "levels/recommended.schema.json")
 
@@ -37,8 +40,13 @@ class DistStandard:
         if self._cache is None:
             manifest = json.loads(self._loc.read("manifest.json"))
             vocabs = {}
-            for name in VOCABULARIES:
-                data = json.loads(self._loc.read(f"vocab/{name}.json"))
+            for name in (*VOCABULARIES, *OPTIONAL_VOCABULARIES):
+                try:
+                    data = json.loads(self._loc.read(f"vocab/{name}.json"))
+                except (FileNotFoundError, FetchError):
+                    if name in OPTIONAL_VOCABULARIES:
+                        continue
+                    raise
                 labels = {c["id"]: c["label"] for c in data["concepts"]}
                 extra = {c["id"]: {k: v for k, v in c.items() if k not in ("id", "label")} for c in data["concepts"]}
                 vocabs[name] = Vocabulary(name, labels, extra)

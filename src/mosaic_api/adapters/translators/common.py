@@ -16,9 +16,9 @@ PENDING = Quality(status=Status.INCOMPLETE)  # replaced by the QualityAssessor d
 # Fields of the MOSAIC standard v0.2 the domain model holds; the rest of a record travels in `more`.
 CORE_FIELDS = (
     "title", "description", "note", "resource_type", "version", "language", "themes", "keywords", "commodities",
-    "usage", "spatial", "temporal", "license", "license_text", "access", "access_note", "attribution", "contact",
-    "citation", "doi", "funding", "related_publications", "additional_links", "data", "structures", "processing",
-    "derived", "created", "updated", "source_updated", "extensions",
+    "usage", "spatial", "temporal", "license", "license_text", "access", "access_note", "processing_status",
+    "attribution", "contact", "citation", "doi", "funding", "related_publications", "additional_links", "data",
+    "structures", "processing", "derived", "created", "updated", "source_updated", "extensions",
 )  # fmt: skip
 
 

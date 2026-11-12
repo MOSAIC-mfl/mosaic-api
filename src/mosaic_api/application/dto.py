@@ -63,6 +63,9 @@ class RecordSummary(Out):
     bbox: list[list[float]]
     period: list[int | None] | None = Field(None, description="[start year, end year]; null = open/unknown.")
     access: str | None
+    processing_status: str | None = Field(
+        None, description="raw | processed | validated, as declared by the contributor; null = not stated."
+    )
     license: str | None = Field(None, description="SPDX expression, or the licence text when there is no SPDX code.")
     status: str
     completeness: dict[str, float]
@@ -92,6 +95,7 @@ class RecordSummary(Out):
             bbox=[list(b) for b in r.bbox],
             period=period,
             access=r.access,
+            processing_status=r.processing_status,
             license=r.license
             if r.license and not r.license.startswith("LicenseRef-")
             else (r.license_text or r.license),

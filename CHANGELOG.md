@@ -6,6 +6,7 @@
 - **More filters on `/v1/records`** (website redesign, 2026-11-12): `data_kind`, `access`, `license`
   and `processing_status`, next to `source`, `theme`, `landscape` and `geography`. Same rules (OR
   inside one filter, AND across filters, ids or labels); `include_facets=true` counts them too.
+- **`resolution`** on `RecordSummary`: the spatial resolution as text ("30 m"), for result cards.
 - **`processing_status`** (standard v0.2, optional): raw / processed / validated as declared by the
   contributor, on the resource and on `RecordSummary`. Never inferred: a record without it is
   `null`, counted as `not_specified`. The vocabulary is read when the standard has it, so the API

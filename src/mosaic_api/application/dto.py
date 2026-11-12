@@ -41,6 +41,16 @@ def _producer(r: Resource) -> str | None:
     return None
 
 
+def _resolution(r: Resource) -> str | None:
+    res = r.spatial.resolution if r.spatial else None
+    if res is None:
+        return None
+    if res.value is not None:
+        value = f"{res.value:g}"
+        return f"{value} {res.unit}" if res.unit else value
+    return res.text
+
+
 def _access_url(r: Resource) -> str | None:
     points = sorted((p for p in r.data if p.url), key=lambda p: (p.access or r.access) != "public")
     return points[0].url if points else None
@@ -73,6 +83,7 @@ class RecordSummary(Out):
     updated: str | None
     producer: str | None = Field(None, description="First producer organization (or person).")
     access_url: str | None = Field(None, description="First data location URL, public ones first.")
+    resolution: str | None = Field(None, description='Spatial resolution as text, e.g. "30 m".')
 
     @classmethod
     def of(cls, r: Resource) -> RecordSummary:
@@ -105,6 +116,7 @@ class RecordSummary(Out):
             updated=r.updated,
             producer=_producer(r),
             access_url=_access_url(r),
+            resolution=_resolution(r),
         )
 
 

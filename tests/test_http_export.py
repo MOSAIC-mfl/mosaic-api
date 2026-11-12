@@ -238,3 +238,9 @@ def test_more_filters_by_kind_access_and_licence(client: TestClient) -> None:
         value, n = next(iter(every["facets"][facet].items()))
         page = client.get("/v1/records", params={facet: value}).json()
         assert page["total"] == n, facet
+
+
+def test_summary_gives_the_resolution_as_text(client: TestClient) -> None:
+    items = client.get("/v1/records", params={"page_size": 50}).json()["items"]
+    shown = [i["resolution"] for i in items if i["resolution"]]
+    assert shown and all(isinstance(x, str) and x.strip() for x in shown)

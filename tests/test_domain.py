@@ -113,6 +113,26 @@ def test_landscapes_derived_from_bbox_but_not_for_global_boxes() -> None:
     ]
 
 
+def test_a_national_dataset_without_bbox_covers_the_landscapes_of_its_country() -> None:
+    countries = {"MEK-3S": ["KHM", "LAO", "VNM"], "CIV-NZ": ["CIV"], "PER-PCL": ["PER"]}
+    out = derive_landscapes(
+        [
+            res("laos", spatial={"geography": ["LAO"]}),
+            res("world", spatial={"geography": ["global"]}),
+            res("region", spatial={"geography": ["m49:419"]}),
+            res("boxed", spatial={"geography": ["PER"], "bbox": [(10, 10, 11, 11)]}),
+        ],
+        {"PER-PCL": (-75.9, -9.4, -74.3, -7.9)},
+        countries,
+    )
+    assert [(r.landscapes, r.landscapes_derived) for r in out] == [
+        (("MEK-3S",), True),
+        ((), False),
+        ((), False),
+        ((), False),  # a bbox says where the data is: it wins over the country
+    ]
+
+
 def test_fold_handles_case_accents_symbols_and_other_scripts() -> None:
     from mosaic_api.domain.text import fold, key
 

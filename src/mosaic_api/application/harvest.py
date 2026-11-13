@@ -49,6 +49,13 @@ def _landscape_boxes(standard: Standard) -> dict[str, Bbox]:
     return boxes
 
 
+def _landscape_countries(standard: Standard) -> dict[str, list[str]]:
+    vocab = standard.vocabularies.get("landscapes")
+    if vocab is None:
+        return {}
+    return {code: list(attrs.get("countries") or []) for code, attrs in vocab.extra.items()}
+
+
 class HarvestService:
     def __init__(
         self,
@@ -119,7 +126,7 @@ class HarvestService:
             translated[info.id], reused[info.id] = n_new, n_reused
             states.append(SourceState(info.id, info.name, info.homepage, info.format, now, len(got), issues))
         resources = link_same_resources(resources)
-        resources = derive_landscapes(resources, _landscape_boxes(standard))
+        resources = derive_landscapes(resources, _landscape_boxes(standard), _landscape_countries(standard))
         resources.sort(key=lambda r: r.id)
         snapshot = Snapshot(resources, states, standard.version, now)
         self._store.save(snapshot)

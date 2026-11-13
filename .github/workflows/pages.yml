@@ -6,10 +6,8 @@
 #           (incremental, from the cached snapshot), export the static API.
 #   deploy  publish the export on GitHub Pages (Settings > Pages > Source: GitHub Actions).
 #
-# The catalogue comes from MOSAIC-mfl/catalog: main when it already has the catalogue-only layout
-# (landscapes/, no mosaic.config.yaml; the first pipeline on main has records/ but no landscapes/), otherwise the branch metadata-standard-v0.1, until that branch
-# is merged. The standard comes from MOSAIC-mfl/mosaic-standard, main. The repository variables
-# CATALOG_REF and STANDARD_REF force a branch or tag.
+# The catalogue comes from MOSAIC-mfl/catalog, main; the standard from MOSAIC-mfl/mosaic-standard,
+# main. The repository variables CATALOG_REF and STANDARD_REF force a branch or tag.
 name: Check and publish
 
 on:
@@ -65,14 +63,7 @@ jobs:
           CATALOG_REF: ${{ vars.CATALOG_REF }}
         run: |
           set -euo pipefail
-          if [ -z "${CATALOG_REF}" ]; then
-            git clone --quiet "$CATALOG_REPO" _catalog
-            if [ -f _catalog/mosaic.config.yaml ] || [ ! -d _catalog/landscapes ]; then
-              git -C _catalog checkout --quiet metadata-standard-v0.1
-            fi
-          else
-            git clone --quiet --branch "$CATALOG_REF" "$CATALOG_REPO" _catalog
-          fi
+          git clone --quiet --branch "${CATALOG_REF:-main}" "$CATALOG_REPO" _catalog
           echo "Catalogue: $(git -C _catalog rev-parse --abbrev-ref HEAD) @ $(git -C _catalog rev-parse --short HEAD)"
       # Full history on purpose: the build takes created / updated from git log.
       - name: Clone the MOSAIC standard

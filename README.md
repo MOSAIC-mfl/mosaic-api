@@ -64,10 +64,8 @@ One workflow, [.github/workflows/pages.yml](.github/workflows/pages.yml):
 | `build` | push to `main`, daily (05:17 UTC), manual, `repository_dispatch: catalog-updated`; only if `check` passes | clones MOSAIC-mfl/catalog and MOSAIC-mfl/mosaic-standard, builds the catalogue's `dist/` with the standard's tool, harvests every source with [config/mosaic-api.ci.yaml](config/mosaic-api.ci.yaml), exports the static API |
 | `deploy` | after `build` | publishes the export on GitHub Pages |
 
-The catalogue is taken from `main` of MOSAIC-mfl/catalog when it has the catalogue-only layout
-(`landscapes/`, no `mosaic.config.yaml`), otherwise from the branch `metadata-standard-v0.1`. The
-standard is `main` of MOSAIC-mfl/mosaic-standard. The repository variables `CATALOG_REF` and
-`STANDARD_REF` force a branch or tag. Nothing has to change when the catalogue branch is merged.
+The catalogue is `main` of MOSAIC-mfl/catalog and the standard `main` of MOSAIC-mfl/mosaic-standard.
+The repository variables `CATALOG_REF` and `STANDARD_REF` force a branch or tag.
 
 Once, in the repository settings: **Settings → Pages → Build and deployment → Source: GitHub
 Actions**. Then run the workflow by hand (Actions → Check and publish → Run workflow) or push to

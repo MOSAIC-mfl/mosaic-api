@@ -9,6 +9,9 @@
   internally (mosaic-standard `review/minimum_gaps`).
 
 ### Added
+- Derived landscapes (2026-11-13): a national dataset without a bounding box covers the landscapes in
+  its countries; a bounding box of a record that names its countries only matches landscapes in
+  those countries.
 - MOSAIC records link to their file in the catalogue (`records/<id>/record.yaml` on GitHub) as
   `provenance.record_url`, instead of the website's old dataset address.
 - **More filters on `/v1/records`** (website redesign, 2026-11-12): `data_kind`, `access`, `license`

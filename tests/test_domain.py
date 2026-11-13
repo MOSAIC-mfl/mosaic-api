@@ -133,6 +133,14 @@ def test_a_national_dataset_without_bbox_covers_the_landscapes_of_its_country() 
     ]
 
 
+def test_a_country_box_only_covers_landscapes_of_that_country() -> None:
+    boxes = {"KEN-LVB": (33.9, -0.7, 35.7, 0.6), "ETH-OG": (34.9, 4.4, 38.4, 9.4)}
+    countries = {"KEN-LVB": ["KEN"], "ETH-OG": ["ETH"]}
+    kenya = res("ken", spatial={"geography": ["KEN"], "bbox": [(33.9, -4.7, 41.9, 5.0)]})
+    out = derive_landscapes([kenya], boxes, countries)
+    assert out[0].landscapes == ("KEN-LVB",)
+
+
 def test_fold_handles_case_accents_symbols_and_other_scripts() -> None:
     from mosaic_api.domain.text import fold, key
 

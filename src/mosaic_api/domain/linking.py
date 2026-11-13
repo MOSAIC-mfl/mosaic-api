@@ -43,7 +43,8 @@ def derive_landscapes(
     """A resource without landscapes gets those it covers, flagged as derived:
 
     - with a bbox, the landscapes it intersects (global boxes, wider than 300 degrees, are not used:
-      they would match every landscape and say nothing);
+      they would match every landscape and say nothing); when the record names its countries, only
+      landscapes in those countries (a box drawn around a country also touches its neighbours);
     - without a bbox, a national dataset (geography = countries, ISO 3166-1 alpha-3) covers the
       landscapes in those countries (as the first website showed national datasets).
 
@@ -56,13 +57,20 @@ def derive_landscapes(
             out.append(r)
             continue
         boxes = r.bbox
+        iso3 = {g for g in r.geography if len(g) == 3 and g.isupper()}
         if boxes:
             if not landscape_boxes or any(b[2] - b[0] > 300 for b in boxes):
                 out.append(r)
                 continue
-            hits = tuple(sorted(c for c, lb in landscape_boxes.items() if any(_intersects(b, lb) for b in boxes)))
+            hits = tuple(
+                sorted(
+                    c
+                    for c, lb in landscape_boxes.items()
+                    if any(_intersects(b, lb) for b in boxes)
+                    and (not iso3 or not countries_of.get(c) or iso3 & set(countries_of[c]))
+                )
+            )
         else:
-            iso3 = {g for g in r.geography if len(g) == 3 and g.isupper()}
             hits = tuple(sorted(c for c, cs in countries_of.items() if iso3 & set(cs)))
         out.append(r.model_copy(update={"landscapes": hits, "landscapes_derived": True}) if hits else r)
     return out

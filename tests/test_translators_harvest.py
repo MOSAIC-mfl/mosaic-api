@@ -57,6 +57,16 @@ def test_harvest_quality_and_incremental(tmp_path: Path, dist_standard: DistStan
     assert second.reused == {"mosaic": 4, "cdh": 3}
 
 
+def test_an_unchanged_record_takes_the_new_record_link(tmp_path: Path, dist_standard: DistStandard) -> None:
+    make_harvest(tmp_path, dist_standard).run()
+    service = make_harvest(tmp_path, dist_standard)
+    service._bindings[0].source._url_tpl = "https://example.org/records/{id}"  # the config changed
+    report = service.run()
+    assert report.translated["mosaic"] == 0
+    r = next(x for x in report.snapshot.resources if x.id == "mosaic:MFL-2026-079")
+    assert r.provenance.record_url == "https://example.org/records/MFL-2026-079"
+
+
 def test_a_snapshot_of_an_older_model_is_ignored(tmp_path: Path, dist_standard: DistStandard) -> None:
     # e.g. the cache of the pipeline holds a v0.1 snapshot: the harvest starts again instead of failing
     old = {"standard_version": "0.1.0", "sources": [], "resources": [{"license": {"spdx": "CC-BY-4.0"}}]}

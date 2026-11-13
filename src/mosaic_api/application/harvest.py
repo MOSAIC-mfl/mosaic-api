@@ -83,6 +83,9 @@ class HarvestService:
                 for raw in binding.source.records():
                     old = prev_by_id.get(f"{info.id}:{raw.local_id}")
                     if old is not None and old.provenance.source_hash == raw.sha256:
+                        if old.provenance.record_url != raw.record_url:  # the source's link changed in config
+                            prov = old.provenance.model_copy(update={"record_url": raw.record_url})
+                            old = old.model_copy(update={"provenance": prov})
                         got.append(old)
                         n_reused += 1
                         continue

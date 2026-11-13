@@ -3,6 +3,8 @@
 ## [0.1.0] - unreleased (first publication)
 
 ### Added
+- MOSAIC records link to their file in the catalogue (`records/<id>/record.yaml` on GitHub) as
+  `provenance.record_url`, instead of the website's old dataset address.
 - **More filters on `/v1/records`** (website redesign, 2026-11-12): `data_kind`, `access`, `license`
   and `processing_status`, next to `source`, `theme`, `landscape` and `geography`. Same rules (OR
   inside one filter, AND across filters, ids or labels); `include_facets=true` counts them too.

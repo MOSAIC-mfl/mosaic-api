@@ -26,7 +26,7 @@ sources:
     format: mosaic-v0.2
     location: ../_catalog/dist
     homepage: https://mosaic-mfl.github.io/website/
-    record_url_template: https://mosaic-mfl.github.io/website/catalogue/{id}/
+    record_url_template: https://github.com/MOSAIC-mfl/catalog/blob/main/records/{id}/record.yaml
 
   - id: cdh
     name: CGIAR Climate Data Hub

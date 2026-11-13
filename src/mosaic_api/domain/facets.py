@@ -35,7 +35,6 @@ FACETS = (
     "access",
     "license",
     "processing_status",
-    "status",
 )
 
 # The facets people can filter by (GET /v1/resources and the website). The others stay as values
@@ -105,7 +104,6 @@ def facet_values(r: Resource) -> dict[str, list[str]]:
         "access": or_ns([r.access]),
         "license": [_license(r)],
         "processing_status": or_ns([r.processing_status]),  # not_specified = not stated
-        "status": [r.quality.status],
     }
 
 

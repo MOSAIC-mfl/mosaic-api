@@ -2,6 +2,12 @@
 
 ## [0.1.0] - unreleased (first publication)
 
+### Changed (2026-11-13)
+- Metadata completeness is no longer public: `quality` (record), `status` / `completeness`
+  (summaries), the `status` facet and the landscapes' `complete` / `incomplete` / `missing_minimum`
+  counts are removed from the responses. It is still computed at harvest; the gaps are reviewed
+  internally (mosaic-standard `review/minimum_gaps`).
+
 ### Added
 - MOSAIC records link to their file in the catalogue (`records/<id>/record.yaml` on GitHub) as
   `provenance.record_url`, instead of the website's old dataset address.

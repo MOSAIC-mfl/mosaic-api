@@ -98,7 +98,7 @@ answers as files, so the static API **is** the live API, frozen at harvest time.
 - Field names are the MOSAIC standard's (`snake_case`), the same as in the records
   ([ADR-0003](adr/0003-standard-field-names.md)).
 - **A record's id is `<source>:<local id>`.** Its URL path is `/v1/records/<source>/<local id>`.
-- **`ResourceDetail.record`** is a valid MOSAIC standard v0.2 record (CDH core field names), plus provenance, quality, facets
+- **`ResourceDetail.record`** is a valid MOSAIC standard v0.2 record (CDH core field names), plus provenance and facets (metadata completeness is computed at harvest but kept internal)
   and `same_as`.
 - **The contract is `openapi.json`.** The website generates its TypeScript types from it with
   `openapi-typescript`, so a breaking change fails the website build instead of production.

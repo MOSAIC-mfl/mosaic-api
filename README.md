@@ -85,7 +85,7 @@ Five, nothing else ([ADR-0007](docs/adr/0007-five-endpoints-records.md)):
 |---|---|---|
 | `GET /v1/sources` | `v1/sources.json` | The catalogues MOSAIC reads (MOSAIC, CGIAR Climate Data Hub, …): records, last harvest, errors |
 | `GET /v1/records?q=&source=&theme=&landscape=&geography=` | `v1/records.json` (the whole catalogue, no filters) | The records: search and filters, sorted and paged; `include_facets=true` adds the count of each filter value over all the results |
-| `GET /v1/records/{source}/{id}` | `v1/records/{source}/{id}.json` | One record: the MOSAIC record, provenance, quality |
+| `GET /v1/records/{source}/{id}` | `v1/records/{source}/{id}.json` | One record: the MOSAIC record, provenance |
 | `GET /v1/landscapes` | `v1/landscapes.json` | Every living landscape: its page sections, dataset counts, the records its profile names |
 | `GET /v1/landscapes/{code}` | `v1/landscapes/{CODE}.json` | One landscape page: its profile and its data status |
 
@@ -110,8 +110,8 @@ The website searches in the browser with the same rules, over files kept outside
 
 Landscape profiles are written in the catalogue (`landscapes/<CODE>/`, published in its
 `dist/landscapes/`) and read from the same place as the standard. The API serves them as published
-and adds what only the catalogue knows: which records cover the landscape and how complete their
-metadata is (`data_status`). The code is case-insensitive in the live API (`KEN-LVB` or `ken-lvb`);
+and adds what only the catalogue knows: which records cover the landscape, by kind, theme and access
+(`data_status`). The code is case-insensitive in the live API (`KEN-LVB` or `ken-lvb`);
 the files on Pages use capitals.
 
 ## Documentation

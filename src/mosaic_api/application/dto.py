@@ -28,12 +28,6 @@ class ProvenanceOut(Out):
     fetched_at: datetime
 
 
-class QualityOut(Out):
-    status: str = Field(description="complete | incomplete (against the MOSAIC minimum).")
-    completeness: dict[str, float]
-    missing_minimum: list[str]
-
-
 def _producer(r: Resource) -> str | None:
     for c in r.contact:
         if "producer" in c.roles:
@@ -77,8 +71,6 @@ class RecordSummary(Out):
         None, description="raw | processed | validated, as declared by the contributor; null = not stated."
     )
     license: str | None = Field(None, description="SPDX expression, or the licence text when there is no SPDX code.")
-    status: str
-    completeness: dict[str, float]
     same_as: list[str]
     updated: str | None
     producer: str | None = Field(None, description="First producer organization (or person).")
@@ -110,8 +102,6 @@ class RecordSummary(Out):
             license=r.license
             if r.license and not r.license.startswith("LicenseRef-")
             else (r.license_text or r.license),
-            status=r.quality.status,
-            completeness=r.quality.completeness,
             same_as=list(r.same_as),
             updated=r.updated,
             producer=_producer(r),
@@ -121,7 +111,8 @@ class RecordSummary(Out):
 
 
 class RecordDetail(Out):
-    """The full resource in the MOSAIC model, plus where it came from and how complete it is."""
+    """The full resource in the MOSAIC model, plus where it came from. How complete its metadata is stays
+    internal (the standard's review lists): it is not part of the public API."""
 
     id: str
     source: str
@@ -134,7 +125,6 @@ class RecordDetail(Out):
     landscapes_derived: bool
     facets: dict[str, list[str]]
     provenance: ProvenanceOut
-    quality: QualityOut
     same_as: list[str]
 
     @classmethod
@@ -152,7 +142,6 @@ class RecordDetail(Out):
             landscapes_derived=r.landscapes_derived,
             facets=facet_values(r),
             provenance=ProvenanceOut.model_validate(r.provenance.model_dump()),
-            quality=QualityOut.model_validate(r.quality.model_dump()),
             same_as=list(r.same_as),
         )
 
@@ -202,16 +191,13 @@ class SectionOut(Out):
 
 
 class DataStatusOut(Out):
-    """What the catalogue holds for the landscape and how complete it is."""
+    """What the catalogue holds for the landscape."""
 
     total: int
-    complete: int
-    incomplete: int
     stated: int = Field(description="Resources that name the landscape; the others cover it by bounding box.")
     by_kind: dict[str, int]
     by_theme: dict[str, int]
     by_access: dict[str, int]
-    missing_minimum: dict[str, int] = Field(description="Minimum field -> resources missing it.")
 
 
 class LandscapeSummaryOut(Out):

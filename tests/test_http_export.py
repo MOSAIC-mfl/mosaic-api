@@ -65,7 +65,10 @@ def test_record_detail(client: TestClient) -> None:
     d = client.get("/v1/records/cdh/esa-worldcover-2021").json()
     assert d["record"]["id"] == "esa-worldcover-2021"
     assert d["provenance"]["source_name"] == "CGIAR Climate Data Hub"
-    assert d["quality"]["status"] == "complete"
+    # metadata completeness is internal (the standard's review lists), not part of the public API
+    assert "quality" not in d and "status" not in d["facets"]
+    summary = client.get("/v1/records").json()["items"][0]
+    assert "status" not in summary and "completeness" not in summary
     for gone in (
         "/v1/manifest",
         "/v1/facets",

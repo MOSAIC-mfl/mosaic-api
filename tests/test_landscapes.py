@@ -27,7 +27,8 @@ def test_list_and_get(catalog: CatalogService, landscapes: LandscapeService) -> 
     assert page["code"] == "KEN-LVB" and page["sections"][0]["config"]["overlays"][0]["id"] == "conflicts"
     assert [r["id"] for r in page["linked"]] == ["mosaic:MFL-2026-090"]
     status = page["data_status"]
-    assert status["total"] == status["complete"] + status["incomplete"] == lvb["counts"]["datasets"]
+    assert status["total"] == lvb["counts"]["datasets"]
+    assert "complete" not in status and "missing_minimum" not in status and set(lvb["counts"]) == {"datasets"}
     assert client.get("/v1/landscapes/XXX-YY").status_code == 404
 
 

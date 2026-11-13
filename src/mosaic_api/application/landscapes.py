@@ -30,7 +30,7 @@ class LandscapeService:
             sections=[
                 SectionOut(id=str(s.get("id")), kind=str(s.get("kind")), title=s.get("title")) for s in p.sections()
             ],
-            counts={"datasets": status.total, "complete": status.complete, "incomplete": status.incomplete},
+            counts={"datasets": status.total},
             records=p.referenced_records(),
         )
 
@@ -59,6 +59,12 @@ class LandscapeService:
                 )
                 for s in p.sections()
             ],
-            data_status=DataStatusOut(**vars(status)),
+            data_status=DataStatusOut(
+                total=status.total,
+                stated=status.stated,
+                by_kind=status.by_kind,
+                by_theme=status.by_theme,
+                by_access=status.by_access,
+            ),
             linked=[RecordSummary.of(r) for r in self._catalog.resources if r.id in referenced],
         )

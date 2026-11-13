@@ -32,7 +32,6 @@ FACET_VOCAB = {
 FIXED_LABELS = {
     "spatial": {"yes": "Spatial", "no": "Not spatial"},
     "geometry": {"point": "Points", "line": "Lines", "polygon": "Polygons", "mixed": "Mixed"},
-    "status": {"complete": "Complete", "incomplete": "Incomplete"},
     "license": {"other": "Other licence"},
 }
 

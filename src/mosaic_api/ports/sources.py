@@ -23,6 +23,7 @@ class RawRecord:
     data: dict[str, Any]
     sha256: str  # hash of the source bytes or canonical JSON: unchanged hash = nothing to redo
     record_url: str | None = None
+    error: str | None = None  # the file could not be read as a record (data is then empty)
 
 
 class CatalogSource(Protocol):

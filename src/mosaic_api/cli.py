@@ -17,7 +17,11 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="mosaic_api")
     ap.add_argument("--config", type=Path, help="config file (default config/mosaic-api.yaml or $MOSAIC_API_CONFIG)")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("harvest", help="read every source and update the snapshot")
+    sub.add_parser(
+        "harvest",
+        help="read every source and update the snapshot (exit 0: all sources read; 2: some failed and kept "
+        "their previous records; 1: every source failed)",
+    )
     ex = sub.add_parser("export", help="write the static API (for GitHub Pages)")
     ex.add_argument("--out", type=Path)
     sv = sub.add_parser("serve", help="run the live API (development or a server)")
@@ -37,7 +41,10 @@ def main(argv: list[str] | None = None) -> int:
             state = f"ERROR {s.error} (kept {s.records} previous records)" if s.error else f"{s.records} records"
             done = f", {report.translated.get(s.id, 0)} translated, {report.reused.get(s.id, 0)} unchanged"
             print(f"{s.id}: {state}{'' if s.error else done}; {len(s.issues)} with issues")
-        return 1 if all(s.error for s in report.snapshot.sources) else 0
+        failed = [s for s in report.snapshot.sources if s.error]
+        if failed and len(failed) == len(report.snapshot.sources):
+            return 1
+        return 2 if failed else 0
 
     catalog = bootstrap.catalog_service(settings)
     landscapes = bootstrap.landscape_service(settings, catalog)

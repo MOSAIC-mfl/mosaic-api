@@ -3,8 +3,11 @@
 #   check   on every pull request and every run: ruff, format, mypy, import layers, pytest.
 #   build   only from main, after check passes: clone the MOSAIC catalogue (records, landscape
 #           profiles) and the MOSAIC standard (its tool builds the catalogue), harvest every source
-#           (incremental, from the cached snapshot), export the static API.
+#           (incremental, from the cached snapshot), export the static API. If every source
+#           failed, nothing is published (the last good deploy stays).
 #   deploy  publish the export on GitHub Pages (Settings > Pages > Source: GitHub Actions).
+#   alert   after deploy, only if some source failed: the API was published with that source's
+#           previous records, and this job fails so the run shows red and GitHub notifies.
 #
 # The catalogue comes from MOSAIC-mfl/catalog, main; the standard from MOSAIC-mfl/mosaic-standard,
 # main. The repository variables CATALOG_REF and STANDARD_REF force a branch or tag.
@@ -15,9 +18,9 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "17 5 * * *"          # daily: picks up catalogue and CDH changes
+    - cron: "17 5 * * *"          # daily: CDH changes (GitHub often starts it hours later)
   repository_dispatch:
-    types: [catalog-updated]      # for the catalogue to trigger a harvest (needs a token there)
+    types: [catalog-updated]      # sent by the catalogue's Publish (job notify-api) after each merge
   workflow_dispatch:
 
 permissions:
@@ -49,6 +52,8 @@ jobs:
     needs: check
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      degraded: ${{ steps.harvest.outputs.degraded }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -83,7 +88,20 @@ jobs:
           path: state
           key: snapshot-${{ github.run_id }}
           restore-keys: snapshot-
-      - run: python -m mosaic_api --config config/mosaic-api.ci.yaml harvest
+      - name: Harvest
+        id: harvest
+        run: |
+          set +e
+          python -m mosaic_api --config config/mosaic-api.ci.yaml harvest
+          code=$?
+          set -e
+          # 0 every source read; 2 some failed and kept their previous records; 1 all failed
+          if [ "$code" -eq 2 ]; then
+            echo "::warning title=Harvest degraded::A source failed; its previous records are published (see the log above)"
+            echo "degraded=true" >> "$GITHUB_OUTPUT"
+          elif [ "$code" -ne 0 ]; then
+            exit "$code"
+          fi
       - run: python -m mosaic_api --config config/mosaic-api.ci.yaml export --out _site
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
@@ -101,3 +119,13 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  alert:
+    needs: [build, deploy]
+    if: needs.build.outputs.degraded == 'true'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - run: |
+          echo "::error title=A source failed::The API was published, but at least one source could not be harvested and kept its previous records. The harvest step of the build job says which and why."
+          exit 1

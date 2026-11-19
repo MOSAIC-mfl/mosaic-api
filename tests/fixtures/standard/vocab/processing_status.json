@@ -1,0 +1,24 @@
+{
+  "scheme": {
+    "id": "mosaic-processing-status",
+    "title": "Processing Status",
+    "description": "How far the data has been processed, as declared by whoever registers it. MOSAIC does not verify it; a record without it is shown as not stated (nothing is inferred)."
+  },
+  "concepts": [
+    {
+      "id": "raw",
+      "label": "Raw",
+      "description": "As supplied by the contributor; not processed."
+    },
+    {
+      "id": "processed",
+      "label": "Processed",
+      "description": "Cleaned, reformatted or harmonised by the contributor."
+    },
+    {
+      "id": "validated",
+      "label": "Validated",
+      "description": "The contributor reports that it has been quality-checked."
+    }
+  ]
+}

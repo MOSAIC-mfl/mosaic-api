@@ -68,6 +68,7 @@ class FileSnapshotStore:
             sources=sources,
             standard_version=data["standard_version"],
             harvested_at=datetime.fromisoformat(data["harvested_at"]) if data.get("harvested_at") else None,
+            fingerprint=data.get("fingerprint"),
         )
 
     def save(self, snapshot: Snapshot) -> None:
@@ -75,6 +76,7 @@ class FileSnapshotStore:
             "snapshot_format": SNAPSHOT_FORMAT,
             "standard_version": snapshot.standard_version,
             "harvested_at": snapshot.harvested_at.isoformat() if snapshot.harvested_at else None,
+            "fingerprint": snapshot.fingerprint,
             "sources": [
                 {
                     "id": s.id,

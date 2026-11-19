@@ -68,8 +68,17 @@ class GitYamlSource:
 
     def records(self) -> Iterator[RawRecord]:
         for rel, raw in sorted(self._files()):
-            data: Any = yaml.safe_load(raw.decode("utf-8"))
+            url = self._url_tpl.format(path=rel, ref=self._ref) if self._url_tpl else None
+            sha = hashlib.sha256(raw).hexdigest()
+            try:
+                data: Any = yaml.safe_load(raw.decode("utf-8"))
+            except (yaml.YAMLError, UnicodeDecodeError) as exc:
+                # one unreadable file must not stop the others: reported under its folder name
+                # (records/<id>/...), the id the record most likely has
+                yield RawRecord(
+                    PurePosixPath(rel).parent.name, {}, sha, url, f"{type(exc).__name__}: {' '.join(str(exc).split())}"
+                )
+                continue
             if not isinstance(data, dict) or "id" not in data:
                 continue
-            url = self._url_tpl.format(path=rel, ref=self._ref) if self._url_tpl else None
-            yield RawRecord(str(data["id"]), data, hashlib.sha256(raw).hexdigest(), url)
+            yield RawRecord(str(data["id"]), data, sha, url)

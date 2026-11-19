@@ -2,6 +2,24 @@
 
 ## [0.1.0] - unreleased (first publication)
 
+### Fixed (2026-11-19, project audit of 2026-11-18)
+- A source that returns no records when the previous harvest had some is a failure: its previous
+  records are kept and the error recorded, instead of publishing the API without them.
+- One unreadable record file, or one record that makes a translator raise, no longer fails the
+  whole source: it becomes an issue of that record and its previous version, if any, is kept.
+- Reused translations: the snapshot stores a fingerprint of the API code and the standard; when
+  either changes, every record is translated again (before, records whose source file did not
+  change kept a translation made by older code until the pipeline cache was lost).
+- Issues of a reused record are carried over instead of disappearing on the next run.
+- `harvest` exits 2 when some source failed; the pipeline publishes and then fails a final
+  `alert` job, so the run is red. Every source failing (exit 1) still stops before publishing.
+- A missing file read over https (404) counts as missing, like a local one: optional vocabularies
+  work with `config/mosaic-api.published.yaml`.
+- `docs/openapi.json` regenerated (it still had `QualityOut` and `missing_minimum`); a test now
+  compares it with the code.
+- Test fixtures of the standard refreshed (schemas, landscape vocabulary, schema-1 crosswalk,
+  `processing_status` vocabulary).
+
 ### Changed (2026-11-13)
 - Metadata completeness is no longer public: `quality` (record), `status` / `completeness`
   (summaries), the `status` facet and the landscapes' `complete` / `incomplete` / `missing_minimum`

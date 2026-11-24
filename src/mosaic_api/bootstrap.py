@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 from .adapters.fetch import Location, SafeFetcher
@@ -49,7 +50,19 @@ def harvest_service(settings: Settings) -> HarvestService:
         if cfg.enabled:
             translator: Translator = TRANSLATORS[cfg.translator]()
             bindings.append(SourceBinding(source(cfg, settings), translator))
-    return HarvestService(std, bindings, SchemaAssessor(std.schemas()), snapshot_store(settings))
+    return HarvestService(
+        std, bindings, SchemaAssessor(std.schemas()), snapshot_store(settings), code_version=code_version()
+    )
+
+
+def code_version() -> str:
+    """Hash of this package's source: any change to the code invalidates the reused translations."""
+    h = hashlib.sha256()
+    root = Path(__file__).resolve().parent
+    for f in sorted(root.rglob("*.py")):
+        h.update(f.relative_to(root).as_posix().encode("utf-8"))
+        h.update(f.read_bytes())
+    return h.hexdigest()
 
 
 def snapshot_store(settings: Settings) -> FileSnapshotStore:

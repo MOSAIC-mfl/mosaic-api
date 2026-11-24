@@ -23,7 +23,7 @@ fields:
   download_url: data[] / access_note  # each URL -> one access point; text without a URL on a non-public record -> access_note
   data_type: data[].kind              # Vector / Raster / Tabular / Mixed -> vector / raster / tabular / mixed (every access point);
                                       # data[].method: a file URL -> download, other URL -> landing_page, no URL -> request
-  file_names: data[0].files
+  file_names: data[0].files          # and data[].media_type from the file extensions (scripts/recover_formats.py)
   file_size: data[0].size
   gee_asset_id: data[]                # {method: service, service_type: earth-engine, access: internal}; asset id in the
                                       # description, no URL until the asset is public (decision 2026-09-29)
@@ -33,12 +33,12 @@ fields:
   bbox: spatial.bbox                  # {xmin, ymin, xmax, ymax} -> [west, south, east, north]
   crs: spatial.crs
   update_frequency: update_frequency  # Unknown, Static, Annual, Seasonal; On-demand -> irregular
+  processing_status: processing_status  # Raw / Processed / Validated -> raw / processed / validated (declared by the contributor)
   last_updated: source_updated        # when it is a date (YYYY[-MM[-DD]]); 'NA' -> left out
   date_registered: mosaic.intake.submitted_on, created   # created falls back to the first commit of the file in the old repo
   (git history): created, updated     # dates of the first and last commit of the record in the old repo
 
 not_migrated:                         # internal working fields; they stay in the old repo's history
-  - processing_status
   - migration_status
   - current_location
   - server_path

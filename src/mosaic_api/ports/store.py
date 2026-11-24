@@ -28,6 +28,9 @@ class Snapshot:
     standard_version: str
     harvested_at: datetime | None
     extra: dict[str, Any] = field(default_factory=dict)
+    # what the translations depend on (API code, standard): when it changes, every record is
+    # translated again instead of reusing the previous translation
+    fingerprint: str | None = None
 
 
 class SnapshotStore(Protocol):

@@ -33,9 +33,10 @@ Python 3.10+.
 ```sh
 pip install -e ".[dev]"
 python -m mosaic_api harvest        # read the sources in config/mosaic-api.yaml -> state/snapshot.json
+                                    # exit 0 all read; 2 a source failed (kept its previous records); 1 all failed
 python -m mosaic_api serve          # live API on http://127.0.0.1:8000 (docs at /docs)
 python -m mosaic_api export         # static API -> site/ (what GitHub Pages serves)
-python -m mosaic_api openapi --out docs/openapi.json
+python -m mosaic_api openapi --out docs/openapi.json   # the contract; a test fails when it is behind the code
 pytest -q && ruff check src tests && mypy src && lint-imports
 ```
 
@@ -61,8 +62,9 @@ One workflow, [.github/workflows/pages.yml](.github/workflows/pages.yml):
 | Job | When | What |
 |---|---|---|
 | `check` | every pull request and every run | `ruff check`, `ruff format --check`, `mypy`, `lint-imports`, `pytest` |
-| `build` | push to `main`, daily (05:17 UTC), manual, `repository_dispatch: catalog-updated`; only if `check` passes | clones MOSAIC-mfl/catalog and MOSAIC-mfl/mosaic-standard, builds the catalogue's `dist/` with the standard's tool, harvests every source with [config/mosaic-api.ci.yaml](config/mosaic-api.ci.yaml), exports the static API |
+| `build` | push to `main`; `repository_dispatch: catalog-updated`, sent by the catalogue's Publish after each merge; daily (scheduled 05:17 UTC, GitHub often starts it hours later); manual; only if `check` passes | clones MOSAIC-mfl/catalog and MOSAIC-mfl/mosaic-standard, builds the catalogue's `dist/` with the standard's tool, harvests every source with [config/mosaic-api.ci.yaml](config/mosaic-api.ci.yaml), exports the static API. If every source failed it stops: the last good deploy stays |
 | `deploy` | after `build` | publishes the export on GitHub Pages |
+| `alert` | after `deploy`, only if a source failed | fails, so the run is red and GitHub notifies; the API was published with that source's previous records |
 
 The catalogue is `main` of MOSAIC-mfl/catalog and the standard `main` of MOSAIC-mfl/mosaic-standard.
 The repository variables `CATALOG_REF` and `STANDARD_REF` force a branch or tag.

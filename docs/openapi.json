@@ -30,7 +30,7 @@
       }
      },
      "422": {
-      "description": "Unprocessable Content",
+      "description": "Unprocessable Entity",
       "content": {
        "application/json": {
         "schema": {
@@ -151,6 +151,82 @@
       "description": "Country or region, e.g. KEN. Comma-separated values (OR); an id or its label."
      },
      {
+      "name": "data_kind",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Kind of data, e.g. raster, vector. Comma-separated values (OR); an id or its label.",
+       "title": "Data Kind"
+      },
+      "description": "Kind of data, e.g. raster, vector. Comma-separated values (OR); an id or its label."
+     },
+     {
+      "name": "access",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Access, e.g. public, restricted. Comma-separated values (OR); an id or its label.",
+       "title": "Access"
+      },
+      "description": "Access, e.g. public, restricted. Comma-separated values (OR); an id or its label."
+     },
+     {
+      "name": "license",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Licence (SPDX), e.g. CC-BY-4.0; other = any other licence. Comma-separated values (OR); an id or its label.",
+       "title": "License"
+      },
+      "description": "Licence (SPDX), e.g. CC-BY-4.0; other = any other licence. Comma-separated values (OR); an id or its label."
+     },
+     {
+      "name": "processing_status",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 500
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Declared processing status: raw, processed, validated; not_specified = not stated. Comma-separated values (OR); an id or its label.",
+       "title": "Processing Status"
+      },
+      "description": "Declared processing status: raw, processed, validated; not_specified = not stated. Comma-separated values (OR); an id or its label."
+     },
+     {
       "name": "sort",
       "in": "query",
       "required": false,
@@ -232,7 +308,7 @@
         }
        }
       },
-      "description": "Unprocessable Content"
+      "description": "Unprocessable Entity"
      },
      "404": {
       "content": {
@@ -294,7 +370,7 @@
         }
        }
       },
-      "description": "Unprocessable Content"
+      "description": "Unprocessable Entity"
      },
      "404": {
       "content": {
@@ -333,7 +409,7 @@
       }
      },
      "422": {
-      "description": "Unprocessable Content",
+      "description": "Unprocessable Entity",
       "content": {
        "application/json": {
         "schema": {
@@ -393,7 +469,7 @@
         }
        }
       },
-      "description": "Unprocessable Content"
+      "description": "Unprocessable Entity"
      },
      "404": {
       "content": {
@@ -416,14 +492,6 @@
      "total": {
       "type": "integer",
       "title": "Total"
-     },
-     "complete": {
-      "type": "integer",
-      "title": "Complete"
-     },
-     "incomplete": {
-      "type": "integer",
-      "title": "Incomplete"
      },
      "stated": {
       "type": "integer",
@@ -450,29 +518,18 @@
       },
       "type": "object",
       "title": "By Access"
-     },
-     "missing_minimum": {
-      "additionalProperties": {
-       "type": "integer"
-      },
-      "type": "object",
-      "title": "Missing Minimum",
-      "description": "Minimum field -> resources missing it."
      }
     },
     "type": "object",
     "required": [
      "total",
-     "complete",
-     "incomplete",
      "stated",
      "by_kind",
      "by_theme",
-     "by_access",
-     "missing_minimum"
+     "by_access"
     ],
     "title": "DataStatusOut",
-    "description": "What the catalogue holds for the landscape and how complete it is."
+    "description": "What the catalogue holds for the landscape."
    },
    "LandscapeOut": {
     "properties": {
@@ -798,36 +855,6 @@
     ],
     "title": "ProvenanceOut"
    },
-   "QualityOut": {
-    "properties": {
-     "status": {
-      "type": "string",
-      "title": "Status",
-      "description": "complete | incomplete (against the MOSAIC minimum)."
-     },
-     "completeness": {
-      "additionalProperties": {
-       "type": "number"
-      },
-      "type": "object",
-      "title": "Completeness"
-     },
-     "missing_minimum": {
-      "items": {
-       "type": "string"
-      },
-      "type": "array",
-      "title": "Missing Minimum"
-     }
-    },
-    "type": "object",
-    "required": [
-     "status",
-     "completeness",
-     "missing_minimum"
-    ],
-    "title": "QualityOut"
-   },
    "RecordDetail": {
     "properties": {
      "id": {
@@ -872,9 +899,6 @@
      "provenance": {
       "$ref": "#/components/schemas/ProvenanceOut"
      },
-     "quality": {
-      "$ref": "#/components/schemas/QualityOut"
-     },
      "same_as": {
       "items": {
        "type": "string"
@@ -893,11 +917,10 @@
      "landscapes_derived",
      "facets",
      "provenance",
-     "quality",
      "same_as"
     ],
     "title": "RecordDetail",
-    "description": "The full resource in the MOSAIC model, plus where it came from and how complete it is."
+    "description": "The full resource in the MOSAIC model, plus where it came from. How complete its metadata is stays\ninternal (the standard's review lists): it is not part of the public API."
    },
    "RecordPage": {
     "properties": {
@@ -1077,6 +1100,18 @@
       ],
       "title": "Access"
      },
+     "processing_status": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Processing Status",
+      "description": "raw | processed | validated, as declared by the contributor; null = not stated."
+     },
      "license": {
       "anyOf": [
        {
@@ -1088,17 +1123,6 @@
       ],
       "title": "License",
       "description": "SPDX expression, or the licence text when there is no SPDX code."
-     },
-     "status": {
-      "type": "string",
-      "title": "Status"
-     },
-     "completeness": {
-      "additionalProperties": {
-       "type": "number"
-      },
-      "type": "object",
-      "title": "Completeness"
      },
      "same_as": {
       "items": {
@@ -1141,6 +1165,18 @@
       ],
       "title": "Access Url",
       "description": "First data location URL, public ones first."
+     },
+     "resolution": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Resolution",
+      "description": "Spatial resolution as text, e.g. \"30 m\"."
      }
     },
     "type": "object",
@@ -1157,8 +1193,6 @@
      "facets",
      "bbox",
      "access",
-     "status",
-     "completeness",
      "same_as",
      "updated"
     ],

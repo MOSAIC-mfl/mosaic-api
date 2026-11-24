@@ -65,7 +65,13 @@ class Location:
 
     def read(self, rel: str) -> bytes:
         if self.is_remote:
-            return self.fetcher.get(urljoin(self.base.rstrip("/") + "/", rel))
+            url = urljoin(self.base.rstrip("/") + "/", rel)
+            try:
+                return self.fetcher.get(url)
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code == 404:  # same meaning as a missing local file
+                    raise FileNotFoundError(url) from exc
+                raise
         path = (Path(self.base) / rel).resolve()
         if not path.is_relative_to(Path(self.base).resolve()):
             raise FetchError(f"path escapes its folder: {rel}")

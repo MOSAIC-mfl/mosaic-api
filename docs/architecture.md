@@ -33,15 +33,22 @@ it is used only for typed, validated, immutable data, never for I/O.
 
 ```
 for each configured source:
-    source.records()                     # RawRecord(local_id, data, sha256, record_url)
-      ├─ same sha256 as last snapshot? → reuse the previous Resource (incremental)
+    source.records()                     # RawRecord(local_id, data, sha256, record_url, error)
+      ├─ unreadable file (error)?       → issue; its previous Resource, if any, is kept
+      ├─ same sha256 and same fingerprint as last snapshot? → reuse the previous Resource and its issues
       └─ translator.translate(...)       # → Resource in the MOSAIC model + issues
             └─ assessor.assess(record)   # MOSAIC minimum / recommended → Quality
-  (a source that raises keeps its previous resources; its error is recorded)
+         (a record that makes the translator raise → issue; its previous Resource is kept)
+  (a source that raises, or that returns no records when it had some, keeps its previous
+   resources; its error is recorded, and the CLI exits 2 so the pipeline's alert job fails)
 link_same_resources()                    # same DOI in two catalogues → same_as on both
 derive_landscapes()                      # bbox ∩ landscape boxes → landscapes (flagged derived)
-store.save(snapshot)
+store.save(snapshot)                     # with the fingerprint (API code + standard)
 ```
+
+The fingerprint is a hash of this package's source and of the standard (version, vocabularies,
+crosswalks). When it differs from the one in the snapshot, nothing is reused: a change to a
+translator or a crosswalk reaches every record, not only the ones whose source file changed.
 
 - **Our language.** The core only sees `Resource`. Since standard v0.2 the MOSAIC record follows the
   CDH core, so the CDH translator mostly copies: `cdh.domain` → `themes`, `cdh.usage` → `usage`,

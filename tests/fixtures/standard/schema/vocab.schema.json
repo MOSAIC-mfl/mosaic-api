@@ -413,6 +413,15 @@
         "unknown"
       ],
       "description": "How often the data is updated at its source."
+    },
+    "processingStatus": {
+      "type": "string",
+      "enum": [
+        "raw",
+        "processed",
+        "validated"
+      ],
+      "description": "How far the data has been processed, as declared by whoever registers it. MOSAIC does not verify it; a record without it is shown as not stated (nothing is inferred)."
     }
   }
 }

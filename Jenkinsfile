@@ -21,15 +21,17 @@
 def runRemote(String command) {
     withCredentials([sshUserPrivateKey(credentialsId: 'mosaic_api_deploy', keyFileVariable: 'SSH_KEY',
                                        usernameVariable: 'SSH_USER', passphraseVariable: 'SSH_PASSPHRASE')]) {
+        // read through env: a variable the credential does not set (no passphrase) is null there,
+        // while a bare SSH_PASSPHRASE would fail with "No such property"
         def remote = [
             name: env.host,
             host: env.host,
-            user: SSH_USER,
-            identityFile: SSH_KEY,
+            user: env.SSH_USER,
+            identityFile: env.SSH_KEY,
             allowAnyHosts: true
         ]
-        if (SSH_PASSPHRASE) {
-            remote.passphrase = SSH_PASSPHRASE
+        if (env.SSH_PASSPHRASE) {
+            remote.passphrase = env.SSH_PASSPHRASE
         }
         return sshCommand(remote: remote, command: command)
     }

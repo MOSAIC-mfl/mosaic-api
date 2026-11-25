@@ -57,8 +57,9 @@ pipeline {
         REPO_URL = 'https://github.com/MOSAIC-mfl/mosaic-api.git'
         BRANCH = 'main'
         // read by deploy/server.sh
-        // CONDA_SH: the conda installation that has the "mosaic-api" environment
-        SERVER_ENV = 'MOSAIC_API_HOME=/opt/mosaic-api MOSAIC_API_PORT=4201 CONDA_ENV=mosaic-api CONDA_SH=/opt/anaconda3/etc/profile.d/conda.sh'
+        // the "mosaic-api" environment of the server user's miniforge (full path: no doubt about
+        // which conda installation it belongs to) and that miniforge's conda.sh
+        SERVER_ENV = 'MOSAIC_API_HOME=/opt/mosaic-api MOSAIC_API_PORT=4201 CONDA_ENV=/home/mosaic-api/.miniforge3/envs/mosaic-api CONDA_SH=/home/mosaic-api/.miniforge3/etc/profile.d/conda.sh'
     }
 
     stages {

@@ -15,8 +15,8 @@
 #   MOSAIC_API_BIND    0.0.0.0                         address uvicorn listens on
 #   MOSAIC_API_CONFIG  $MOSAIC_API_HOME/config/mosaic-api.server.yaml
 #   CONDA_ENV          mosaic-api                      name (or path) of the conda environment
-#   CONDA_SH           <conda>/etc/profile.d/conda.sh; default: first found of /opt/anaconda3,
-#                      /opt/miniforge3, /opt/conda, ~/miniforge3, ~/anaconda3, ~/miniconda3
+#   CONDA_SH           <conda>/etc/profile.d/conda.sh; default: first found of ~/.miniforge3,
+#                      ~/miniforge3, /opt/miniforge3, /opt/anaconda3, /opt/conda, ~/anaconda3, ~/miniconda3
 set -euo pipefail
 
 HOME_DIR="${MOSAIC_API_HOME:-/opt/mosaic-api}"
@@ -30,7 +30,7 @@ PID_FILE="$HOME_DIR/state/api.pid"
 activate() {
     local sh="${CONDA_SH:-}"
     if [ -z "$sh" ]; then
-        for base in /opt/anaconda3 /opt/miniforge3 /opt/conda "$HOME/miniforge3" "$HOME/anaconda3" "$HOME/miniconda3"; do
+        for base in "$HOME/.miniforge3" "$HOME/miniforge3" /opt/miniforge3 /opt/anaconda3 /opt/conda "$HOME/anaconda3" "$HOME/miniconda3"; do
             if [ -f "$base/etc/profile.d/conda.sh" ]; then sh="$base/etc/profile.d/conda.sh"; break; fi
         done
     fi

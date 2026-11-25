@@ -7,7 +7,7 @@ CIAT server, deployed by Jenkins. Both serve the same contract (`docs/openapi.js
 |---|---|
 | Folder | `/opt/mosaic-api` (a clone of this repository, branch `main`) |
 | Port | `4201` (`http://<server>:4201/`, docs at `/docs`, health at `/health`) |
-| Python | conda environment `mosaic-api` (`/opt/anaconda3`), Python 3.14 |
+| Python | conda environment `/home/mosaic-api/.miniforge3/envs/mosaic-api` (the server user's miniforge), Python 3.14 |
 | Configuration | [config/mosaic-api.server.yaml](../config/mosaic-api.server.yaml) |
 | Data | `state/snapshot.json` (harvested resources); logs in `logs/api.log` and `logs/harvest.log` |
 | Pipeline | [Jenkinsfile](../Jenkinsfile), which runs [deploy/server.sh](../deploy/server.sh) over SSH |
@@ -42,10 +42,10 @@ The API reads the snapshot when it starts, which is why every run restarts it. T
 **On the server** (as the deploy user):
 
 - Make sure `/opt/mosaic-api` exists and belongs to the deploy user. It should be empty, or already be a clone of this repository.
-- The conda environment `mosaic-api` exists with Python 3.14 and pip, and `conda info --envs` run after `source /opt/anaconda3/etc/profile.d/conda.sh` lists it.
-  - The Jenkinsfile passes `CONDA_SH=/opt/anaconda3/etc/profile.d/conda.sh` to `deploy/server.sh`. If the environment belongs to another conda installation, change that path in `SERVER_ENV`.
-  - `CONDA_ENV` may also be the environment's full path.
-  - When the environment is not found, `server.sh` prints the environments that conda sees.
+- The conda environment `mosaic-api` exists with Python 3.14 and pip: today `/home/mosaic-api/.miniforge3/envs/mosaic-api`, in the miniforge of the user `mosaic-api`.
+  - The Jenkinsfile passes that full path as `CONDA_ENV`, and that miniforge's `conda.sh` as `CONDA_SH` (`SERVER_ENV`). If the environment moves, change both there.
+  - Without `CONDA_SH`, `deploy/server.sh` looks in `~/.miniforge3`, `~/miniforge3`, `/opt/miniforge3`, `/opt/anaconda3`, `/opt/conda`, `~/anaconda3` and `~/miniconda3`.
+  - When the environment is not found, it prints the environments that conda sees.
 - Outbound https to `mosaic-mfl.github.io`, `github.com`, `codeload.github.com` and `raw.githubusercontent.com`. If the server goes out through a proxy, set `HTTPS_PROXY` for the deploy user; the API honours it.
 - Port 4201 is open to whoever must reach the API (the website calls it from the browser).
 - Optional: `fuser` (package `psmisc`), used to free the port if something else holds it.

@@ -27,6 +27,16 @@
 - Test fixtures of the standard refreshed (schemas, landscape vocabulary, schema-1 crosswalk,
   `processing_status` vocabulary).
 
+### Added (2026-11-25, live API on the CIAT server)
+- `Jenkinsfile`: deploys the live API to `/opt/mosaic-api` (port 4201, miniforge environment
+  `mosaic-api`, Python 3.14) over SSH with a private key (Jenkins credential "SSH Username with
+  private key"): update to `origin/main`, install, harvest, restart and wait for `/health`. A
+  failed source makes the build unstable, not failed. Runs on each push to `main` and daily.
+- `deploy/server.sh` (`install`, `harvest`, `restart`, `stop`, `status`), the same commands by hand.
+- `config/mosaic-api.server.yaml`: everything over https from the published catalogue and the CDH.
+- `deploy/requirements-server.txt`: dependencies pinned for Python 3.14 (tests pass on 3.14).
+- `docs/deployment.md`.
+
 ### Changed (2026-11-13)
 - Metadata completeness is no longer public: `quality` (record), `status` / `completeness`
   (summaries), the `status` facet and the landscapes' `complete` / `incomplete` / `missing_minimum`

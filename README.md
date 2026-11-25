@@ -2,6 +2,7 @@
 
 > **Status: v0.1.0, first publication.** Repository: https://github.com/MOSAIC-mfl/mosaic-api.
 > Static API: https://mosaic-mfl.github.io/mosaic-api/ · documentation: https://mosaic-mfl.github.io/mosaic-api/docs/
+> Live API: CIAT server, port 4201, deployed by Jenkins ([docs/deployment.md](docs/deployment.md)).
 
 Read-only API of **MOSAIC**, a network of metadata. It reads several catalogues, translates their
 records into the **MOSAIC metadata model** (standard v0.2, built on the CGIAR Climate Data Hub core), and serves them as JSON to the website and to anyone
@@ -20,9 +21,9 @@ follow. Every resource keeps its provenance: MOSAIC links to the data where it l
 - **Hexagonal.** The core (domain + use cases) knows no framework, no file format and no source.
   Each catalogue is an adapter plus a translator. Adding a catalogue does not touch the core
   ([docs/adding-a-source.md](docs/adding-a-source.md)).
-- **No server, no database (today).** `harvest` and `export` run in GitHub Actions and publish a
-  **static JSON API** on GitHub Pages. The same FastAPI app can run live on a free server later,
-  with the same contract.
+- **No database.** `harvest` and `export` run in GitHub Actions and publish a **static JSON API**
+  on GitHub Pages. The same FastAPI app also runs live on a CIAT server (Jenkins,
+  [docs/deployment.md](docs/deployment.md)), with the same contract.
 - **Typed end to end.** Pydantic v2 models, `mypy --strict`, an OpenAPI contract the website
   generates its TypeScript types from, and `import-linter` enforcing the layers.
 
@@ -77,6 +78,14 @@ When the catalogue publishes its own Pages site (mosaic-mfl.github.io/catalog), 
 read it over https with [config/mosaic-api.published.yaml](config/mosaic-api.published.yaml)
 instead of cloning it.
 
+## Live API (Jenkins)
+
+[Jenkinsfile](Jenkinsfile) deploys the live API to `/opt/mosaic-api` on a CIAT server (port 4201,
+miniforge environment `mosaic-api`, Python 3.14): it updates the code, installs the pinned
+dependencies, harvests with [config/mosaic-api.server.yaml](config/mosaic-api.server.yaml) (all
+https, from the published catalogue and the CDH) and restarts the API. It runs on each push to
+`main` and once a day. Set-up and commands: [docs/deployment.md](docs/deployment.md).
+
 ## Endpoints (v1)
 
 Five, nothing else ([ADR-0007](docs/adr/0007-five-endpoints-records.md)):
@@ -119,6 +128,7 @@ the files on Pages use capitals.
 - [docs/architecture.md](docs/architecture.md): layers, flows, static API, how the website uses it.
 - [docs/adding-a-source.md](docs/adding-a-source.md): connect a new catalogue.
 - [docs/security.md](docs/security.md): threats and measures.
+- [docs/deployment.md](docs/deployment.md): the live API on the CIAT server (Jenkins).
 - [docs/adr/](docs/adr/): decisions.
 - [CHANGELOG.md](CHANGELOG.md).
 

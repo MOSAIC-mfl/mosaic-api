@@ -112,6 +112,12 @@ class Citation(Model):
     url: str | None = None
 
 
+def _year(value: str | None) -> int | None:
+    """Year of an ISO date ("2020", "2020-06-23", ...); None when absent or not a date (never raises)."""
+    head = (value or "")[:4]
+    return int(head) if len(head) == 4 and head.isdigit() else None
+
+
 class Temporal(Model):
     date: str | None = None
     start_date: str | None = None
@@ -122,11 +128,9 @@ class Temporal(Model):
     def years(self) -> tuple[int | None, int | None]:
         """(start year, end year) of the period; None = open or unknown."""
         if self.date:
-            y = int(self.date[:4])
+            y = _year(self.date)
             return y, y
-        start = int(self.start_date[:4]) if self.start_date else None
-        end = int(self.end_date[:4]) if self.end_date else None
-        return start, end
+        return _year(self.start_date), _year(self.end_date)
 
 
 class Resolution(Model):

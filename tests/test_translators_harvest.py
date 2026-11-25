@@ -134,3 +134,15 @@ def test_git_yaml_reads_a_github_tarball(tmp_path: Path) -> None:
     recs = list(src.records())
     assert fake.urls == ["https://codeload.github.com/CGIAR-Climate-Data-Hub/cdh-catalog/tar.gz/main"]
     assert [(r.local_id, r.record_url) for r in recs] == [("a", "https://github.com/x/y/blob/main/records/a/a.yaml")]
+
+
+def test_a_bad_cdh_date_is_an_issue_and_is_left_out(standard: Standard) -> None:
+    raw = next(r for r in GitYamlSource(CDH, str(FIX / "cdh"), FETCHER).records() if r.local_id == "ecocrop")
+    data = json.loads(json.dumps(raw.data, default=str))
+    data["temporal"] = {"start_date": 2001, "end_date": "present"}
+    res = CdhTranslator().translate(RawRecord(raw.local_id, data, "h2"), CDH, standard, NOW)
+    r = res.resource
+    assert r is not None and r.temporal is not None
+    assert r.temporal.start_date == "2001" and r.temporal.end_date is None
+    assert any("temporal.end_date 'present'" in i for i in res.issues)
+    assert r.temporal.years() == (2001, None)

@@ -2,6 +2,13 @@
 
 ## [0.1.0] - unreleased (first publication)
 
+### Fixed (2026-11-25, security review)
+- CDH translator: a `temporal.date`, `start_date` or `end_date` that is not an ISO date (year,
+  month, day or date-time, as the standard's `coverageDate`) becomes an issue of that record and
+  is left out. Before, a value such as `"present"` reached the export, where `Temporal.years()`
+  raised and stopped the whole publication.
+- `Temporal.years()` returns `None` for a value it cannot read instead of raising.
+
 ### Fixed (2026-11-19, project audit of 2026-11-18)
 - A source that returns no records when the previous harvest had some is a failure: its previous
   records are kept and the error recorded, instead of publishing the API without them.

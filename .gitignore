@@ -16,3 +16,6 @@ _site/
 .env.*
 !.env.example
 _standard/
+
+# live API on a server (deploy/server.sh)
+logs/

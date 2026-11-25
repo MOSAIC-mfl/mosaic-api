@@ -1,0 +1,48 @@
+# mosaic-api configuration for the live API on the CIAT server (/opt/mosaic-api, deployed by Jenkins:
+# Jenkinsfile, deploy/server.sh, docs/deployment.md). Paths are relative to this file.
+#
+# Everything is read over https from what is already published: the MOSAIC catalogue build
+# (standard, records and landscape profiles) on the catalogue's GitHub Pages, and the CDH catalogue
+# on GitHub. The server needs outbound https to the allowed hosts below (HTTPS_PROXY is honoured).
+
+standard: https://mosaic-mfl.github.io/catalog
+
+state: ../state/snapshot.json   # /opt/mosaic-api/state, not in git
+export_dir: ../site             # not used by the live API
+
+# Remote reads are only allowed to these hosts (https only, also after redirects).
+allowed_hosts:
+  - mosaic-mfl.github.io
+  - github.com
+  - codeload.github.com
+  - raw.githubusercontent.com
+max_download_mb: 50
+
+sources:
+  - id: mosaic
+    name: MOSAIC
+    type: mosaic_catalog
+    translator: mosaic
+    format: mosaic-v0.2
+    location: https://mosaic-mfl.github.io/catalog
+    homepage: https://mosaic-mfl.github.io/website/
+    record_url_template: https://github.com/MOSAIC-mfl/catalog/blob/main/records/{id}/record.yaml
+
+  - id: cdh
+    name: CGIAR Climate Data Hub
+    type: git_yaml
+    translator: cdh
+    format: cdh-yaml-v0.5
+    location: https://github.com/CGIAR-Climate-Data-Hub/cdh-catalog
+    ref: main
+    pattern: records/*/*.yaml
+    homepage: https://cgiar-climate-data-hub.github.io/
+    record_url_template: https://github.com/CGIAR-Climate-Data-Hub/cdh-catalog/blob/{ref}/{path}
+
+http:
+  cors_origins:
+    - https://mosaic-mfl.github.io   # the website
+    - http://localhost:4321          # the website in development (npm run dev / preview)
+    - http://127.0.0.1:4321
+  max_page_size: 100
+  expose_emails: true   # project decision: contact e-mails are public

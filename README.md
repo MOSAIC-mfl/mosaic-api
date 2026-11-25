@@ -81,7 +81,7 @@ instead of cloning it.
 ## Live API (Jenkins)
 
 [Jenkinsfile](Jenkinsfile) deploys the live API to `/opt/mosaic-api` on a CIAT server (port 4201,
-miniforge environment `mosaic-api`, Python 3.14): it updates the code, installs the pinned
+conda environment `mosaic-api`, Python 3.14): it updates the code, installs the pinned
 dependencies, harvests with [config/mosaic-api.server.yaml](config/mosaic-api.server.yaml) (all
 https, from the published catalogue and the CDH) and restarts the API. It runs on each push to
 `main` and once a day. Set-up and commands: [docs/deployment.md](docs/deployment.md).

@@ -2,7 +2,7 @@
 //
 //   1. SSH to the server.
 //   2. Update /opt/mosaic-api to origin/main (clone it the first time) and install the pinned
-//      dependencies into the miniforge environment "mosaic-api" (deploy/server.sh install).
+//      dependencies into the conda environment "mosaic-api" (deploy/server.sh install).
 //   3. Harvest every source into state/snapshot.json (deploy/server.sh harvest). A source that
 //      fails keeps its previous records; the build is then UNSTABLE (yellow), not failed.
 //   4. Restart the API on port 4201 and wait for /health (deploy/server.sh restart).
@@ -57,7 +57,8 @@ pipeline {
         REPO_URL = 'https://github.com/MOSAIC-mfl/mosaic-api.git'
         BRANCH = 'main'
         // read by deploy/server.sh
-        SERVER_ENV = 'MOSAIC_API_HOME=/opt/mosaic-api MOSAIC_API_PORT=4201 CONDA_ENV=mosaic-api'
+        // CONDA_SH: the conda installation that has the "mosaic-api" environment
+        SERVER_ENV = 'MOSAIC_API_HOME=/opt/mosaic-api MOSAIC_API_PORT=4201 CONDA_ENV=mosaic-api CONDA_SH=/opt/anaconda3/etc/profile.d/conda.sh'
     }
 
     stages {

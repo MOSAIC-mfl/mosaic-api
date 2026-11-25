@@ -7,7 +7,7 @@ CIAT server, deployed by Jenkins. Both serve the same contract (`docs/openapi.js
 |---|---|
 | Folder | `/opt/mosaic-api` (a clone of this repository, branch `main`) |
 | Port | `4201` (`http://<server>:4201/`, docs at `/docs`, health at `/health`) |
-| Python | miniforge environment `mosaic-api`, Python 3.14 |
+| Python | conda environment `mosaic-api` (`/opt/anaconda3`), Python 3.14 |
 | Configuration | [config/mosaic-api.server.yaml](../config/mosaic-api.server.yaml) |
 | Data | `state/snapshot.json` (harvested resources); logs in `logs/api.log` and `logs/harvest.log` |
 | Pipeline | [Jenkinsfile](../Jenkinsfile), which runs [deploy/server.sh](../deploy/server.sh) over SSH |
@@ -42,9 +42,10 @@ The API reads the snapshot when it starts, which is why every run restarts it. T
 **On the server** (as the deploy user):
 
 - Make sure `/opt/mosaic-api` exists and belongs to the deploy user. It should be empty, or already be a clone of this repository.
-- The miniforge environment `mosaic-api` exists with Python 3.14 and pip.
-  - `deploy/server.sh` looks for `conda.sh` in `/opt/miniforge3`, `/opt/conda`, `~/miniforge3` and `~/miniconda3`.
-  - If miniforge is somewhere else, add `CONDA_SH=<miniforge>/etc/profile.d/conda.sh` to `SERVER_ENV` in the Jenkinsfile.
+- The conda environment `mosaic-api` exists with Python 3.14 and pip, and `conda info --envs` run after `source /opt/anaconda3/etc/profile.d/conda.sh` lists it.
+  - The Jenkinsfile passes `CONDA_SH=/opt/anaconda3/etc/profile.d/conda.sh` to `deploy/server.sh`. If the environment belongs to another conda installation, change that path in `SERVER_ENV`.
+  - `CONDA_ENV` may also be the environment's full path.
+  - When the environment is not found, `server.sh` prints the environments that conda sees.
 - Outbound https to `mosaic-mfl.github.io`, `github.com`, `codeload.github.com` and `raw.githubusercontent.com`. If the server goes out through a proxy, set `HTTPS_PROXY` for the deploy user; the API honours it.
 - Port 4201 is open to whoever must reach the API (the website calls it from the browser).
 - Optional: `fuser` (package `psmisc`), used to free the port if something else holds it.

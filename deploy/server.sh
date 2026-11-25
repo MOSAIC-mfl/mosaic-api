@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the live MOSAIC API on a Linux server with a conda (miniforge) environment.
+# Run the live MOSAIC API on a Linux server with a conda environment.
 #
 #   deploy/server.sh install    install the pinned dependencies and this package into the environment
 #   deploy/server.sh harvest    read every source and update state/snapshot.json
@@ -15,8 +15,8 @@
 #   MOSAIC_API_BIND    0.0.0.0                         address uvicorn listens on
 #   MOSAIC_API_CONFIG  $MOSAIC_API_HOME/config/mosaic-api.server.yaml
 #   CONDA_ENV          mosaic-api                      name (or path) of the conda environment
-#   CONDA_SH           first found of /opt/miniforge3, /opt/conda, ~/miniforge3, ~/miniconda3
-#                      (etc/profile.d/conda.sh)
+#   CONDA_SH           <conda>/etc/profile.d/conda.sh; default: first found of /opt/anaconda3,
+#                      /opt/miniforge3, /opt/conda, ~/miniforge3, ~/anaconda3, ~/miniconda3
 set -euo pipefail
 
 HOME_DIR="${MOSAIC_API_HOME:-/opt/mosaic-api}"
@@ -30,18 +30,24 @@ PID_FILE="$HOME_DIR/state/api.pid"
 activate() {
     local sh="${CONDA_SH:-}"
     if [ -z "$sh" ]; then
-        for base in /opt/miniforge3 /opt/conda "$HOME/miniforge3" "$HOME/miniconda3"; do
+        for base in /opt/anaconda3 /opt/miniforge3 /opt/conda "$HOME/miniforge3" "$HOME/anaconda3" "$HOME/miniconda3"; do
             if [ -f "$base/etc/profile.d/conda.sh" ]; then sh="$base/etc/profile.d/conda.sh"; break; fi
         done
     fi
     if [ -z "$sh" ] || [ ! -f "$sh" ]; then
-        echo "conda.sh not found: set CONDA_SH to <miniforge>/etc/profile.d/conda.sh" >&2
+        echo "conda.sh not found: set CONDA_SH to <conda>/etc/profile.d/conda.sh" >&2
         exit 1
     fi
+    echo "conda: $sh"
     # shellcheck disable=SC1090
     source "$sh"
     set +u  # conda's activate scripts read unset variables
-    conda activate "$ENV_NAME"
+    if ! conda activate "$ENV_NAME"; then
+        echo "Environment '$ENV_NAME' not found by $sh. Environments it sees:" >&2
+        conda info --envs >&2 || true
+        echo "Set CONDA_SH to the conda that has it, or CONDA_ENV to its name or full path." >&2
+        exit 1
+    fi
     set -u
     echo "Python: $(python --version 2>&1) at $(command -v python)"
 }

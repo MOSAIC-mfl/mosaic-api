@@ -157,3 +157,10 @@ def test_fold_matches_the_website_rule() -> None:
 
     assert fold("हिंदी नक्शा") == "हद नकश"  # marks of any script removed, as in the browser
     assert fold("Ｆｕｌｌ ﬁle") == "full file"
+
+
+def test_years_never_raise_on_a_bad_date() -> None:
+    from mosaic_api.domain.model import Temporal
+
+    assert Temporal(date="unknown").years() == (None, None)
+    assert Temporal(start_date="20xx", end_date="2024-05").years() == (None, 2024)

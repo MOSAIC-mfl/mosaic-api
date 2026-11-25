@@ -35,6 +35,8 @@ MEDIA_KIND = (
 FILE_EXT = re.compile(r"\.(tif|tiff|nc|zarr|csv|parquet|gpkg|geojson|fgb|zip|vrt|json|xlsx?|pdf|txt)$", re.I)
 UNITS = {"degree": "degree", "deg": "degree", "m": "m", "km": "km", "arcsec": "arcsec", "arcmin": "arcmin"}
 DATE = re.compile(r"^\d{4}(-\d{2}(-\d{2})?)?")
+# the standard's coverageDate: year, month, day or date-time (YAML may give "2020-06-23 00:00:00+00:00")
+COVERAGE_DATE = re.compile(r"^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01])([T ]\d{2}:\d{2}[0-9:.+\-Z]*)?)?)?$")
 
 
 def _date(value: Any) -> str | None:
@@ -125,8 +127,14 @@ class CdhTranslator:
             issues.append(f"temporal.update_frequency {freq!r} not in the MOSAIC vocabulary")
             temporal.pop("update_frequency")
         for k in ("date", "start_date", "end_date"):
-            if temporal.get(k) is not None:
-                temporal[k] = str(temporal[k])
+            if temporal.get(k) is None:
+                continue
+            value = str(temporal[k])
+            if COVERAGE_DATE.match(value):
+                temporal[k] = value
+            else:  # one bad date must not stop the export: report it and leave it out
+                issues.append(f"temporal.{k} {value!r} is not an ISO date (YYYY, YYYY-MM, YYYY-MM-DD, date-time)")
+                temporal.pop(k)
         f["temporal"] = temporal or None
 
         f["access"] = cw["access"].get(d.get("access") or "public")  # CDH: absent means public
